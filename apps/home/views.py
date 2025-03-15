@@ -13,6 +13,7 @@ class ModuleListView(LoginRequiredMixin, ListView):
     model = Module
     template_name = 'home/module.html'
     permission_required = 'view_module'
+    paginate_by = 10  # Número de elementos por página
 
     def get_queryset(self):
         queryset = super().get_queryset()
