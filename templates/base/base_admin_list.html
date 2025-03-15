@@ -5,17 +5,19 @@
 
 
 {% block content %}
-
-    <table class="table">
+<div class="container-fluid mt-3">
+    <strong style="font-size: 1.5rem; color: #1E3A5F;"><i class="bi bi-list-ol"></i> {{title}}</strong>
+    <table class="table mt-1">
         <thead class="table-dark">
-            {% block 'thead' %}
+            {% block thead %}
 
             {% endblock %}
         </thead>
         <tbody>
-            {% block 'body' %}
+            {% block tbody %}
             
             {% endblock %}
         </tbody>
     </table>
 {% endblock %}
+</div>
