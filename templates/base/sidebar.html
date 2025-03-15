@@ -29,30 +29,27 @@
           role="menu"
           data-accordion="false"
         >
+          {% for module in modulos_sistema %}
           <li class="nav-item">
             <a href="#" class="nav-link nav-topmenu">
-              <i class="nav-icon bi bi-cart-check"></i>
+              <i class="nav-icon {{module.icon}}"></i>
               <p>
-                Módulo
+                {{ module.name }}
                 <i class="nav-arrow bi bi-chevron-right"></i>
               </p>
             </a>
             <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <a href="{% url 'home-url' %}" class="nav-link nav-sublink">
-                  <i class="nav-icon bi bi-circle"></i>
-                  <p>Menú1</p>
-                </a>
-              </li>
-              <li class="my-link">
-                <a href="{% url 'home-url' %}" class="nav-link nav-sublink">
-                  <i class="nav-icon bi bi-circle"></i>
-                  <p>Menú2</p>
-                </a>
-              </li>
+              {% for submodule in module.submodule_set.all %}
+                <li class="nav-item">
+                  <a href="{% url submodule.url_name %}" class="nav-link nav-sublink">
+                    <i class="nav-icon bi bi-circle"></i>
+                    <p>{{ submodule.name }}</p>
+                  </a>
+                </li>
+              {% endfor %}
             </ul>
           </li>
-    
+          {% endfor %}
         </ul>
         <!--end::Sidebar Menu-->
       </nav>

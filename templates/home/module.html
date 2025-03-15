@@ -1,0 +1,25 @@
+{% extends 'base/base_admin_list.html' %}
+
+{% block thead %}
+    <th style="width: 5%;">Nro</th>
+    <th style="width: 25%;">Parroquia</th>
+    <th style="width: 50%;">Cantón</th>
+    <th style="width: 20%;" class="text-center">Opciones</th>
+{% endblock %}
+
+{% block rows %}
+    {% for i in object_list %}
+        <tr>
+            <td>{{ i.id }}</td>
+            <td>{{ i.name }}</td>
+            <td>{{ i.city }}</td>
+            <td class="text-center">
+                <a href="{{ i.get_absolute_url_update }}" data-bs-toggle="tooltip" title="Editar registro"
+                   class="btn btn-warning btn-xs btn-flat">
+                    <i class="fas fa-edit" aria-hidden="true"></i>
+                </a>
+            </td>
+        </tr>
+    {% endfor %}
+{% endblock %}
+
