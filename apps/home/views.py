@@ -14,10 +14,19 @@ class ModuleListView(LoginRequiredMixin, ListView):
     template_name = 'home/module.html'
     permission_required = 'view_module'
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        query = self.request.GET.get('q')
+        if query:
+            queryset = queryset.filter(name__icontains=query)  # Ajusta el campo de búsqueda
+        return queryset
+
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Listado de Módulos'
+        context['parametroBusqueda'] = 'Nombre'
+        context['query'] = self.request.GET.get('q', '')
         return context

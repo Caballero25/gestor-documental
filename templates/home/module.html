@@ -19,6 +19,8 @@
             {% else %}
                 <td><i class="bi bi-ban-fill" style="color: red;"></i></td>
             {% endif %}
+
+            <!-- UPDATE & DELETE -->
             <td class="text-center">
                 <a href="{{ i.get_absolute_url_update }}" data-bs-toggle="tooltip" title="Editar registro"
                    class="btn btn-warning btn-xs btn-flat" style="padding: 0px; padding-left: 2px; padding-right: 2px;">
@@ -30,6 +32,14 @@
                 </a>
             </td>
         </tr>
+    {% empty %}
+    <!-- EMPTY RESULT -->
+    <tr>
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+             No se han encontrado resultados para: <strong>{{ query }}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+    </tr>
     {% endfor %}
 {% endblock %}
 
