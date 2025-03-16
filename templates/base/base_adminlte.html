@@ -50,7 +50,6 @@
     <script src="{% static 'lib/jquery/jquery-3.37.1.min.js' %}"></script>
     <!---SWEETALERT-->
     <script src="{% static 'lib/sweetalert/sweetalert2.all.min.js' %}"></script>
-    {% block extra_head %}{% endblock %}
     <style>
       .app-sidebar {
         background: #ffffff;
@@ -80,7 +79,7 @@
         }
       }
     </style>
-    
+    {% block extra_head %}{% endblock %}
   </head>
   <!--end::Head-->
   <!--begin::Body-->

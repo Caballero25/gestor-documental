@@ -1,0 +1,73 @@
+{% extends 'base/base_adminlte.html' %}
+{% block extra_head %}
+    <script>
+        function deleteButton(csrfToken) {
+            Swal.fire({
+                text: "¿Está seguro de eliminar el registro?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: 'Eliminar',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    return fetch(window.location.href, {  // Envia el POST a la URL actual
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": csrfToken
+                        },
+                        body: JSON.stringify({})
+                    })
+                    .then(response => {
+                        if (response.status !== 204) {
+                            return response.json().then(errorData => {
+                                throw new Error(errorData.error || "Error al eliminar el registro");
+                            });
+                        } else {
+                            Swal.fire({
+                                text: "El registro fue eliminado con éxito.",
+                                icon: "success",
+                                showCancelButton: false,
+                                confirmButtonText: 'Ok',
+                                //timer: 4000,  // Cierra la alerta después de 3 segundos
+                                willClose: () => {
+                                    window.location.href = "{% url 'module_list' %}";
+                                }
+                            });
+                            
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error:", error.message);
+                        Swal.fire("Error", error.message, "error");
+                    });
+                }
+            });
+        }
+
+    </script>
+    <style>
+        
+    </style>
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid mt-3">
+    
+    <div class="card text-center">
+        <div class="card-header">
+            <strong style="font-size: 1.5rem; color: #1E3A5F;"><i class="bi bi-trash3-fill" style="color: red;"></i> {{title}}</strong>
+        </div>
+        <div class="card-body">
+          <p class="card-text">Registro seleccionado: {{record.id}} - {{record}}.</p>
+        <button onclick="deleteButton('{{ csrf_token }}')" class="btn btn-danger">
+            Eliminar
+        </button>
+        
+        </div>
+        <div class="card-footer text-muted">
+          Los registros eliminados no se pueden recuperar.
+        </div>
+      </div>
+</div>
+{% endblock %}
