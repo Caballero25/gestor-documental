@@ -34,12 +34,27 @@ class ModuleListView(LoginRequiredMixin, ListView):
         context['title'] = 'Listado de Módulos'
         context['parametroBusqueda'] = 'Nombre'
         context['query'] = self.request.GET.get('q', '')
+        context['create_url'] = "module_create"
         context['delete_url'] = "module_delete"
         context['update_url'] = "module_edit"
         context['breadcrumb_previous'] = "Inicio"
         context['breadcrumb_previous_link'] = "home-url"
         return context
-    
+
+def moduleCreateView(request):
+    context = {}
+    context['title'] = 'Crear Módulo'
+    context['breadcrumb_previous'] = "Módulos"
+    context['breadcrumb_previous_link'] = "module_list"
+    if request.method == 'POST':
+        form = ModuleForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('module_list')  # Redirige a la lista de módulos
+    else:
+        form = ModuleForm()
+    context['form'] = form
+    return render(request, 'parametrization/modules/module_create.html', context) 
 
 def moduleUpdateView(request, id):
     record = get_object_or_404(Module, id=id)
@@ -56,7 +71,7 @@ def moduleUpdateView(request, id):
     else:
         form = ModuleForm(instance=record)
     context['form'] = form
-    return render(request, 'base/base_admin_update.html', context)
+    return render(request, 'parametrization/modules/module_edit.html', context)
 
 
 @permission_required("delete_module")

@@ -30,7 +30,7 @@
     </table>
 </div>
 <!-- Controles de paginación -->
-<div>
+<div class="container-fluid">
     {% if is_paginated %}
     <nav aria-label="Paginación">
         <ul class="pagination">
@@ -69,7 +69,10 @@
       </nav>
       
     {% endif %}
+    <div><a class="btn btn-outline-primary" href="{% url create_url %}"><i class="bi bi-folder-plus"></i> &nbsp; Crear Registro</a></div>
 </div>
+
+
 </div>
 {% endblock %}
 

@@ -7,8 +7,8 @@
             event.preventDefault();
             Swal.fire({
                 title: "¿Está seguro?",
-                text: "Esta acción actualizará el registro.",
-                icon: "warning",
+                text: "Esta acción creará un nuevo registro.",
+                icon: "question",
                 showCancelButton: true,
                 confirmButtonColor: "#0077cc",
                 cancelButtonColor: "#d33",
@@ -30,8 +30,7 @@
     
     <div class="card">
         <div class="card-header text-center">
-            <strong style="font-size: 1.5rem; color: #1E3A5F;"><i class="bi bi-pencil-fill" style="color: #ffc107;"></i> {{title}}</strong>
-            <p class="card-text">Registro seleccionado: {{record.id}} - {{record}}.</p>
+            <strong style="font-size: 1.5rem; color: #1E3A5F;"><i class="bi bi-folder-plus" style="color: #4caf50;"></i> {{title}}</strong>
         </div>
         <div class="container-fluid mt-3 pb-4">
             <form method="post">
