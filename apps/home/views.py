@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from http import HTTPStatus
 from django.contrib.auth.decorators import login_required
@@ -6,6 +6,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import permission_required
 from django.views.generic import ListView
 from .models import Module
+from .forms import ModuleForm
 
 # Create your views here.
 @login_required
@@ -34,20 +35,42 @@ class ModuleListView(LoginRequiredMixin, ListView):
         context['parametroBusqueda'] = 'Nombre'
         context['query'] = self.request.GET.get('q', '')
         context['delete_url'] = "module_delete"
+        context['update_url'] = "module_edit"
+        context['breadcrumb_previous'] = "Inicio"
+        context['breadcrumb_previous_link'] = "home-url"
         return context
+    
 
-@permission_required("delete_module")    
+def moduleUpdateView(request, id):
+    record = get_object_or_404(Module, id=id)
+    context = {}
+    context['title'] = 'Editar Módulo'
+    context['record'] = record
+    context['breadcrumb_previous'] = "Módulos"
+    context['breadcrumb_previous_link'] = "module_list"
+    if request.method == 'POST':
+        form = ModuleForm(request.POST, instance=record)
+        if form.is_valid():
+            form.save()
+            return redirect('module_list')  # Redirige a una vista de listado de módulos
+    else:
+        form = ModuleForm(instance=record)
+    context['form'] = form
+    return render(request, 'base/base_admin_update.html', context)
+
+
+@permission_required("delete_module")
 def moduleDeleteView(request, id):
     record = Module.objects.get(id=id) 
     context = {}
     context['title'] = 'Eliminar Módulo'
     context['record'] = record
+    context['breadcrumb_previous'] = "Módulos"
+    context['breadcrumb_previous_link'] = "module_list"
     if request.method == 'POST':
         try:
             record.delete()
             return JsonResponse({"status": True}, status=HTTPStatus.NO_CONTENT)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=HTTPStatus.BAD_REQUEST)
-
-
     return render(request, 'parametrization/modules/module_delete.html', context)

@@ -4,7 +4,7 @@ from django.db import models
 
 class Module(models.Model):
     name = models.CharField(max_length=20, unique=True, null=False, blank=False, verbose_name="Nombre del modulo")
-    icon = models.CharField(max_length=20, unique=True, null=False, blank=False, verbose_name="Ícono del modulo")
+    icon = models.CharField(max_length=60, unique=True, null=False, blank=False, verbose_name="Ícono del modulo")
     is_visible = models.BooleanField(default=True, verbose_name='Visible')
 
     def __str__(self):
