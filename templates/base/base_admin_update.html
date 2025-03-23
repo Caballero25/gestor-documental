@@ -34,7 +34,7 @@
             <p class="card-text">Registro seleccionado: {{record.id}} - {{record}}.</p>
         </div>
         <div class="container-fluid mt-3 pb-4">
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 {% for field in form %}
                     <div class="mb-3">
