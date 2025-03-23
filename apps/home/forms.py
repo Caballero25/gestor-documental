@@ -1,6 +1,6 @@
 from django.utils.translation import gettext_lazy as _
 from django import forms
-from .models import Module
+from .models import Module, SubModule
 
 class ModuleForm(forms.ModelForm):
     class Meta:
@@ -19,5 +19,33 @@ class ModuleForm(forms.ModelForm):
             'icon': {
                 'unique': _("Este ícono ya está en uso."),
                 'required': _("El ícono del módulo es obligatorio."),
+            },
+        }
+
+
+class SubModuleForm(forms.ModelForm):
+    class Meta:
+        model = SubModule
+        fields = ['name', 'url_name', 'is_visible', 'module']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del submódulo'}),
+            'url_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de la URL'}),
+            'module': forms.Select(attrs={
+                'class': 'form-control select2',
+                'style': 'width: 100%;',
+            }),
+            'is_visible': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        error_messages = {
+            'name': {
+                'unique': _("Ya existe un submódulo con este nombre."),
+                'required': _("El nombre del submódulo es obligatorio."),
+            },
+            'url_name': {
+                'unique': _("Esta URL ya está siendo utilizada en otro submódulo."),
+                'required': _("La URL del submódulo es obligatorio."),
+            },
+            'module': {
+                'required': _("El submódulo debe alojarse en un módulo."),
             },
         }

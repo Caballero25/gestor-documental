@@ -1,4 +1,5 @@
 {% load static %}
+{% load custom_filters %}
 <aside class="app-sidebar" data-bs-theme="">
     <!--begin::Sidebar Brand-->
     <div class="sidebar-brand">
@@ -39,7 +40,7 @@
               </p>
             </a>
             <ul class="nav nav-treeview">
-              {% for submodule in module.submodule_set.all %}
+              {% for submodule in module.submodule_set.all|filter_visible %}
                 <li class="nav-item">
                   <a href="{% url submodule.url_name %}" class="nav-link nav-sublink">
                     <i class="nav-icon bi bi-circle"></i>
