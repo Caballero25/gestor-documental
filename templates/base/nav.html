@@ -20,7 +20,7 @@
         <li class="nav-item dropdown user-menu">
           <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
             <img
-              src="{% static 'img/logo.png' %}"
+              src="{{request.user.avatar.url}}"
               class="user-image rounded-circle shadow"
               alt="User Image"
             />
@@ -30,14 +30,14 @@
             <!--begin::User Image-->
             <li class="user-header" style="color: white;">
               <img
-                src="{% static 'img/logo.png' %}"
+              src="{{request.user.avatar.url}}"
                 class="rounded-circle shadow"
                 alt="User Image"
               />
               <p>
                 {{request.user.username}} - 
                 {{request.user.email}}
-                <small>Miembro desde: {{request.user.date_joined|date:"d/m/Y"}}</small>
+                <small>Miembro desde: {{request.user.created_at|date:"d/m/Y"}}</small>
               </p>
               <a class="btn btn-danger btn-sm mt-2" href="{% url 'logout-url' %}">Cerrar sesión</a>
             </li>
