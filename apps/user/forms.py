@@ -9,7 +9,7 @@ class CustomClearableFileInput(ClearableFileInput):
 class UserForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['username', 'email', 'gender', 'certificate', 'is_active']
+        fields = ['username', 'email', 'gender', 'certificate', 'is_active', 'groups']
         widgets = {
             'username': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del usuario'}),
             'email': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Correo electrónico'}),
@@ -19,6 +19,7 @@ class UserForm(forms.ModelForm):
             }),
             'certificate': CustomClearableFileInput(attrs={'class': 'form-control'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'groups': forms.CheckboxSelectMultiple(attrs={'class': ''}),
         }
         error_messages = {
             'username': {

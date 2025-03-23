@@ -64,7 +64,8 @@ def userUpdateView(request, id):
         form = UserForm(request.POST, request.FILES, instance=record)
         if form.is_valid():
             form.save()
-            return redirect('user_list')  # Redirige a una vista de listado de módulos
+            form.save_m2m()  # Guarda las relaciones ManyToMany (grupos)
+            return redirect('user_list') 
     else:
         form = UserForm(instance=record)
     context['form'] = form

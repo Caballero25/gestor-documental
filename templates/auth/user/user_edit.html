@@ -1,2 +1,36 @@
 {% extends 'base/base_admin_update.html' %}
 
+{% block inheritance_head %}
+<style>
+    #id_groups {
+        display: flex;
+        height: auto;
+        width: 100%;
+        justify-content: space-around;
+        background-color: #EAEAEA;
+        border-radius: 7px;
+    }
+    #id_groups * {
+        margin: 5px;
+    }
+    #id_groups label {
+        color: #1E3A5F;
+    }
+</style>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const groupsContainer = document.getElementById("id_groups");
+        if (groupsContainer) {
+            groupsContainer.classList.add("row", "container-fluid", "m-1");
+
+            // Selecciona todos los divs internos (cada grupo)
+            const groupItems = groupsContainer.querySelectorAll("div");
+
+            // Agrega las clases de Bootstrap a cada grupo
+            groupItems.forEach((item) => {
+                item.classList.add("col-4", "col-sm-4", "col-md-3", "col-lg-3");
+            });
+        }
+        });
+</script>
+{% endblock %}

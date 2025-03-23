@@ -22,7 +22,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True, verbose_name='Activo')
 
-    groups = models.ManyToManyField(Group, verbose_name=('groups'), blank=True, related_name='user_groups')
+    groups = models.ManyToManyField(Group, blank=True, related_name='user_groups', verbose_name='Grupos')
     user_permissions = models.ManyToManyField(
         Permission, verbose_name=('user permissions'), blank=True, related_name='user_user_permissions'
     )

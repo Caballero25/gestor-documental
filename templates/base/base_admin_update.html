@@ -1,27 +1,31 @@
 {% extends 'base/base_adminlte.html' %}
 {% block extra_head %}
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const form = document.querySelector("form");
-        form.addEventListener("submit", function(event) {
-            event.preventDefault();
-            Swal.fire({
-                title: "¿Está seguro?",
-                text: "Esta acción actualizará el registro.",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#0077cc",
-                cancelButtonColor: "#d33",
-                confirmButtonText: "Sí, guardar",
-                cancelButtonText: "Cancelar"
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const form = document.querySelector("form");
+            form.addEventListener("submit", function(event) {
+                event.preventDefault();
+                Swal.fire({
+                    title: "¿Está seguro?",
+                    text: "Esta acción actualizará el registro.",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#0077cc",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Sí, guardar",
+                    cancelButtonText: "Cancelar"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
             });
         });
-    });
-</script>
+    </script>
+    {% block inheritance_head %}
+
+    {% endblock %}
+
 {% endblock %}
 
 {% block content %}
