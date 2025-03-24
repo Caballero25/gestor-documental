@@ -1,7 +1,10 @@
+from django.contrib.auth.models import Group, Permission
 from django.utils.translation import gettext_lazy as _
 from django import forms
 from django.forms.widgets import ClearableFileInput
 from .models import User
+
+#   USERS
 class CustomClearableFileInput(ClearableFileInput):
     clear_checkbox_label = "Eliminar certificado"
     initial_text = ""
@@ -76,3 +79,22 @@ class CreateUserForm(UserForm):
         if commit:
             user.save()
         return user
+    
+#   GROUPS
+class GroupForm(forms.ModelForm):
+    class Meta:
+        model = Group
+        fields = ['name', 'permissions']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del grupo'}),
+            'permissions': forms.CheckboxSelectMultiple(attrs={'class': ''}),
+        }
+        labels = {
+            'permissions': 'Permisos que tendrá el grupo:',  # Aquí cambias el label de "Permissions" a "Permisos"
+        }
+        error_messages = {
+            'name': {
+                'unique': _("Ya existe un grupo con el nombre ingresado."),
+                'required': _("El nombre del grupo es obligatorio."),
+            },
+        }
