@@ -1,0 +1,38 @@
+{% extends 'base/base_admin_list.html' %}
+
+{% block thead %}
+    <th style="width: 5%;">Nro</th>
+    <th style="width: 50%;">Nombre</th>
+    <th style="width: 20%;" class="text-center">Opciones</th>
+{% endblock %}
+
+{% block tbody %}
+    {% for i in object_list %}
+        <tr>
+            <td>{{ i.id }}</td>
+            <td>{{ i.name }}</td>
+            
+
+            <!-- UPDATE & DELETE -->
+            <td class="text-center">
+                <a href="{% url update_url i.id %}" data-bs-toggle="tooltip" title="Editar registro"
+                   class="btn btn-warning btn-xs btn-flat" style="padding: 0px; padding-left: 2px; padding-right: 2px;">
+                    <i class="bi bi-pencil-fill" aria-hidden="true"></i>
+                </a>
+                <a href="{% url delete_url i.id %}" data-bs-toggle="tooltip" title="Editar registro"
+                   class="btn btn-danger btn-xs btn-flat" style="padding: 0px; padding-left: 2px; padding-right: 2px;">
+                   <i class="bi bi-trash3-fill" aria-hidden="true"></i>
+                </a>
+            </td>
+        </tr>
+    {% empty %}
+    <!-- EMPTY RESULT -->
+    <tr>
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+             No se han encontrado resultados para: <strong>{{ query }}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+    </tr>
+    {% endfor %}
+{% endblock %}
+

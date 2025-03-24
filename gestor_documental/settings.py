@@ -42,7 +42,8 @@ DJANGO_APPS = [
 
 SYSTEM_APPS = [
     'apps.home',
-    'apps.user'
+    'apps.user',
+    'apps.metadata',
 ]
 
 LIB_APPS = [
