@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import userLogin, logout_view
-from .views_extras import user, group
+from .views_extras import user, group, permission
 
 urlpatterns = [
     path('login', userLogin, name='login-url'),
@@ -17,4 +17,10 @@ urlpatterns = [
     path('groups/create', group.groupCreateView, name="group_create"),
     path('groups/edit/<str:id>', group.groupUpdateView, name="group_edit"),
     path('groups/delete/<str:id>', group.groupDeleteView, name="group_delete"),
+
+    #Permission
+    path('permissions/', permission.PermissionListView.as_view(), name='permission_list'),
+    path('permissions/create', permission.permissionCreateView, name="permission_create"),
+    path('permissions/edit/<str:id>', permission.permissionUpdateView, name="permission_edit"),
+    path('permissions/delete/<str:id>', permission.permissionDeleteView, name="permission_delete"),
 ]

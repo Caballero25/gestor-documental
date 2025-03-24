@@ -98,3 +98,35 @@ class GroupForm(forms.ModelForm):
                 'required': _("El nombre del grupo es obligatorio."),
             },
         }
+
+
+#   PERMISSIONS
+class PermissionForm(forms.ModelForm):
+    class Meta:
+        model = Permission
+        fields = ['name', 'content_type' ,'codename']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del permiso'}),
+            'codename': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'codigo_permiso'}),
+            'content_type': forms.Select(attrs={
+                'class': 'form-control select2',
+                'style': 'width: 100%;',
+            }),
+        }
+        labels = {
+            'name': 'Nombre del permiso:',  # Aquí cambias el label de "Permissions" a "Permisos"
+            'codename': 'Codigo en formato palabra_palabra',
+        }
+        error_messages = {
+            'name': {
+                'unique': _("Ya existe un permiso con el nombre ingresado."),
+                'required': _("El nombre del permiso es obligatorio."),
+            },
+            'codename': {
+                'unique': _("Ya existe un permiso con el codename ingresado."),
+                'required': _("El codename del permiso es obligatorio."),
+            },
+            'content_type': {
+                'required': _("El modelo de referencia es obligatorio."),
+            },
+        }
