@@ -2,13 +2,13 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from http import HTTPStatus
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.decorators import permission_required
 from django.db.models import Q
 from django.views.generic import ListView
 from ..models import User
 from ..forms import UserForm, CreateUserForm
-class UserListView(LoginRequiredMixin, ListView):
+class UserListView(PermissionRequiredMixin, ListView):
     model = User
     template_name = 'auth/user/user_list.html'
     permission_required = 'view_user'

@@ -2,12 +2,12 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from http import HTTPStatus
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.decorators import permission_required
 from django.views.generic import ListView
 from ..models import SubModule
 from ..forms import SubModuleForm
-class SubModuleListView(LoginRequiredMixin, ListView):
+class SubModuleListView(PermissionRequiredMixin, ListView):
     model = SubModule
     template_name = 'parametrization/submodules/submodule_list.html'
     permission_required = 'view_submodule'

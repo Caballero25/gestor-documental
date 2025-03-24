@@ -154,3 +154,4 @@ LOGIN_URL = 'login-url'
 
 #User
 AUTH_USER_MODEL = 'user.User'
+CSRF_FAILURE_VIEW = "apps.home.views.permission_denied"

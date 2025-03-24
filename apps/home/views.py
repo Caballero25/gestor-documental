@@ -13,3 +13,5 @@ from .forms import ModuleForm
 def home(request):
     return render(request, "home/home.html")
 
+def permission_denied(request, reason=""):
+    return render(request, "403.html")
