@@ -22,6 +22,7 @@
         });
     });
 </script>
+{% block inheritance_head %} {% endblock %}
 {% endblock %}
 
 {% block content %}
@@ -33,7 +34,7 @@
             <strong style="font-size: 1.5rem; color: #1E3A5F;"><i class="bi bi-folder-plus" style="color: #4caf50;"></i> {{title}}</strong>
         </div>
         <div class="container-fluid mt-3 pb-4">
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 {% for field in form %}
                     <div class="mb-3">

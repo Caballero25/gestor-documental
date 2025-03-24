@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import permission_required
 from django.db.models import Q
 from django.views.generic import ListView
 from ..models import User
-from ..forms import UserForm
+from ..forms import UserForm, CreateUserForm
 class UserListView(LoginRequiredMixin, ListView):
     model = User
     template_name = 'auth/user/user_list.html'
@@ -29,28 +29,29 @@ class UserListView(LoginRequiredMixin, ListView):
         context['title'] = 'Listado de Usuarios'
         context['parametroBusqueda'] = 'Nombre o Correo Electrónico'
         context['query'] = self.request.GET.get('q', '')
-        context['create_url'] = "module_create"
+        context['create_url'] = "user_create"
         context['delete_url'] = "user_delete"
         context['update_url'] = "user_edit"
         context['breadcrumb_previous'] = "Inicio"
         context['breadcrumb_previous_link'] = "home-url"
         return context
 
-@permission_required("add_module")
-def moduleCreateView(request):
+@permission_required("add_user")
+def userCreateView(request):
     context = {}
-    context['title'] = 'Crear Módulo'
-    context['breadcrumb_previous'] = "Módulos"
-    context['breadcrumb_previous_link'] = "module_list"
+    context['title'] = 'Crear Usuario'
+    context['breadcrumb_previous'] = "Usuarios"
+    context['breadcrumb_previous_link'] = "user_list"
     if request.method == 'POST':
-        form = UserForm(request.POST)
+        form = CreateUserForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
-            return redirect('module_list')  # Redirige a la lista de módulos
+            form.save_m2m()
+            return redirect('user_list')  # Redirige a la lista de módulos
     else:
-        form = UserForm()
+        form = CreateUserForm()
     context['form'] = form
-    return render(request, 'parametrization/modules/module_create.html', context) 
+    return render(request, 'auth/user/user_create.html', context) 
 
 @permission_required("change_user")
 def userUpdateView(request, id):

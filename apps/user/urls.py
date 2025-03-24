@@ -8,7 +8,7 @@ urlpatterns = [
 
     #User
     path('users/', user.UserListView.as_view(), name='user_list'),
-    #path('submodules/create', submodules.subModuleCreateView, name="submodule_create"),
+    path('users/create', user.userCreateView, name="user_create"),
     path('users/edit/<str:id>', user.userUpdateView, name="user_edit"),
     path('users/delete/<str:id>', user.userDeleteView, name="user_delete"),
 ]

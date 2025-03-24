@@ -41,3 +41,38 @@ class UserForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+    
+
+class CreateUserForm(UserForm):
+    password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Contraseña'}),
+        label="Contraseña"
+    )
+    password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirmar contraseña'}),
+        label="Confirmar Contraseña"
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get("password1")
+        password2 = cleaned_data.get("password2")
+
+        if password1 != password2:
+            self.add_error("password2", "Las contraseñas no coinciden.")
+
+        return cleaned_data
+    
+    def save(self, commit=True):
+        user = super().save(commit=False) 
+        password1 = self.cleaned_data.get("password1")
+        if user.gender == "MASCULINO":
+            user.avatar = "avatars/male-color.png"
+        elif user.gender == "FEMENINO":
+            user.avatar = "avatars/female-color.png"
+        else:
+            user.avatar = "avatars/no-gender.png"
+        user.set_password(password1)
+        if commit:
+            user.save()
+        return user
