@@ -33,6 +33,12 @@ class UserForm(forms.ModelForm):
                 'required': _("El correo electrónico es obligatorio."),
             },
         }
+    def clean_certificate(self):
+        certificate = self.cleaned_data.get('certificate')
+        if certificate:
+            if not certificate.name.endswith('.p12'):
+                self.add_error("certificate", "El certificado debe tener extensión .p12")
+        return certificate
     def save(self, commit=True):
         user = super().save(commit=False)  # No guarda inmediatamente
         if user.gender == "MASCULINO":
