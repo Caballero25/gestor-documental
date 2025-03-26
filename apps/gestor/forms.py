@@ -1,43 +1,39 @@
     
 from django.utils.translation import gettext_lazy as _
 from django import forms
+from .models import Document
 from ..metadata.models import MetadataSchema, MetadataField
 
-class DocumentAndSchemaForm(forms.Form):
-    code_name = forms.CharField(
-        label="Identificador del documento",
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '(?) Opcional: Identificador para buscar el documento posteriormente'})
-    )
-    document = forms.FileField(
-        label="Seleccionar Documento",
-        required=True,
-        widget=forms.ClearableFileInput(attrs={'class': "form-control", 'id': "formFile"}),
-        error_messages = {
-            'required': "El documento es obligatorio.",
-            'missing': "No se encontró el archivo en la solicitud.",
-        }
-    )
-    schema = forms.ModelChoiceField(
-        queryset=MetadataSchema.objects.all(),
-        label="Seleccionar Esquema de Metadatos",
-        required=False,
-        widget=forms.Select(attrs={'class': "form-select"})
-    )
+class DocumentAndSchemaForm(forms.ModelForm):
     metadata = forms.BooleanField(
         required=False,
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch', 'id': 'flexSwitchCheckDefault'}),
     )
+    class Meta:
+        model = Document 
+        fields = ['code_name', 'file', 'metadata_schema']
+        widgets = {
+            'code_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '(?) Opcional: Identificador para buscar el documento posteriormente'}),
+            'file': forms.ClearableFileInput(attrs={'class': "form-control", 'id': "formFile"}),
+            'metadata_schema': forms.Select(attrs={'class': "form-select"})
+        }
+        error_messages = {
+            'document': {
+                'required': _("El documento es obligatorio."),
+                'missing': _("No se encontró el archivo en la solicitud."),
+            },
+        }
+    
     
     def clean(self):
         cleaned_data = super().clean()
         metadata = cleaned_data.get("metadata")
-        schema = cleaned_data.get("schema")
+        schema = cleaned_data.get("metadata_schema")
 
         if metadata and schema:
-            self.add_error("schema", "No seleccione un esquema si la opción 'Subir Sin Metadatos' está activada.")
+            self.add_error("metadata_schema", "No seleccione un esquema si la opción 'Subir Sin Metadatos' está activada.")
         if not metadata and not schema:
-            self.add_error("schema", "Seleccione un esquema si la opción 'Subir Sin Metadatos' está desactivada.")
+            self.add_error("metadata_schema", "Seleccione un esquema si la opción 'Subir Sin Metadatos' está desactivada.")
 
         return cleaned_data
 

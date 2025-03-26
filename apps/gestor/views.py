@@ -15,22 +15,16 @@ def firstSteptUploadView(request):
     if request.method == 'POST':
         form = DocumentAndSchemaForm(request.POST, request.FILES)
         if form.is_valid():
-            code_name = form.cleaned_data.get("code_name", "")
-            document = form.cleaned_data.get("document")
-            schema = form.cleaned_data.get("schema")
-            schema = schema.id
+            document = form.cleaned_data.get("file")
             metadata = form.cleaned_data.get("metadata")
             if metadata and document:
-                new_document = Document(
-                    code_name=code_name,
-                    file = document,
-                    metadata_schema = None,
-                    metadata_values = None
-                    )
-                new_document.save()
+                form.save()
                 messages.success(request, "Documento subido con éxito")
                 return redirect('first-stept-upload') 
-
+            elif not metadata and document:
+                form.save()
+                messages.success(request, "Documento listo para adjuntar metadatos")
+                return redirect('first-stept-upload') 
     else:
         form = DocumentAndSchemaForm()
     context['form'] = form
