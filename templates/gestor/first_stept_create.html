@@ -1,0 +1,86 @@
+{% extends 'base/base_adminlte.html' %}
+{% block extra_head %}
+<script>
+    $(document).ready(function() {
+        const form = document.querySelector("form");
+        if ($("#flexSwitchCheckDefault").prop('checked')) {
+                    $("#submitFormButton").html('Subir Documento Sin Metadatos <i class="bi bi-file-earmark-arrow-up"></i>');
+        } else {
+                $("#submitFormButton").html('Siguiente: agregar metadatos <i class="bi bi-arrow-right-square"></i>');
+        }
+        $("#flexSwitchCheckDefault").on('change', function() {
+            if ($("#flexSwitchCheckDefault").prop('checked')) {
+                    $("#submitFormButton").html('Subir Documento Sin Metadatos <i class="bi bi-file-earmark-arrow-up"></i>');
+                } else {
+                    $("#submitFormButton").html('Siguiente: agregar metadatos <i class="bi bi-arrow-right-square"></i>');
+            }
+            
+        });
+        form.addEventListener("submit", function(event) {
+                event.preventDefault();
+                if ($("#flexSwitchCheckDefault").prop('checked')) {
+                    Swal.fire({
+                        title: "¿Está seguro?",
+                        text: "Esta acción guardará el documento sin metadatos.",
+                        icon: "question",
+                        showCancelButton: true,
+                        confirmButtonColor: "#0077cc",
+                        cancelButtonColor: "#d33",
+                        confirmButtonText: "Sí, guardar",
+                        cancelButtonText: "Cancelar"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                } else {
+                    form.submit();}
+        });
+    });
+        
+</script>
+{% endblock %}
+
+{% block content %}
+    
+<div class="container-fluid mt-3">
+    
+    <div class="card">
+        <div class="card-header text-center">
+            <strong style="font-size: 1.5rem; color: #1E3A5F;"><i class="bi bi-folder-plus" style="color: #4caf50;"></i> {{title}}</strong>
+        </div>
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                Sistema: <strong>{{ message }}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+        <div class="container-fluid mt-3 pb-4">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="mb-3">
+                        {% if field.name != 'metadata' %}
+                        {{ field.label_tag }}
+                        {{ field }}
+                        {% else %}
+                        <hr>
+                        <div class="form-check form-switch">
+                            {{ field }}
+                            <label class="form-check-label" for="flexSwitchCheckDefault">Subir Sin Metadatos</label>
+                        </div>
+                        {% endif %}
+                        {% if field.errors %}
+                            <div class="text-danger">
+                                {{ field.errors|striptags }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary mt-2" id="submitFormButton">Siguiente: agregar metadatos <i class="bi bi-arrow-right-square"></i></button>
+            </form>
+        </div>
+</div>
+{% endblock %}

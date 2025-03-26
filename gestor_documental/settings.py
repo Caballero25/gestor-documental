@@ -44,6 +44,7 @@ SYSTEM_APPS = [
     'apps.home',
     'apps.user',
     'apps.metadata',
+    'apps.gestor',
 ]
 
 LIB_APPS = [
