@@ -4,8 +4,8 @@ from django.contrib import messages
 from django.http import JsonResponse
 from .models import Document
 from ..metadata.models import MetadataSchema
-from .forms import DocumentAndSchemaForm, DynamicMetadataForm
-
+from .forms import DocumentAndSchemaForm, DynamicMetadataForm, DynamicFileMetadataForm
+from datetime import datetime
 
 def firstSteptUploadView(request):
     context = {}
@@ -57,3 +57,49 @@ def secondSteptUploadView(request, id):
         print(record.metadata_schema)
     context['form'] = form
     return render(request, 'gestor/second_stept_create.html', context) 
+
+
+def edit_document_view(request, id):
+    document = get_object_or_404(Document, id=id)
+    schema = document.metadata_schema
+    
+    if request.method == 'POST':
+        form = DynamicMetadataForm(request.POST, schema=schema, initial=document.metadata_values or {})
+        if form.is_valid():
+            cleaned_data = form.cleaned_data
+            
+            # Convertir objetos date a strings ISO
+            for key, value in cleaned_data.items():
+                if hasattr(value, 'isoformat'):  # Para campos de fecha
+                    cleaned_data[key] = value.isoformat()
+            
+            # Mantener campos que ya no están en el esquema pero existen en metadata_values
+            current_metadata = document.metadata_values or {}
+            updated_metadata = {**current_metadata, **cleaned_data}
+            
+            # Guardar
+            document.metadata_values = updated_metadata
+            document.save()
+            
+            messages.success(request, "Documento actualizado correctamente")
+            #return redirect('document_detail', id=document.id)
+    else:
+        # Para el GET, asegurarnos de pasar las fechas como objetos date al initial
+        initial_data = document.metadata_values or {}
+        if initial_data:
+            for key, value in initial_data.items():
+                if isinstance(value, str):
+                    try:
+                        # Parsear strings que parecen fechas
+                        parsed_date = datetime.strptime(value, '%Y-%m-%d').date()
+                        initial_data[key] = parsed_date
+                    except (ValueError, TypeError):
+                        pass
+        
+        form = DynamicMetadataForm(schema=schema, initial=initial_data)
+    
+    return render(request, 'gestor/update_document.html', {
+        'form': form,
+        'document': document,
+        'schema': schema,
+    })
