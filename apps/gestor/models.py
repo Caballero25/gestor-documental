@@ -9,4 +9,4 @@ class Document(models.Model):
     metadata_values = models.JSONField(default=dict, blank=True, null=True)  # Aquí se guardan los valores de los metadatos
 
     def __str__(self):
-        return f"Documento de {self.file}"
+        return f"Documento: {self.file}"

@@ -25,7 +25,8 @@ class MetadataSchemaForm(forms.ModelForm):
 class MetadataFieldEditForm(forms.ModelForm):
     options = forms.CharField(
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'opcion 1, opcion 2, opcion 3...'}),
-        label="Opciones en caso de que el tipo de dato sea 'Selección':"
+        label="Opciones en caso de que el tipo de dato sea 'Selección':",
+        required=False
     )
     class Meta:
         model = MetadataField
