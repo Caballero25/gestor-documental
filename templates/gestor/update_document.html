@@ -1,11 +1,66 @@
 {% extends 'base/base_adminlte.html' %}
 {% block extra_head %}
 {% endblock %}
+
 {% block content %}
-<h2>Editar Documento: {{ document.code_name }}</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-</form>
+    
+<div class="container-fluid mt-3">
+    
+    <div class="card">
+        <div class="card-header text-center">
+            <strong style="font-size: 1.5rem; color: #1E3A5F;"><i class="bi bi-file-earmark-spreadsheet" style="color: #4caf50;"></i> Editar Documento: {{ document }}</strong>
+        </div>
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                Sistema: <strong>{{ message }}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+        <div class="container-fluid mt-3 pb-4">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% for field in document_form %}
+                    <div class="mb-3">
+                        {% if field.name != 'metadata' %}
+                        {{ field.label_tag }}
+                        {{ field }}
+                        {% else %}
+                        <hr>
+                        <div class="form-check form-switch">
+                            {{ field }}
+                            <label class="form-check-label" for="flexSwitchCheckDefault">Subir Sin Metadatos</label>
+                        </div>
+                        {% endif %}
+                        {% if field.errors %}
+                            <div class="text-danger">
+                                {{ field.errors|striptags }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                {% for field in metadata_form %}
+                    <div class="mb-3">
+                        {% if field.name != 'metadata' %}
+                        {{ field.label_tag }}
+                        {{ field }}
+                        {% else %}
+                        <hr>
+                        <div class="form-check form-switch">
+                            {{ field }}
+                            <label class="form-check-label" for="flexSwitchCheckDefault">Subir Sin Metadatos</label>
+                        </div>
+                        {% endif %}
+                        {% if field.errors %}
+                            <div class="text-danger">
+                                {{ field.errors|striptags }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary mt-2" id="submitFormButton">Actualizar metadatos del documento <i class="bi bi-file-earmark-arrow-up"></i></i></button>
+            </form>
+        </div>
+</div>
 {% endblock %}

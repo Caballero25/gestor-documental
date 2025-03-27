@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from .models import Document
 from ..metadata.models import MetadataSchema
-from .forms import DocumentAndSchemaForm, DynamicMetadataForm, DynamicFileMetadataForm
+from .forms import DocumentAndSchemaForm, DynamicMetadataForm, DynamicFileMetadataForm, DocumentForm
 from datetime import datetime
 
 def firstSteptUploadView(request):
@@ -41,7 +41,6 @@ def secondSteptUploadView(request, id):
     schema = record.metadata_schema
     if request.method == 'POST':
         form = DynamicMetadataForm(request.POST, schema=schema)
-        print(1)
         if form.is_valid():
             metadata_values = form.cleaned_data
 
@@ -54,52 +53,52 @@ def secondSteptUploadView(request, id):
             record.save()
     else:
         form = DynamicMetadataForm(schema=schema)
-        print(record.metadata_schema)
     context['form'] = form
     return render(request, 'gestor/second_stept_create.html', context) 
 
 
-def edit_document_view(request, id):
+def editDocumentView(request, id):
     document = get_object_or_404(Document, id=id)
     schema = document.metadata_schema
+    print(document)
     
     if request.method == 'POST':
-        form = DynamicMetadataForm(request.POST, schema=schema, initial=document.metadata_values or {})
-        if form.is_valid():
-            cleaned_data = form.cleaned_data
+        document_form = DocumentForm(request.POST, request.FILES, instance=document)
+        metadata_form = DynamicFileMetadataForm(request.POST, schema=schema, initial=document.metadata_values or {})
+        
+        if document_form.is_valid() and metadata_form.is_valid():
+            # Guardar los datos básicos del documento
+            doc = document_form.save()
             
-            # Convertir objetos date a strings ISO
-            for key, value in cleaned_data.items():
-                if hasattr(value, 'isoformat'):  # Para campos de fecha
-                    cleaned_data[key] = value.isoformat()
+            # Procesar los metadatos
+            cleaned_metadata = metadata_form.cleaned_data
+            for key, value in cleaned_metadata.items():
+                if hasattr(value, 'isoformat'):
+                    cleaned_metadata[key] = value.isoformat()
             
-            # Mantener campos que ya no están en el esquema pero existen en metadata_values
-            current_metadata = document.metadata_values or {}
-            updated_metadata = {**current_metadata, **cleaned_data}
-            
-            # Guardar
-            document.metadata_values = updated_metadata
-            document.save()
+            # Actualizar los metadatos manteniendo campos que no están en el formulario
+            current_metadata = doc.metadata_values or {}
+            doc.metadata_values = {**current_metadata, **cleaned_metadata}
+            doc.save()
             
             messages.success(request, "Documento actualizado correctamente")
-            #return redirect('document_detail', id=document.id)
+            return redirect('edit_document_view', id=doc.id)
     else:
-        # Para el GET, asegurarnos de pasar las fechas como objetos date al initial
+        document_form = DocumentForm(instance=document)
         initial_data = document.metadata_values or {}
         if initial_data:
             for key, value in initial_data.items():
                 if isinstance(value, str):
                     try:
-                        # Parsear strings que parecen fechas
                         parsed_date = datetime.strptime(value, '%Y-%m-%d').date()
                         initial_data[key] = parsed_date
                     except (ValueError, TypeError):
                         pass
-        
-        form = DynamicMetadataForm(schema=schema, initial=initial_data)
+        metadata_form = DynamicFileMetadataForm(schema=schema, initial=initial_data)
     
     return render(request, 'gestor/update_document.html', {
-        'form': form,
+        'document_form': document_form,
+        'metadata_form': metadata_form,
         'document': document,
         'schema': schema,
     })
