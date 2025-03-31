@@ -1,5 +1,20 @@
 {% extends 'base/base_adminlte.html' %}
 {% block extra_head %}
+<style>
+    /* Estilos para mover el icono de fecha hacia la izquierda */
+    input[type="date"].datepicker-left::-webkit-calendar-picker-indicator {
+        left: 10px; 
+        right: unset; 
+        position: absolute;
+        z-index: 1;
+    }
+
+    input[type="date"].datepicker-left {
+        position: relative; 
+        padding-left: 30px; 
+    }
+
+</style>
 {% endblock %}
 
 {% block content %}
@@ -8,7 +23,7 @@
     
     <div class="card">
         <div class="card-header text-center">
-            <strong style="font-size: 1.5rem; color: #1E3A5F;"><i class="bi bi-file-earmark-spreadsheet" style="color: #4caf50;"></i> Editar Documento: {{ document }}</strong>
+            <strong style="font-size: 1.5rem; color: #1E3A5F;"><i class="bi bi-file-earmark-spreadsheet" style="color: #4caf50;"></i> Editar: {{ document }}</strong>
         </div>
         {% if messages %}
             {% for message in messages %}

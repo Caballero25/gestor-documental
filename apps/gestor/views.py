@@ -7,13 +7,21 @@ from ..metadata.models import MetadataSchema
 from .forms import DocumentAndSchemaForm, DynamicMetadataForm, DynamicFileMetadataForm, DocumentForm
 from datetime import datetime
 
-def firstSteptUploadView(request):
+def firstSteptUploadView(request, id=None):
     context = {}
+    if id:
+        record = get_object_or_404(Document, id=id)
+        context['record'] = record
+        form_get = DocumentAndSchemaForm(instance=record)
+        form_post = form = DocumentAndSchemaForm(request.POST, request.FILES, instance=record)
+    else:
+        form_get = DocumentAndSchemaForm()
+        form_post = DocumentAndSchemaForm(request.POST, request.FILES)
     context['title'] = 'Paso 1: Seleccionar Documento y Esquema'
     context['breadcrumb_previous'] = "Esquemas"
     context['breadcrumb_previous_link'] = "metadataschema_list"
     if request.method == 'POST':
-        form = DocumentAndSchemaForm(request.POST, request.FILES)
+        form = form_post
         if form.is_valid():
             document = form.cleaned_data.get("file")
             metadata = form.cleaned_data.get("metadata")
@@ -27,7 +35,7 @@ def firstSteptUploadView(request):
                 messages.success(request, "Documento listo para adjuntar metadatos")
                 return redirect('second-stept-upload', record_id) 
     else:
-        form = DocumentAndSchemaForm()
+        form = form_get
     context['form'] = form
     return render(request, 'gestor/first_stept_create.html', context) 
 
@@ -37,7 +45,7 @@ def secondSteptUploadView(request, id):
     context['title'] = 'Paso 2: Llenar Metadatos'
     context['breadcrumb_previous'] = "Esquemas"
     context['breadcrumb_previous_link'] = "metadataschema_list"
-    context['document_name'] = str(record.file)
+    context['document'] = record
     schema = record.metadata_schema
     if request.method == 'POST':
         form = DynamicMetadataForm(request.POST, schema=schema)
@@ -51,6 +59,9 @@ def secondSteptUploadView(request, id):
 
             record.metadata_values = metadata_values
             record.save()
+            messages.success(request, "Documento actualizado correctamente")
+            return redirect('edit_document_view', id=record.id)
+            
     else:
         form = DynamicMetadataForm(schema=schema)
     context['form'] = form

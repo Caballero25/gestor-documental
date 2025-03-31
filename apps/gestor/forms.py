@@ -5,24 +5,14 @@ from .models import Document
 from ..metadata.models import MetadataSchema, MetadataField
 import json
 from datetime import datetime
+
+#utils
 class CustomClearableFileInput(forms.ClearableFileInput):
     initial_text = ""
     input_text = "Cambiar Documento"
-class DocumentForm(forms.ModelForm):
-    class Meta:
-        model = Document
-        fields = ['code_name', 'file', 'metadata_schema']
-        widgets = {
-            'code_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '(?) Opcional: Identificador para buscar el documento posteriormente'}),
-            'file': CustomClearableFileInput(attrs={'class': "form-control", 'id': "formFile"}),
-            'metadata_schema': forms.Select(attrs={'class': "form-select"})
-        }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['file'].required = False  # Hacer el campo de archivo opcional en la edición
 
 
+#Creación de Document
 class DocumentAndSchemaForm(forms.ModelForm):
     metadata = forms.BooleanField(
         required=False,
@@ -33,7 +23,7 @@ class DocumentAndSchemaForm(forms.ModelForm):
         fields = ['code_name', 'file', 'metadata_schema']
         widgets = {
             'code_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '(?) Opcional: Identificador para buscar el documento posteriormente'}),
-            'file': forms.ClearableFileInput(attrs={'class': "form-control", 'id': "formFile"}),
+            'file': CustomClearableFileInput(attrs={'class': "form-control", 'id': "formFile"}),
             'metadata_schema': forms.Select(attrs={'class': "form-select"})
         }
         error_messages = {
@@ -55,8 +45,6 @@ class DocumentAndSchemaForm(forms.ModelForm):
             self.add_error("metadata_schema", "Seleccione un esquema si la opción 'Subir Sin Metadatos' está desactivada.")
 
         return cleaned_data
-
-
 class DynamicMetadataForm(forms.Form):
     def __init__(self, *args, **kwargs):
         schema = kwargs.pop('schema', None)
@@ -100,6 +88,23 @@ class DynamicMetadataForm(forms.Form):
                         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
                     )
 
+
+
+# Edición de document
+class DocumentForm(forms.ModelForm):
+    class Meta:
+        model = Document
+        fields = ['code_name', 'file', 'metadata_schema']
+        widgets = {
+            'code_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '(?) Opcional: Identificador para buscar el documento posteriormente'}),
+            'file': CustomClearableFileInput(attrs={'class': "form-control", 'id': "formFile"}),
+            'metadata_schema': forms.Select(attrs={'class': "form-select"})
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['file'].required = False  # Hacer el campo de archivo opcional en la edición
+# Edición de document
 class DynamicFileMetadataForm(forms.Form):
     def __init__(self, *args, **kwargs):
         schema = kwargs.pop('schema', None)

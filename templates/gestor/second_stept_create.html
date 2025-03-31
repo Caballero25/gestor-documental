@@ -23,7 +23,7 @@
     
     <div class="card">
         <div class="card-header text-center">
-            <strong style="font-size: 1.5rem; color: #1E3A5F;"><i class="bi bi-folder-plus" style="color: #4caf50;"></i> {{title}} del documento: {{document_name}}</strong>
+            <strong style="font-size: 1.5rem; color: #1E3A5F;"><i class="bi bi-folder-plus" style="color: #4caf50;"></i> {{title}} del documento: {{document}}</strong>
         </div>
         {% if messages %}
             {% for message in messages %}
@@ -55,6 +55,7 @@
                         {% endif %}
                     </div>
                 {% endfor %}
+                <a class="btn btn-secondary mt-2" href="{% url 'first-stept-upload' document.id  %}">Anterior</a>
                 <button type="submit" class="btn btn-primary mt-2" id="submitFormButton">Actualizar metadatos del documento <i class="bi bi-file-earmark-arrow-up"></i></i></button>
             </form>
         </div>
