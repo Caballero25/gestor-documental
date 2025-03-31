@@ -150,7 +150,7 @@ class DocumentListView(PermissionRequiredMixin, ListView):
         query = self.request.GET.get('q')
         if query:
             queryset = queryset.filter(Q(id=str(query)) | Q(code_name__icontains=query) | Q(file__icontains=query) | Q(metadata_values__icontains=query) | Q(metadata_schema__name__contains=query))  # Ajusta el campo de búsqueda
-        return queryset
+        return queryset.order_by('-id')
 
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
