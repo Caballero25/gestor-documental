@@ -149,7 +149,11 @@ class DocumentListView(PermissionRequiredMixin, ListView):
         queryset = super().get_queryset()
         query = self.request.GET.get('q')
         if query:
-            queryset = queryset.filter(Q(id=str(query)) | Q(code_name__icontains=query) | Q(file__icontains=query) | Q(metadata_values__icontains=query) | Q(metadata_schema__name__contains=query))  # Ajusta el campo de búsqueda
+            filters = Q(code_name__icontains=query) | Q(file__icontains=query) | Q(metadata_values__icontains=query) | Q(metadata_schema__name__icontains=query)
+            # Verificar si query es un número antes de aplicarlo al campo 'id'
+            if query.isdigit():
+                filters |= Q(id=int(query))
+            queryset = queryset.filter(filters)
         return queryset.order_by('-id')
 
     def dispatch(self, request, *args, **kwargs):
