@@ -2,9 +2,9 @@
 
 {% block thead %}
     <th style="width: 5%;">Nro</th>
-    <th style="width: 25%;">Nombre</th>
-    <th style="width: 25%;">Tipo de Dato</th>
-    <th style="width: 25%;">Selección</th>
+    <th style="width: 25%;">Código</th>
+    <th style="width: 25%;">Documento</th>
+    <th style="width: 25%;">Esquema</th>
     <th style="width: 20%;" class="text-center">Opciones</th>
 {% endblock %}
 
@@ -12,12 +12,16 @@
     {% for i in object_list %}
         <tr>
             <td>{{ i.id }}</td>
-            <td>{{ i.name }}</td>
-            <td>{{ i.field_type }}</td>
-            {% if i.options %}
-                <td>{{ i.options }}</td>
+            {% if i.code_name %}
+                <td>{{ i.code_name }}</td>
             {% else %}
-                <td class="text-secondary">No es select</td>
+                <td class="text-secondary">Sin Código</td>
+            {% endif %}
+            <td>{{ i.file }}</td>
+            {% if i.metadata_schema %}
+                <td>{{ i.metadata_schema }}</td>
+            {% else %}
+                <td class="text-secondary">Sin Metadatos</td>
             {% endif %}
 
             <!-- UPDATE & DELETE -->

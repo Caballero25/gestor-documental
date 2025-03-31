@@ -1,4 +1,7 @@
 
+from django.views.generic import ListView
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.http import JsonResponse
@@ -18,8 +21,8 @@ def firstSteptUploadView(request, id=None):
         form_get = DocumentAndSchemaForm()
         form_post = DocumentAndSchemaForm(request.POST, request.FILES)
     context['title'] = 'Paso 1: Seleccionar Documento y Esquema'
-    context['breadcrumb_previous'] = "Esquemas"
-    context['breadcrumb_previous_link'] = "metadataschema_list"
+    context['breadcrumb_previous'] = "Documentos"
+    context['breadcrumb_previous_link'] = "document_list"
     if request.method == 'POST':
         form = form_post
         if form.is_valid():
@@ -43,8 +46,8 @@ def secondSteptUploadView(request, id):
     record = get_object_or_404(Document, id=id)
     context = {}
     context['title'] = 'Paso 2: Llenar Metadatos'
-    context['breadcrumb_previous'] = "Esquemas"
-    context['breadcrumb_previous_link'] = "metadataschema_list"
+    context['breadcrumb_previous'] = "Documentos"
+    context['breadcrumb_previous_link'] = "document_list"
     context['document'] = record
     schema = record.metadata_schema
     if request.method == 'POST':
@@ -71,7 +74,6 @@ def secondSteptUploadView(request, id):
 def editDocumentView(request, id):
     document = get_object_or_404(Document, id=id)
     schema = document.metadata_schema
-    print(document)
     
     if request.method == 'POST':
         document_form = DocumentForm(request.POST, request.FILES, instance=document)
@@ -108,8 +110,40 @@ def editDocumentView(request, id):
         metadata_form = DynamicFileMetadataForm(schema=schema, initial=initial_data)
     
     return render(request, 'gestor/update_document.html', {
+        'title': 'Editar Documento',
+        'breadcrumb_previous' : "Documentos",
+        'breadcrumb_previous_link' : "document_list",
         'document_form': document_form,
         'metadata_form': metadata_form,
         'document': document,
         'schema': schema,
     })
+
+
+class DocumentListView(PermissionRequiredMixin, ListView):
+    model = Document
+    template_name = 'gestor/document_list.html'
+    permission_required = 'view_user'
+    paginate_by = 10  
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        query = self.request.GET.get('q')
+        if query:
+            queryset = queryset.filter(Q(id=str(query)) | Q(code_name__icontains=query) | Q(file__icontains=query) | Q(metadata_values__icontains=query) | Q(metadata_schema__name__contains=query))  # Ajusta el campo de búsqueda
+        return queryset
+
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Listado de Documentos'
+        context['parametroBusqueda'] = 'Nombre - Código - Metadato'
+        context['query'] = self.request.GET.get('q', '')
+        context['create_url'] = "first-stept-upload"
+        context['delete_url'] = "user_delete"
+        context['update_url'] = "edit_document_view"
+        context['breadcrumb_previous'] = "Inicio"
+        context['breadcrumb_previous_link'] = "home-url"
+        return context
