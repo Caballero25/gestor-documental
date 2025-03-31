@@ -1,11 +1,12 @@
 from django.urls import path, re_path
-from .views import firstSteptUploadView, secondSteptUploadView, editDocumentView, DocumentListView
+from .views import firstSteptUploadView, secondSteptUploadView, editDocumentView, DocumentListView, documentDeleteView
 
 urlpatterns = [
     path('documents/', DocumentListView.as_view(), name='document_list'),
     re_path(r'^upload/stept/first/(?P<id>\d+)?/$', firstSteptUploadView, name="first-stept-upload"),
     path('upload/stept/second/<str:id>', secondSteptUploadView, name="second-stept-upload"),
     path('document/edit/<str:id>', editDocumentView, name="edit_document_view"),
+    path('document/delete/<str:id>', documentDeleteView, name="document_delete"),
     #Modules
     #path('modules/', modules.ModuleListView.as_view(), name='module_list'),
     #path('modules/create', modules.moduleCreateView, name="module_create"),

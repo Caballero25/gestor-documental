@@ -1,10 +1,12 @@
 
 from django.views.generic import ListView
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.decorators import permission_required
 from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.http import JsonResponse
+from http import HTTPStatus
 from .models import Document
 from ..metadata.models import MetadataSchema
 from .forms import DocumentAndSchemaForm, DynamicMetadataForm, DynamicFileMetadataForm, DocumentForm
@@ -119,6 +121,23 @@ def editDocumentView(request, id):
         'schema': schema,
     })
 
+@permission_required("delete_user")
+def documentDeleteView(request, id):
+    record = Document.objects.get(id=id) 
+    context = {}
+    context['title'] = 'Eliminar Documento'
+    context['record'] = record
+    context['breadcrumb_previous'] = "Documentos"
+    context['breadcrumb_previous_link'] = "document_list"
+    context['success_redirection'] = "document_list"
+    if request.method == 'POST':
+        try:
+            record.delete()
+            return JsonResponse({"status": True}, status=HTTPStatus.NO_CONTENT)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=HTTPStatus.BAD_REQUEST)
+    return render(request, 'gestor/document_delete.html', context)
+
 
 class DocumentListView(PermissionRequiredMixin, ListView):
     model = Document
@@ -139,10 +158,10 @@ class DocumentListView(PermissionRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Listado de Documentos'
-        context['parametroBusqueda'] = 'Nombre - Código - Metadato'
+        context['parametroBusqueda'] = 'Nro - Nombre - Código - Metadato'
         context['query'] = self.request.GET.get('q', '')
         context['create_url'] = "first-stept-upload"
-        context['delete_url'] = "user_delete"
+        context['delete_url'] = "document_delete"
         context['update_url'] = "edit_document_view"
         context['breadcrumb_previous'] = "Inicio"
         context['breadcrumb_previous_link'] = "home-url"
