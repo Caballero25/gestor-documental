@@ -38,17 +38,35 @@
             }
         });
 
+
         function addEmail(email) {
-            idAux = `addresseeAuxID-${addresseeAuxID++}`
-            if (!addedEmails.has(email)) {
+            idAux = `addresseeAuxID-${addresseeAuxID++}`;
+            
+            // Verificar si el email ya existe como valor en el Map
+            let emailExists = false;
+            for (let value of addedEmails.values()) {
+                if (value === email) {
+                    emailExists = true;
+                    break;
+                }
+            }
+            
+            if (!emailExists) {
                 addedEmails.set(idAux, email);
                 $("#emailList").append(`
                     <li class="list-group-item list-group-item-action list-group-item-light" addresseeAuxID="${idAux}">
                         <button type="button" class="remove-email btn-close btn btn-outline-danger" addresseeAuxID="${idAux}" aria-label="Eliminar"></button>
-                       &nbsp; ${email}
+                    &nbsp; ${email}
                         
                     </li>
                 `);
+            } else {
+                Swal.fire({
+                    title: email,
+                    text: 'El correo electrónico ingresado ya se encuentra entre los destinatarios.',
+                    icon: 'info',
+                    confirmButtonText: 'Ok'
+                })
             }
             $("#userInput").val("");
             $("#suggestions").remove();
