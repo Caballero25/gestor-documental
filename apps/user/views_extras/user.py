@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from http import HTTPStatus
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.views.generic import ListView
 from ..models import User
@@ -90,6 +91,7 @@ def userDeleteView(request, id):
             return JsonResponse({"error": str(e)}, status=HTTPStatus.BAD_REQUEST)
     return render(request, 'auth/user/user_delete.html', context)
 
+@login_required
 def buscar_usuarios(request):
     query = request.GET.get('q', '')
     if query:

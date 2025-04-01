@@ -4,13 +4,17 @@
     $(document).ready(function() {
         let addedEmails = new Map();  // Para evitar duplicados
         let addresseeAuxID = 0;
-        /*  START MAP EMAILS  */
+        let addedDocuments = new Map();  // Para evitar duplicados
+        let documentAuxID = 0;
+        let token = '{{ csrf_token }}'
+
+        /*  START MAP EMAILS  *************************************************************************************/
         $("#userInput").on("input", function() {
             let query = $(this).val().trim();
             if (query.length > 2) {
-                $.getJSON("{% url 'user_search' %}", { q: query }, function(data) {
+                $.getJSON("{% url 'user_search' %}", { q: query, csrfmiddlewaretoken: token }, function(data) {
                     let suggestions = data.usuarios.map(user => 
-                        `<li class="list-group-item list-group-item-light suggest-item" data-email="${user.email}">${user.username} (${user.email})</li>`
+                        `<li class="list-group-item list-group-item-light suggest suggest-item" data-email="${user.email}">${user.username} (${user.email})</li>`
                     ).join("");
                     $("#suggestions").remove();
                     $("<ul id='suggestions'>" + suggestions + "</ul>").insertAfter("#list_pointer");
@@ -37,8 +41,6 @@
                 })
             }
         });
-
-
         function addEmail(email) {
             idAux = `addresseeAuxID-${addresseeAuxID++}`;
             
@@ -84,6 +86,67 @@
             return regex.test(email);
         }
         /*  END MAP EMAILS  */
+
+
+        /* START MAP DOCUMENTS *************************************************************************************/
+        $("#documentInput").on("input", function() {
+            let query = $(this).val().trim();
+            if (query.length > 0) {
+                $.getJSON("{% url 'document_search' %}", { q: query, csrfmiddlewaretoken: token }, function(data) {
+                    let suggestions_document = data.documents.map(document => 
+                        `<li class="list-group-item list-group-item-light suggest suggest-document-item" data-legible="${document.id} - ${document.code_name} -${document.name}" data-document="${document.id}">${document.id} - ${document.code_name} -${document.name}</li>`
+                    ).join("");
+                    $("#suggestions_documents").remove();
+                    $("<ul id='suggestions_documents'>" + suggestions_document + "</ul>").insertAfter("#documents_pointer");
+
+                    $(".suggest-document-item").click(function() {
+                        addDocument($(this).data("document"), $(this).data("legible"));
+                    });
+                });
+            } else {
+                $("#suggestions_documents").remove();
+            }
+        });
+        function addDocument(document, legible) {
+            idAux = `documentAuxID-${documentAuxID++}`;
+            
+            // Verificar si el email ya existe como valor en el Map 
+            let documentExists = false;
+            for (let value of addedDocuments.values()) {
+                if (value === document) {
+                    documentExists = true;
+                    break;
+                }
+            }
+            
+            if (!documentExists) {
+                addedDocuments.set(idAux, document);
+                $("#documentsList").append(`
+                    <li class="list-group-item list-group-item-action list-group-item-light" documentAuxID="${idAux}">
+                        <button type="button" class="remove-document btn-close btn btn-outline-danger" documentAuxID="${idAux}" aria-label="Eliminar"></button>
+                    &nbsp; ${legible}
+                        
+                    </li>
+                `);
+            } else {
+                Swal.fire({
+                    title: legible,
+                    text: 'El documento ingresado ya se encuentra entre los archivos a enviar.',
+                    icon: 'info',
+                    confirmButtonText: 'Ok'
+                })
+            }
+            $("#documentInput").val("");
+            $("#suggestions_documents").remove();
+        }
+
+        // Evento para eliminar correos de la lista
+        $(document).on("click", ".remove-document", function() {
+            let idAux = $(this).attr("documentAuxID");
+            addedDocuments.delete(idAux);  // Eliminar del Map
+            $(`li[documentAuxID='${idAux}']`).remove();  // Remover del DOM
+        });
+        /*  END MAP DOCUMENTS  */
     });
 </script>
 <style>
@@ -105,12 +168,12 @@
         padding: 0 10px;
     }
     /*Destinatarios*/
-    .suggest-item {
+    .suggest {
         border-radius: 10px;
         cursor: pointer;
         transition: .2s;
     }
-    .suggest-item:hover {
+    .suggest:hover {
         background-color: #0077cc;
         color: #ffffff;
     }
@@ -139,7 +202,7 @@
                 </div>
                 <div class="input-group mb-3 mt-2">
                     <button type="button" class="btn btn-primary" id="addEmail"><i class="bi bi-person-plus"></i> Destinatario</button>
-                    <input type="text" class="form-control ml-5" id="userInput" placeholder="Escribe un correo o usuario" aria-label="Correo o nombre de usuario" aria-describedby="correo">
+                    <input type="text" class="form-control ml-5" id="userInput" placeholder="Escribe un correo electrónico o usuario" aria-label="Correo o nombre de usuario" aria-describedby="correo">
                     <span class="input-group-text" id="basic-addon2">@</span>
                 </div>
                 <div class="list-group">
@@ -149,6 +212,23 @@
 
                 </ul>
             </div>
+            <!--Docs Container-->
+            <div class="col-12" id="destinatariosContainer">
+                <div class="section_span">
+                    <span>Documentos</span>
+                </div>
+            </div>
+            <div class="input-group mb-3 mt-2">
+                <span class="input-group-text" id="basic-addon2"><i class="bi bi-file-earmark-plus"></i></span>
+                <input type="text" class="form-control ml-5" id="documentInput" placeholder="Buscar por Nro, Código o Nombre" aria-label="Datos del documento" aria-describedby="documento">
+                <span class="input-group-text" id="basic-addon2"><i class="bi bi-file-earmark-plus"></i></span>
+            </div>
+            <div class="list-group">
+                <div id="documents_pointer"></div>
+            </div> 
+            <ul class="list-group mt-3" id="documentsList">
+
+            </ul>
         </div>
 </div>
 {% endblock %}
