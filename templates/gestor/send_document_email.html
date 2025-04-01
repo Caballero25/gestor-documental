@@ -1,7 +1,121 @@
 {% extends 'base/base_adminlte.html' %}
 {% block extra_head %}
+<script>
+    $(document).ready(function() {
+        let addedEmails = new Set();  // Para evitar duplicados
+
+        $("#userInput").on("input", function() {
+            let query = $(this).val().trim();
+            if (query.length > 2) {
+                $.getJSON("{% url 'user_search' %}", { q: query }, function(data) {
+                    let suggestions = data.usuarios.map(user => 
+                        `<li class="list-group-item list-group-item-light suggest-item" data-email="${user.email}">${user.username} (${user.email})</li>`
+                    ).join("");
+                    $("#suggestions").remove();
+                    $("<ul id='suggestions'>" + suggestions + "</ul>").insertAfter("#list_pointer");
+
+                    $(".suggest-item").click(function() {
+                        addEmail($(this).data("email"));
+                    });
+                });
+            } else {
+                $("#suggestions").remove();
+            }
+        });
+
+        $("#addEmail").click(function() {
+            let email = $("#userInput").val().trim();
+            if (validateEmail(email)) {
+                addEmail(email);
+            } else {
+                alert("Por favor ingresa un correo válido.");
+                Swal.fire({
+                    title: email,
+                    text: 'Por favor ingrese un correo válido.',
+                    icon: 'warning',
+                    confirmButtonText: 'Ok'
+                })
+            }
+        });
+
+        function addEmail(email) {
+            if (!addedEmails.has(email)) {
+                addedEmails.add(email);
+                $("#emailList").append(`<li class="list-group-item list-group-item-action list-group-item-light">${email}</li>`);
+            }
+            $("#userInput").val("");
+            $("#suggestions").remove();
+        }
+
+        function validateEmail(email) {
+            let regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return regex.test(email);
+        }
+    });
+</script>
+<style>
+    /*Section Header*/
+    .section_span {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    }
+
+    .section_span::before,
+    .section_span::after {
+        content: "";
+        flex: 1;
+        border-bottom: 1px solid black;
+    }
+
+    .section_span span {
+        padding: 0 10px;
+    }
+    /*Destinatarios*/
+    .suggest-item {
+        border-radius: 10px;
+        cursor: pointer;
+        transition: .2s;
+    }
+    .suggest-item:hover {
+        background-color: #0077cc;
+        color: #ffffff;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
+<div class="container-fluid mt-3">
+    
+    <div class="card">
+        <div class="card-header text-center">
+            <strong style="font-size: 1.5rem; color: #1E3A5F;"><i class="bi bi-send-plus" style="color: #4caf50;"></i> {{title}}</strong>
+        </div>
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                Sistema: <strong>{{ message }}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+        <div class="container-fluid mt-3 pb-4">
+            <div class="col-12" id="destinatariosContainer">
+                <div class="section_span">
+                    <span>Destinatarios</span>
+                </div>
+                <div class="input-group mb-3 mt-2">
+                    <button type="button" class="btn btn-primary" id="addEmail"><i class="bi bi-person-plus"></i> Destinatario</button>
+                    <input type="text" class="form-control ml-5" id="userInput" placeholder="Escribe un correo o usuario" aria-label="Correo o nombre de usuario" aria-describedby="correo">
+                    <span class="input-group-text" id="basic-addon2">@</span>
+                </div>
+                <div class="list-group">
+                    <div id="list_pointer"></div>
+                </div> 
+                <ul class="list-group mt-3" id="emailList">
 
+                </ul>
+            </div>
+        </div>
+</div>
 {% endblock %}

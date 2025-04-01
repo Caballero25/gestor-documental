@@ -89,3 +89,12 @@ def userDeleteView(request, id):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=HTTPStatus.BAD_REQUEST)
     return render(request, 'auth/user/user_delete.html', context)
+
+def buscar_usuarios(request):
+    query = request.GET.get('q', '')
+    if query:
+        usuarios = User.objects.filter(username__icontains=query) | User.objects.filter(email__icontains=query)
+        data = [{"username": u.username, "email": u.email} for u in usuarios]
+    else:
+        data = []
+    return JsonResponse({"usuarios": data})

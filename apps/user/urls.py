@@ -11,6 +11,7 @@ urlpatterns = [
     path('users/create', user.userCreateView, name="user_create"),
     path('users/edit/<str:id>', user.userUpdateView, name="user_edit"),
     path('users/delete/<str:id>', user.userDeleteView, name="user_delete"),
+    path('users/search/', user.buscar_usuarios, name="user_search"),
 
     #Group
     path('groups/', group.GroupListView.as_view(), name='group_list'),
