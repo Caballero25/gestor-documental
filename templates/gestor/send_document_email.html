@@ -28,10 +28,9 @@
             if (validateEmail(email)) {
                 addEmail(email);
             } else {
-                alert("Por favor ingresa un correo válido.");
                 Swal.fire({
                     title: email,
-                    text: 'Por favor ingrese un correo válido.',
+                    text: 'Por favor ingrese un correo electrónico válido.',
                     icon: 'warning',
                     confirmButtonText: 'Ok'
                 })
