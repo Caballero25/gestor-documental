@@ -157,3 +157,7 @@ LOGIN_URL = 'login-url'
 #User
 AUTH_USER_MODEL = 'user.User'
 CSRF_FAILURE_VIEW = "apps.home.views.permission_denied"
+
+#Email
+EMAIL_HOST_USER = config('EMAIL_USER')
+EMAIL_PASSWORD = config('EMAIL_PASSWORD')

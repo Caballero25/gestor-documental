@@ -1,15 +1,14 @@
 from django.urls import path, re_path
 from .views import firstSteptUploadView, secondSteptUploadView, editDocumentView, DocumentListView, documentDeleteView
-
+from .email_service import sendDocumentLink
 urlpatterns = [
+    #CRUD Documents
     path('documents/', DocumentListView.as_view(), name='document_list'),
     re_path(r'^upload/stept/first/(?P<id>\d+)?/$', firstSteptUploadView, name="first-stept-upload"),
     path('upload/stept/second/<str:id>', secondSteptUploadView, name="second-stept-upload"),
     path('document/edit/<str:id>', editDocumentView, name="edit_document_view"),
     path('document/delete/<str:id>', documentDeleteView, name="document_delete"),
-    #Modules
-    #path('modules/', modules.ModuleListView.as_view(), name='module_list'),
-    #path('modules/create', modules.moduleCreateView, name="module_create"),
-    #path('modules/edit/<str:id>', modules.moduleUpdateView, name="module_edit"),
-    #path('modules/delete/<str:id>', modules.moduleDeleteView, name="module_delete"),
+    
+    #Email
+    path('document/send/email/<str:id>', sendDocumentLink, name="send_email_link"),
 ]

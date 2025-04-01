@@ -167,6 +167,7 @@ class DocumentListView(PermissionRequiredMixin, ListView):
         context['create_url'] = "first-stept-upload"
         context['delete_url'] = "document_delete"
         context['update_url'] = "edit_document_view"
+        context['send_email_link'] = "send_email_link"
         context['breadcrumb_previous'] = "Inicio"
         context['breadcrumb_previous_link'] = "home-url"
         return context
