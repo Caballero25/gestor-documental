@@ -2,8 +2,9 @@
 {% block extra_head %}
 <script>
     $(document).ready(function() {
-        let addedEmails = new Set();  // Para evitar duplicados
-
+        let addedEmails = new Map();  // Para evitar duplicados
+        let addresseeAuxID = 0;
+        /*  START MAP EMAILS  */
         $("#userInput").on("input", function() {
             let query = $(this).val().trim();
             if (query.length > 2) {
@@ -38,18 +39,33 @@
         });
 
         function addEmail(email) {
+            idAux = `addresseeAuxID-${addresseeAuxID++}`
             if (!addedEmails.has(email)) {
-                addedEmails.add(email);
-                $("#emailList").append(`<li class="list-group-item list-group-item-action list-group-item-light">${email}</li>`);
+                addedEmails.set(idAux, email);
+                $("#emailList").append(`
+                    <li class="list-group-item list-group-item-action list-group-item-light" addresseeAuxID="${idAux}">
+                        <button type="button" class="remove-email btn-close btn btn-outline-danger" addresseeAuxID="${idAux}" aria-label="Eliminar"></button>
+                       &nbsp; ${email}
+                        
+                    </li>
+                `);
             }
             $("#userInput").val("");
             $("#suggestions").remove();
         }
 
+        // Evento para eliminar correos de la lista
+        $(document).on("click", ".remove-email", function() {
+            let idAux = $(this).attr("addresseeAuxID");
+            addedEmails.delete(idAux);  // Eliminar del Map
+            $(`li[addresseeAuxID='${idAux}']`).remove();  // Remover del DOM
+        });
+
         function validateEmail(email) {
             let regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             return regex.test(email);
         }
+        /*  END MAP EMAILS  */
     });
 </script>
 <style>
