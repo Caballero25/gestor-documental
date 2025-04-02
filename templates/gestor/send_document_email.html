@@ -4,9 +4,89 @@
     $(document).ready(function() {
         let addedEmails = new Map();  // Para evitar duplicados
         let addresseeAuxID = 0;
-        let addedDocuments = new Map();  // Para evitar duplicados
+        let addedDocuments = new Map();  
         let documentAuxID = 0;
         let token = '{{ csrf_token }}'
+
+        $('#emailForm').on('submit', function(e) {
+            e.preventDefault(); 
+            
+            let asunto = $('#subject').val();
+            let cuerpo = $('#body').val();
+                    // Validación de campos vacíos
+            if (!asunto) {
+                Swal.fire({
+                    title: 'Campo requerido',
+                    text: 'Por favor ingrese un asunto para el correo.',
+                    icon: 'warning',
+                    confirmButtonText: 'Ok'
+                });
+                return;
+            }
+
+            if (!cuerpo) {
+                Swal.fire({
+                    title: 'Campo requerido',
+                    text: 'Por favor ingrese el cuerpo del correo.',
+                    icon: 'warning',
+                    confirmButtonText: 'Ok'
+                });
+                return;
+            }
+
+            // Validación de emails y documentos
+            if (addedEmails.size === 0) {
+                Swal.fire({
+                    title: 'Destinatarios requeridos',
+                    text: 'Debe agregar al menos un destinatario.',
+                    icon: 'warning',
+                    confirmButtonText: 'Ok'
+                });
+                return;
+            }
+
+            if (addedDocuments.size === 0) {
+                Swal.fire({
+                    title: 'Documentos requeridos',
+                    text: 'Debe agregar al menos un documento.',
+                    icon: 'warning',
+                    confirmButtonText: 'Ok'
+                });
+                return;
+            }
+            
+            // Convertir las Map a listas para poder enviarlas
+            let emailsObj = Array.from(addedEmails.values());
+            let documentsObj = Array.from(addedDocuments.values());
+            console.log(emailsObj)
+            // Crear el objeto con todos los datos a enviar
+            let dataToSend = {
+                asunto: asunto,
+                cuerpo: cuerpo,
+                addedEmails: emailsObj,
+                addedDocuments: documentsObj,
+                _token: token 
+            };
+            $.ajax({
+                url: "{% url 'send_email_documents' %}",
+                type: 'POST',
+                dataType: 'json',
+                data: dataToSend, 
+                headers: {
+                    'X-CSRFToken': token 
+                },
+                success: function(response) {
+                    console.log('Correo enviado con éxito:', response);
+                    
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error al enviar el correo:', error);
+                    
+                }
+            });
+        });
+
+
 
         /*  START MAP EMAILS  *************************************************************************************/
         $("#userInput").on("input", function() {
@@ -217,18 +297,37 @@
                 <div class="section_span">
                     <span>Documentos</span>
                 </div>
-            </div>
-            <div class="input-group mb-3 mt-2">
-                <span class="input-group-text" id="basic-addon2"><i class="bi bi-file-earmark-plus"></i></span>
-                <input type="text" class="form-control ml-5" id="documentInput" placeholder="Buscar por Nro, Código o Nombre" aria-label="Datos del documento" aria-describedby="documento">
-                <span class="input-group-text" id="basic-addon2"><i class="bi bi-file-earmark-plus"></i></span>
-            </div>
-            <div class="list-group">
-                <div id="documents_pointer"></div>
-            </div> 
-            <ul class="list-group mt-3" id="documentsList">
+                <div class="input-group mb-3 mt-2">
+                    <span class="input-group-text" id="basic-addon2"><i class="bi bi-file-earmark-plus"></i></span>
+                    <input type="text" class="form-control ml-5" id="documentInput" placeholder="Buscar por Nro, Código o Nombre" aria-label="Datos del documento" aria-describedby="documento">
+                    <span class="input-group-text" id="basic-addon2"><i class="bi bi-file-earmark-plus"></i></span>
+                </div>
+                <div class="list-group">
+                    <div id="documents_pointer"></div>
+                </div> 
+                <ul class="list-group mt-3" id="documentsList">
 
-            </ul>
+                </ul>
+            </div>
+
+            <!--Form container -->
+            <div class="col-12" id="destinatariosContainer">
+                <div class="section_span">
+                    <span>Datos del correo</span>
+                </div>
+                <form id="emailForm">
+                    <div class="form-floating mt-2">
+                        <input type="text" class="form-control" id="subject" placeholder="">
+                        <label for="subject">Asunto del correo:</label>
+                    </div>
+                    <div class="form-floating mt-2">
+                        <textarea class="form-control" placeholder="Cuerpo del correo" id="body" style="height: 100px"></textarea>
+                        <label for="floatingTextarea2">Cuerpo del correo:</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-2">Enviar Correo</button>
+
+                  </form>
+            </div>
         </div>
 </div>
 {% endblock %}

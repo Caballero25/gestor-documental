@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+import json
 from .models import Document
 
 def sendDocumentLink(request, id):
@@ -13,7 +14,7 @@ def sendDocumentLink(request, id):
 
 
 @login_required
-def search_documents(request):
+def searchDocuments(request):
     query = request.GET.get('q', '')
     if query:
         filters = Q(code_name__icontains=query) | Q(file__icontains=query)
@@ -25,3 +26,21 @@ def search_documents(request):
     else:
         data = []
     return JsonResponse({"documents": data})
+
+def sendEmailDocuments(request):
+    if request.method == 'POST':
+        asunto = request.POST.get("asunto")
+        cuerpo = request.POST.get("cuerpo")
+
+        # Obtener todos los correos y documentos como listas
+        added_emails = request.POST.getlist("addedEmails[]")  
+        added_documents = request.POST.getlist("addedDocuments[]")  
+
+        print("Asunto:", asunto)
+        print("Cuerpo:", cuerpo)
+        print("Added Emails:", added_emails)
+        print("Added Documents:", added_documents)
+
+        return JsonResponse({"message": "Correo enviado correctamente", "emails": added_emails, "documents": added_documents})
+
+    return JsonResponse({"error": "Método no permitido"}, status=405)
