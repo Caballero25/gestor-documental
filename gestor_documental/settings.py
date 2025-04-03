@@ -160,4 +160,5 @@ CSRF_FAILURE_VIEW = "apps.home.views.permission_denied"
 
 #Email
 EMAIL_HOST_USER = config('EMAIL_USER')
-EMAIL_PASSWORD = config('EMAIL_PASSWORD')
+EMAIL_HOST_PASSWORD = config('EMAIL_PASSWORD')
+LINK_EXPIRATION = config('LINK_EXPIRATION')
