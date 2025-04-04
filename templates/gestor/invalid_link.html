@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enlace expirado</title>
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="{% static 'lib/adminlte-4.0/css/adminlte.css' %}">
+    <style>
+        :root {
+            --primary-color: #0077cc;
+            --secondary-color: #0077cc;
+            --light-color: #ffffff;
+            --success-color: #4CAF50;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .expired-container {
+            max-width: 600px;
+            margin: 100px auto;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            background-color: var(--light-color);
+            text-align: center;
+        }
+        
+        .expired-icon {
+            font-size: 5rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+        
+        .expired-title {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .expired-message {
+            color: #495057;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            padding: 10px 25px;
+            font-weight: 500;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0066b3;
+            border-color: #0066b3;
+        }
+        
+        .contact-support {
+            margin-top: 30px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .contact-support a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="expired-container">
+            <div class="expired-icon">
+                <svg style="width: 120px; height:120px" viewBox="0 0 64 64" data-name="Layer 1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" fill="#000000" stroke="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><defs><style>.cls-1{fill:#0077cc;}.cls-2{fill:#1e3a5f;}</style></defs><title></title><path class="cls-1" d="M32,59.59A11.78,11.78,0,0,1,20.7,51a2,2,0,0,1,1.93-2.54H41.37A2,2,0,0,1,43.3,51,11.78,11.78,0,0,1,32,59.59Zm-6.19-7.1a7.73,7.73,0,0,0,12.38,0Z"></path><path class="cls-2" d="M47.91,45.91H16.09a2,2,0,0,1-2-2V26.33a17.91,17.91,0,1,1,35.82,0v2.59a2,2,0,0,1-4,0V26.33a13.91,13.91,0,1,0-27.82,0V41.91H45.91v-2.4a2,2,0,1,1,4,0v4.4A2,2,0,0,1,47.91,45.91Z"></path><path class="cls-2" d="M52.49,52.49h-41a2,2,0,0,1-2-2V43.91a2,2,0,0,1,2-2h41a2,2,0,0,1,2,2v6.58A2,2,0,0,1,52.49,52.49Zm-39-4h37V45.91h-37Z"></path><path class="cls-2" d="M32,12.42a2,2,0,0,1-2-2v-4a2,2,0,1,1,4,0v4A2,2,0,0,1,32,12.42Z"></path></g></svg>
+            </div>
+            <h1 class="expired-title">{{title}}</h1>
+            <p class="expired-message">
+                {{body}}
+            </p>
+            <div class="contact-support">
+                Por favor, comunícate con el remitente para solicitar un nuevo enlace.
+            </div>
+        </div>
+    </div>
+</body>
+</html>

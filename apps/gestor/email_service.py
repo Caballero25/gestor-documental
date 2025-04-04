@@ -3,13 +3,14 @@ from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, FileResponse
 from django.urls import reverse
 import json
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from .models import Document
+import os
 
 def sendDocumentLink(request, id):
     context = {}
@@ -73,11 +74,33 @@ def downloadDocument(request, token):
         signer = TimestampSigner()
         doc_id = signer.unsign(token, max_age=int(settings.LINK_EXPIRATION))  # 7 días en segundos
         documento = get_object_or_404(Document, pk=doc_id)
-        return HttpResponse("Este enlace es bueno", status=200)
+        file_name = os.path.basename(documento.file.path)
+        # Abre el archivo en modo binario
+        file = open(documento.file.path, 'rb')
+        
+        # Crea la respuesta con el archivo
+        response = FileResponse(file)
+        
+        # Configura los headers para forzar la descarga
+        response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+        response['Content-Type'] = 'application/octet-stream'
+        
+        return response
     except SignatureExpired:
-        return HttpResponse("Este enlace ha expirado", status=410)
+        context = {
+            "title": "¡Enlace expirado!",
+            "body": "El enlace que has utilizado para acceder al documento ha expirado. Por motivos de seguridad, los enlaces de descarga tienen un tiempo limitado de validez."
+        }
+        return render(request, 'gestor/invalid_link.html', context)
+        #return HttpResponse("Este enlace ha expirado", status=410)
     except BadSignature:
         return HttpResponse("Enlace inválido", status=404)
+    except:
+        context = {
+            "title": "¡Algo salió mal!",
+            "body": "El enlace que has utilizado para acceder al documento no ha funcionado."
+        }
+        return render(request, 'gestor/invalid_link.html', context)
 
 def sendEmail(subject, body, added_emails: list):
     msg = MIMEMultipart()
