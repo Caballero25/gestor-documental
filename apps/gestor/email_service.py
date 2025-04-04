@@ -12,7 +12,7 @@ from email.mime.text import MIMEText
 from .models import Document
 import os
 
-def sendDocumentLink(request, id):
+def sendDocumentLink(request):
     context = {}
     context['title'] = 'Enviar Documentos - Correo Electrónico'
     context['breadcrumb_previous'] = "Documentos"

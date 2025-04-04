@@ -10,7 +10,7 @@ urlpatterns = [
     path('document/delete/<str:id>', documentDeleteView, name="document_delete"),
     
     #Email
-    path('document/send/email/<str:id>', sendDocumentLink, name="send_email_link"),
+    path('document/send/email/', sendDocumentLink, name="send_email_link"),
     path('document/search/', searchDocuments, name="document_search"),
     path('send/email/', sendEmailDocuments, name="send_email_documents"),
     path('download/document/<str:token>', downloadDocument, name="download_documents"),
