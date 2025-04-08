@@ -15,7 +15,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     email = models.EmailField(unique=True, max_length=50, blank=False, verbose_name='Correo Electrónico')
     username = models.CharField(max_length=40, blank=False, null=False, verbose_name='Nombre de usuario')
-    gender = models.CharField(null=True, default="PREFIERO NO DECIRLO", choices=GENDER_CHOICES, verbose_name='Género')
+    gender = models.CharField(null=True, default="PREFIERO NO DECIRLO", choices=GENDER_CHOICES, verbose_name='Género', max_length=20)
     avatar = models.ImageField(upload_to='avatars', blank=True, null=True, default='avatars/no-gender.png')
     certificate = models.FileField(upload_to="certificados/", null=True, blank=True,
                                    verbose_name='certificado digital')
