@@ -1,0 +1,43 @@
+{% extends 'base/base_adminlte.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card-header text-center">
+        <strong style="font-size: 1.5rem; color: #1E3A5F;"><i class="bi bi-folder-plus" style="color: #4caf50;"></i> {{ document.code_name|default:"Sin Código" }}</strong>
+    </div>
+    {% if file_error %} 
+    <div class="alert alert-danger" role="alert">
+        {{file_error}}
+      </div>
+    {% endif %}
+    {% if document.file.name|lower|slice:'-4:' == '.pdf' %}
+        <!-- Visualización de PDF -->
+        <embed src="data:application/pdf;base64,{{ file_base64 }}" 
+        type="application/pdf" 
+        width="100%" 
+        height="700px">
+        
+    {% elif document.file.name|lower|slice:'-4:' in '.jpg,.jpeg,.png,.gif' %}
+        <!-- Visualización de imágenes -->
+        <img src="data:{{ mime_type }};base64,{{ file_base64 }}" alt="{{ document.code_name }}" class="rounded mx-auto d-block">
+          
+    {% elif document.file.name|lower|slice:'-4:' in '.mp4,.ogg' %}
+        <!-- Visualización de video -->
+        <video width="100%" controls>
+            <source src="data:video/{{ document.file.name|lower|slice:'-3:' }};base64,{{ file_base64 }}" type="video/{{ document.file.name|lower|slice:'-3:' }}">
+            Tu navegador no soporta el elemento de video.
+        </video>
+    {% elif document.file.name|lower|slice:'-4:' in '.webm' %}
+        <!-- Visualización de video -->
+        <video width="100%" controls>
+            <source src="data:video/{{ document.file.name|lower|slice:'-4:' }};base64,{{ file_base64 }}" type="video/{{ document.file.name|lower|slice:'-4:' }}">
+            Tu navegador no soporta el elemento de video.
+        </video>
+    {% else %}
+        <!-- Descarga para otros formatos -->
+        <p>Este tipo de archivo no puede ser visualizado directamente.</p>
+        
+    {% endif %}
+    <a href="{{ document.file.url }}" class="btn btn-primary" download>Descargar archivo</a>
+</div>
+{% endblock %}

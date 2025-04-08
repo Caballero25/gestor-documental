@@ -1,6 +1,7 @@
 from django.urls import path, re_path
 from .views import firstSteptUploadView, secondSteptUploadView, editDocumentView, DocumentListView, documentDeleteView
 from .email_service import sendDocumentLink, searchDocuments, sendEmailDocuments, downloadDocument
+from .document_detail import DocumentView
 urlpatterns = [
     #CRUD Documents
     path('documents/', DocumentListView.as_view(), name='document_list'),
@@ -14,4 +15,5 @@ urlpatterns = [
     path('document/search/', searchDocuments, name="document_search"),
     path('send/email/', sendEmailDocuments, name="send_email_documents"),
     path('download/document/<str:token>', downloadDocument, name="download_documents"),
+    path('ver/<int:pk>/', DocumentView.as_view(), name='document_viewer'),
 ]
