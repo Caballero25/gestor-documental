@@ -4,8 +4,8 @@ from .email_service import sendDocumentLink, searchDocuments, sendEmailDocuments
 from .document_detail import DocumentView
 urlpatterns = [
     #CRUD Documents
+    path('documents/', DocumentListView.as_view(), name='document_list'),
     re_path(r'^upload/stept/first/(?:(?P<id>\d+)/)?$', firstSteptUploadView, name="first-stept-upload"),
-    re_path(r'^upload/stept/first/(?P<id>\d+)?/$', firstSteptUploadView, name="first-stept-upload"),
     path('upload/stept/second/<str:id>', secondSteptUploadView, name="second-stept-upload"),
     path('document/edit/<str:id>', editDocumentView, name="edit_document_view"),
     path('document/delete/<str:id>', documentDeleteView, name="document_delete"),
