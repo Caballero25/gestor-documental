@@ -1,9 +1,9 @@
 {% extends 'base/base_adminlte.html' %} 
 {% load static %} 
+{% block title %}Firmar Documento{% endblock %}
 {% block extra_head %}
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  {% block title %}Firmar Documento{% endblock %}
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -173,7 +173,7 @@
               $currentImage = $('<img class="image" id="signedImage">');
               $currentImage.attr("src", imageUrl);
               $currentImage.css({
-                top: yPos - 45 + "px", // Ajusta este valor para centrar verticalmente
+                top: yPos - 35 + "px", // Ajusta este valor para centrar verticalmente
                 left: xPos - 25 + "px", // Ajusta este valor para centrar horizontalmente
                 zIndex: 30,
                 position: "absolute",
