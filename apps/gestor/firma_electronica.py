@@ -15,7 +15,7 @@ from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography.hazmat.backends import default_backend
 from gestor_documental.settings import MEDIA_ROOT
 from pyhanko import stamp
-
+import time
 
 @login_required
 def signDocument(request, pk):
@@ -48,32 +48,55 @@ def signDocument(request, pk):
                 passphrase=password
             )
 
-            # Normalizar el PDF (quitar hybrid xref)
-            normalized_pdf_io = io.BytesIO()
+            # SOLUCIÓN: Solo normalizar si es la primera firma
             with document.file.open('rb') as original_pdf:
-                reader = PdfReader(original_pdf)
-                writer = PdfWriter()
-                for page in reader.pages:
-                    writer.add_page(page)
-                writer.write(normalized_pdf_io)
+                pdf_data = original_pdf.read()
+                
+                # Verificar si el PDF ya tiene firmas
+                reader = PdfReader(io.BytesIO(pdf_data))
+                already_signed = False
+                # Verifica si el documento tiene un formulario AcroForm
+                acro_form_ref = reader.trailer["/Root"].get("/AcroForm")
+                if acro_form_ref:
+                    acro_form = acro_form_ref.get_object()  # <--- CORRECTO AQUÍ
+                    fields_pdf = acro_form.get("/Fields", [])
+                    for field in fields_pdf:
+                        field_obj = field.get_object()
+                        if field_obj.get("/FT") == "/Sig":
+                            already_signed = True
+                            break
+                
+                if not already_signed:
+                    # Normalizar solo si no tiene firmas previas
+                    normalized_pdf_io = io.BytesIO()
+                    writer = PdfWriter()
+                    for page in reader.pages:
+                        writer.add_page(page)
+                    writer.write(normalized_pdf_io)
+                    normalized_pdf_io.seek(0)
+                    w = IncrementalPdfFileWriter(normalized_pdf_io)
+                else:
+                    # Usar el PDF tal cual si ya tiene firmas
+                    w = IncrementalPdfFileWriter(io.BytesIO(pdf_data))
 
-            normalized_pdf_io.seek(0)
-
-            # Crear escritor incremental
-            w = IncrementalPdfFileWriter(normalized_pdf_io)
+            # Nombre único para el campo de firma
+            field_name = f"FIRMA_{request.user.id}_{document.id}_{int(time.time())}"
 
             # Añadir campo de firma
             fields.append_signature_field(
                 w,
                 sig_field_spec=SigFieldSpec(
-                    f"FIRMA_{request.user.id}_{document.id}",
+                    field_name,
                     box=(coordenadaX, coordenadaY, coordenadaX + 200, coordenadaY + 50),
                     on_page=pagina
                 )
             )
 
             meta = signers.PdfSignatureMetadata(
-                field_name=f"FIRMA_{request.user.id}_{document.id}"
+                field_name=field_name,
+                # Asegurar compatibilidad con firmas previas
+                md_algorithm='sha256',
+                subfilter=fields.SigSeedSubFilter.PADES
             )
 
             pdf_signer = signers.PdfSigner(
@@ -81,21 +104,25 @@ def signDocument(request, pk):
                 signer=signer,
                 stamp_style=stamp.QRStampStyle(
                     stamp_text='Firmado por: %(signer)s\nFecha: %(ts)s\n',
+                ),
+                # Permitir firmas incrementales
+                new_field_spec=SigFieldSpec(
+                    field_name,
+                    box=(coordenadaX, coordenadaY, coordenadaX + 200, coordenadaY + 50),
+                    on_page=pagina
                 )
-                # No necesitamos allow_hybrid_xref=True porque ya está normalizado
             )
 
             out = pdf_signer.sign_pdf(
                 w,
-                appearance_text_params={'url': 'https://tudominio.com'}
+                appearance_text_params={'url': 'https://tudominio.com'},
+                existing_fields_only=False
             )
 
-            # Guardar el PDF firmado sobre el archivo original
-            file_path = document.file.name
-            default_storage.delete(file_path)  # Elimina el archivo existente
-            default_storage.save(file_path, ContentFile(out.getvalue()))  # Guarda el nuevo
-            document.file = file_path  # Actualiza la referencia en el modelo
-            document.save()
+            # Guardar el PDF firmado correctamente
+            file_name = document.file.name.split('/')[-1]
+            document.file.delete()
+            document.file.save(file_name, ContentFile(out.getvalue()), save=True)
 
             subject = cert.subject
             dataSignatory = {attr.oid._name: attr.value for attr in subject}
