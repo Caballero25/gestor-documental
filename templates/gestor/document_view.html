@@ -2,8 +2,11 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="card-header text-center">
+    <div class="container pb-2 text-center d-flex justify-content-between col-12">
         <strong style="font-size: 1.5rem; color: #1E3A5F;"><i class="bi bi-folder-plus" style="color: #4caf50;"></i> {{ document.code_name|default:"Sin Código" }}</strong>
+        {% if document.file.name|lower|slice:'-4:' == '.pdf' %}
+        <a target="_blank" href="{% url 'firmarElectronicamente' document.id %}" type="button" class="btn btn-outline-success">Firmar</a>
+        {% endif %}
     </div>
     {% if file_error %} 
     <div class="alert alert-danger" role="alert">
