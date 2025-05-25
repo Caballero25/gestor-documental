@@ -2,7 +2,7 @@ from django.urls import path, re_path
 from .views import firstSteptUploadView, secondSteptUploadView, editDocumentView, DocumentListView, documentDeleteView
 from .email_service import sendDocumentLink, searchDocuments, sendEmailDocuments, downloadDocument
 from .document_detail import DocumentView
-from .firma_electronica import signDocument
+from .firma_electronica import signDocument, verificar_firmas
 urlpatterns = [
     #CRUD Documents
     path('documents/', DocumentListView.as_view(), name='document_list'),
@@ -21,4 +21,5 @@ urlpatterns = [
     #Firma Electrónica
     
     path('firmar/<int:pk>/', signDocument, name='firmarElectronicamente'),
+    path('verificar-firma/<str:token>/', verificar_firmas, name='verificar_firmas'),
 ]

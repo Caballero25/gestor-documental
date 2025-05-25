@@ -1,29 +1,31 @@
-import io
-import base64
-import tempfile
-from PyPDF2 import PdfReader, PdfWriter
 from django.shortcuts import render, get_object_or_404
+from django.core.signing import TimestampSigner
 from django.http import JsonResponse
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
-from .models import Document
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from PyPDF2 import PdfReader, PdfWriter
 from pyhanko.sign import signers, fields
 from pyhanko.sign.fields import SigFieldSpec
 from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
 from pyhanko import stamp
 from pyhanko.pdf_utils.text import TextBoxStyle
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography.hazmat.backends import default_backend
 from gestor_documental.settings import MEDIA_ROOT
+from .models import Document
 import time
+import io
+import base64
 
 @login_required
 def signDocument(request, pk):
+    signer = TimestampSigner()
     document = get_object_or_404(Document, id=pk)
-    protocolo = 'https' if request.is_secure() else 'http'
-    dominio = request.get_host()
-    url_base = f"{protocolo}://{dominio}"
+    token = signer.sign(document.id)
+    url_relativa = reverse('verificar_firmas', kwargs={'token': token})
+    url_completa = request.build_absolute_uri(url_relativa)
 
     if not request.user.certificate:
         return JsonResponse({'message': 'No tienes un certificado digital configurado'}, status=400)
@@ -145,7 +147,7 @@ def signDocument(request, pk):
 
             out = pdf_signer.sign_pdf(
                 w,
-                appearance_text_params={'url': url_base},
+                appearance_text_params={'url': url_completa},
                 existing_fields_only=False
             )
 
