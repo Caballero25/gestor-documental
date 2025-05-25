@@ -9,12 +9,13 @@ from .models import Document
 from pyhanko.sign import signers, fields
 from pyhanko.sign.fields import SigFieldSpec
 from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
+from pyhanko import stamp
+from pyhanko.pdf_utils.text import TextBoxStyle
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography.hazmat.backends import default_backend
 from gestor_documental.settings import MEDIA_ROOT
-from pyhanko import stamp
 import time
 
 @login_required
@@ -105,11 +106,31 @@ def signDocument(request, pk):
                 subfilter=fields.SigSeedSubFilter.PADES
             )
 
+            text_box_style = TextBoxStyle(
+                font_size=18,
+            )
+            dataSignatory = {}
+            for attribute in cert.subject:
+                print(str(attribute.oid._name) + " exitoso")
+                dataSignatory[attribute.oid._name] = attribute.value
+            try:
+                cn = dataSignatory['commonName']
+                nombre_dividido = cn.split()
+                nombres = " ".join(nombre_dividido[:2])
+                apellidos = " ".join(nombre_dividido[2:])
+                cn = f"{nombres}\n{apellidos}"
+            except:
+                print("No se pueden dividir los nombres")
+            sample_text = f'Firmado electrónicamente\npor:\n{cn if cn else "%(signer)s"}\n'
+            
+
             pdf_signer = signers.PdfSigner(
                 meta,
                 signer=signer,
                 stamp_style=stamp.QRStampStyle(
-                    stamp_text='Firmado por: %(signer)s\nFecha: %(ts)s\n',
+                    stamp_text= sample_text + 'Validar únicamente\ncon FirmaEC',
+                    text_box_style=text_box_style,
+                    border_width=0
                 ),
                 # Permitir firmas incrementales
                 new_field_spec=SigFieldSpec(
