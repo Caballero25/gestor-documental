@@ -39,7 +39,7 @@ def signDocument(request, pk):
             coordenadaX = float(request.POST.get('coordenadaX', 100))
 
             if pdfY:
-                coordenadaY = (float(pdfY)-float(request.POST.get('coordenadaY', 100))) - 75
+                coordenadaY = (float(pdfY)-float(request.POST.get('coordenadaY', 100))) - 50
             password = request.POST.get('password', '').encode('utf-8')
 
             # Leer certificado del usuario
