@@ -26,6 +26,14 @@
 
             <!-- UPDATE & DELETE -->
             <td class="text-center">
+                {% if i.file.name|lower|slice:'-4:' == '.pdf' %}
+                    <a target="_blank" href="{% url 'firmarElectronicamente' i.id %}" type="button" class="btn btn-outline-info btn-xs btn-flat"
+                    style="padding: 0px; padding-left: 2px; padding-right: 2px;"><i class="bi bi-check2-all"></i></a>
+                {% endif %}
+                <a href="{% url 'document_viewer' i.id %}" data-bs-toggle="tooltip" title="Ver documento"
+                   class="btn btn-success btn-xs btn-flat" style="padding: 0px; padding-left: 2px; padding-right: 2px;">
+                   <i class="bi bi-eye" aria-hidden="true"></i>
+                </a>
                 <a href="{% url update_url i.id %}" data-bs-toggle="tooltip" title="Editar registro"
                    class="btn btn-warning btn-xs btn-flat" style="padding: 0px; padding-left: 2px; padding-right: 2px;">
                     <i class="bi bi-pencil-fill" aria-hidden="true"></i>
@@ -33,10 +41,6 @@
                 <a href="{% url delete_url i.id %}" data-bs-toggle="tooltip" title="Eliminar registro"
                    class="btn btn-danger btn-xs btn-flat" style="padding: 0px; padding-left: 2px; padding-right: 2px;">
                    <i class="bi bi-trash3-fill" aria-hidden="true"></i>
-                </a>
-                <a href="{% url 'document_viewer' i.id %}" data-bs-toggle="tooltip" title="Ver documento"
-                   class="btn btn-success btn-xs btn-flat" style="padding: 0px; padding-left: 2px; padding-right: 2px;">
-                   <i class="bi bi-eye" aria-hidden="true"></i>
                 </a>
             </td>
         </tr>
