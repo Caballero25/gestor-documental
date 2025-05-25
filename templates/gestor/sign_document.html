@@ -333,21 +333,22 @@
       processData: false,
       contentType: false,
       success: function (response) {
-        alert("Documento firmado con éxito");
-        if (response.signed_pdf) {
-          var link = document.createElement("a");
-          link.href = "data:application/pdf;base64," + response.signed_pdf;
-          link.download = "signed_document.pdf";
-          link.textContent = "Descargar PDF firmado";
-          $("#result").html("").append(link);
-        }
+        Swal.fire({
+          title: "Documento firmado con éxito",
+          text: "Firmado por: " + response.signer_info?.commonName??"usuario",
+          icon: "success"
+         }).then(() => {
+            location.reload(); 
+          });
       },
       error: function (response) {
-        $("#result").html(
-          "<p>" +
-            (response.responseJSON?.message || "Error al firmar el documento") +
-            "</p>"
-        );
+        console.log(response)
+        console.log(response.responseJSON.message)
+        Swal.fire({
+          title: "El proceso de firma fue interrumpido",
+          text: response.responseJSON.message??"Error inesperado",
+          icon: "error"
+        });
       },
     });
   });

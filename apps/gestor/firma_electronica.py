@@ -155,12 +155,14 @@ def signDocument(request, pk):
             dataSignatory = {attr.oid._name: attr.value for attr in subject}
 
             return JsonResponse({
+                'success': True,
                 'message': 'Documento firmado con éxito!',
                 'signer_info': dataSignatory
             })
 
         except Exception as e:
             return JsonResponse({
+                'success': False,
                 'message': f'Error al firmar el documento: {str(e)}'
             }, status=400)
 
