@@ -21,6 +21,9 @@ import time
 @login_required
 def signDocument(request, pk):
     document = get_object_or_404(Document, id=pk)
+    protocolo = 'https' if request.is_secure() else 'http'
+    dominio = request.get_host()
+    url_base = f"{protocolo}://{dominio}"
 
     if not request.user.certificate:
         return JsonResponse({'message': 'No tienes un certificado digital configurado'}, status=400)
@@ -142,7 +145,7 @@ def signDocument(request, pk):
 
             out = pdf_signer.sign_pdf(
                 w,
-                appearance_text_params={'url': 'https://tudominio.com'},
+                appearance_text_params={'url': url_base},
                 existing_fields_only=False
             )
 
