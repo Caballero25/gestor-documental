@@ -23,3 +23,4 @@ urlpatterns = [
     path('firmar/<int:pk>/', signDocument, name='firmarElectronicamente'),
     path('verificar-firma/<str:token>/', verificar_firmas, name='verificar_firmas'),
 ]
+

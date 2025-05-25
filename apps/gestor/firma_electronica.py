@@ -128,7 +128,6 @@ def signDocument(request, pk):
                 print("No se pueden dividir los nombres")
             sample_text = f'Firmado electrónicamente\npor:\n{cn if cn else "%(signer)s"}\n'
             
-
             pdf_signer = signers.PdfSigner(
                 meta,
                 signer=signer,
