@@ -64,8 +64,8 @@ def sendEmailDocuments(request):
                                 </body>
                                 </html>
                             """
-        sendEmail(asunto, mensaje_html, added_emails)
-        return JsonResponse({"message": "Correo enviado correctamente", "emails": added_emails, "documents": added_documents})
+        sended_emails = sendEmail(asunto, mensaje_html, added_emails)    
+        return JsonResponse({"message": "Correo enviado correctamente", "emails": sended_emails, "documents": added_documents})
 
     return JsonResponse({"error": "Método no permitido"}, status=405)
 
@@ -119,3 +119,4 @@ def sendEmail(subject, body, added_emails: list):
 
     # Cerrar la conexión
     server.quit()
+    return msg['To']

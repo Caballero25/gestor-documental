@@ -67,6 +67,12 @@
                 addedDocuments: documentsObj,
                 _token: token 
             };
+            Swal.fire({
+                title: 'Petición enviada',
+                text: "Esperando respuesta del servidor",
+                icon: 'info',
+                confirmButtonText: 'Ok'
+            });
             $.ajax({
                 url: "{% url 'send_email_documents' %}",
                 type: 'POST',
@@ -76,11 +82,21 @@
                     'X-CSRFToken': token 
                 },
                 success: function(response) {
-                    console.log('Correo enviado con éxito:', response);
+                    Swal.fire({
+                    title: 'Correo enviado con éxito a todos los destinatarios',
+                    text: "Destinatarios: " + response.emails,
+                    icon: 'success',
+                    confirmButtonText: 'Ok'
+                });
                     
                 },
                 error: function(xhr, status, error) {
-                    console.error('Error al enviar el correo:', error);
+                    Swal.fire({
+                    title: 'Error inesperado',
+                    text: 'No se pudo enviar el correo electrónico correctamente',
+                    icon: 'warning',
+                    confirmButtonText: 'Ok'
+                });
                     
                 }
             });
