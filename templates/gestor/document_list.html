@@ -28,7 +28,7 @@
             <td class="text-center">
                 {% if i.file.name|lower|slice:'-4:' == '.pdf' %}
                     <a target="_blank" href="{% url 'firmarElectronicamente' i.id %}" type="button" class="btn btn-outline-info btn-xs btn-flat"
-                    style="padding: 0px; padding-left: 2px; padding-right: 2px;"><i class="bi bi-check2-all"></i></a>
+                    style="padding: 0px; padding-left: 2px; padding-right: 2px;">Firmar</a>
                 {% endif %}
                 <a href="{% url 'document_viewer' i.id %}" data-bs-toggle="tooltip" title="Ver documento"
                    class="btn btn-success btn-xs btn-flat" style="padding: 0px; padding-left: 2px; padding-right: 2px;">

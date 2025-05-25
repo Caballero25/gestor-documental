@@ -178,3 +178,6 @@ def signDocument(request, pk):
             'mime_type': 'application/pdf'
         }
         return render(request, 'gestor/sign_document.html', context)
+    
+def verificar_firmas(request, token):
+    pass
