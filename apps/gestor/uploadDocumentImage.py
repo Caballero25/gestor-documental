@@ -14,12 +14,14 @@ def capture_document_view(request):
         form = DocumentAndSchemaForm(request.POST)
         
         if form.is_valid():
+            print("isValid")
             # Crear documento
             document = form.save(commit=False)
             
             # Procesar imagen capturada
             image_data = request.POST.get('image_data', '')
             if image_data:
+                print("image_data")
                 format, imgstr = image_data.split(';base64,') 
                 ext = format.split('/')[-1]
                 filename = f"captured_{uuid.uuid4()}.{ext}"
@@ -28,6 +30,7 @@ def capture_document_view(request):
                 document.file = data
             
             document.save()
+            print(document)
             
             # Procesar metadatos si es necesario
             if not form.cleaned_data.get('metadata', False) and form.cleaned_data.get('metadata_schema'):
@@ -49,6 +52,8 @@ def capture_document_view(request):
                 document.save()
             
             return redirect('some_success_url')
+        else:
+            print("formInvalid")
     else:
         form = DocumentAndSchemaForm()
     

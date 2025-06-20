@@ -9,21 +9,33 @@
         width: 100%;
         max-width: 500px;
         margin: 0 auto;
+        border: 2px dashed #ddd;
+        border-radius: 5px;
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
     }
     #camera-view {
         width: 100%;
-        background-color: #f8f9fa;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+        display: none;
     }
-    #camera-controls {
-        margin-top: 10px;
-        text-align: center;
+    #camera-canvas {
+        display: none;
     }
     #captured-image {
         max-width: 100%;
         display: none;
         margin-top: 10px;
+    }
+    .camera-placeholder {
+        text-align: center;
+        padding: 20px;
+    }
+    .camera-buttons {
+        margin-top: 15px;
+        text-align: center;
     }
     .metadata-section {
         margin-top: 20px;
@@ -31,10 +43,9 @@
         background-color: #f8f9fa;
         border-radius: 4px;
     }
-    .switch-container {
-        display: flex;
-        align-items: center;
-        margin-bottom: 15px;
+    .error-message {
+        color: #dc3545;
+        margin-top: 5px;
     }
 </style>
 {% endblock %}
@@ -67,36 +78,42 @@
             </div>
             
             <!-- Opción para subir sin metadatos -->
-            <div class="switch-container">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" 
-                           id="flexSwitchCheckDefault" name="metadata">
-                    <label class="form-check-label" for="flexSwitchCheckDefault">Subir sin metadatos</label>
-                </div>
+            <div class="form-group form-check">
+                <input type="checkbox" class="form-check-input" id="no_metadata" name="no_metadata">
+                <label class="form-check-label" for="no_metadata">Subir sin metadatos</label>
             </div>
             
             <!-- Sección de captura de cámara -->
             <div class="form-group">
                 <label>Capturar Documento</label>
                 <div id="camera-container">
-                    <video id="camera-view" autoplay playsinline></video>
-                    <canvas id="camera-canvas" style="display:none;"></canvas>
-                    <img id="captured-image" alt="Documento capturado">
-                    <div id="camera-controls">
-                        <button type="button" id="capture-btn" class="btn btn-primary">
-                            <i class="fas fa-camera"></i> Capturar
-                        </button>
-                        <button type="button" id="retake-btn" class="btn btn-secondary" style="display:none;">
-                            <i class="fas fa-sync-alt"></i> Volver a tomar
-                        </button>
+                    <div class="camera-placeholder" id="camera-placeholder">
+                        <i class="fas fa-camera fa-3x mb-3"></i>
+                        <p>Haz clic en "Iniciar Cámara" para comenzar</p>
                     </div>
+                    <video id="camera-view" autoplay playsinline></video>
+                    <canvas id="camera-canvas"></canvas>
+                    <img id="captured-image" alt="Documento capturado">
                 </div>
+                <div class="camera-buttons">
+                    <button type="button" id="start-camera" class="btn btn-primary">
+                        <i class="fas fa-video"></i> Iniciar Cámara
+                    </button>
+                    <button type="button" id="capture-btn" class="btn btn-success" disabled>
+                        <i class="fas fa-camera"></i> Capturar
+                    </button>
+                    <button type="button" id="retake-btn" class="btn btn-warning" disabled>
+                        <i class="fas fa-redo"></i> Volver a tomar
+                    </button>
+                </div>
+                <div id="camera-error" class="error-message"></div>
                 <input type="hidden" id="image-data" name="image_data">
             </div>
             
-            <!-- Sección de metadatos dinámicos (se muestra/oculta según selección) -->
-            <div id="metadata-fields" class="metadata-section" style="display:none;">
+            <!-- Sección de metadatos dinámicos -->
+            <div id="metadata-fields" class="metadata-section">
                 <h5>Metadatos del Documento</h5>
+                <p class="text-muted">Seleccione un esquema de metadatos para ver los campos</p>
                 <!-- Los campos de metadatos se agregarán dinámicamente aquí -->
             </div>
             
@@ -108,82 +125,142 @@
         </form>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
 <script>
 $(document).ready(function() {
     // Elementos de la cámara
+    const cameraContainer = document.getElementById('camera-container');
+    const cameraPlaceholder = document.getElementById('camera-placeholder');
     const cameraView = document.getElementById('camera-view');
     const cameraCanvas = document.getElementById('camera-canvas');
+    const startCameraBtn = document.getElementById('start-camera');
     const captureBtn = document.getElementById('capture-btn');
     const retakeBtn = document.getElementById('retake-btn');
     const capturedImage = document.getElementById('captured-image');
     const imageDataInput = document.getElementById('image-data');
+    const cameraError = document.getElementById('camera-error');
     let stream = null;
     
-    // Iniciar cámara
+    // Iniciar cámara con manejo de errores mejorado
     function startCamera() {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-                .then(function(mediaStream) {
-                    stream = mediaStream;
-                    cameraView.srcObject = mediaStream;
-                })
-                .catch(function(error) {
-                    console.error("Error al acceder a la cámara: ", error);
-                    alert("No se pudo acceder a la cámara. Asegúrese de haber concedido los permisos necesarios.");
-                });
-        } else {
-            alert("Su navegador no soporta el acceso a la cámara o no tiene una cámara disponible.");
-        }
+        console.log("da")
+        cameraError.textContent = '';
+        
+        // Opciones para la cámara trasera (environment) o frontal (user)
+        const constraints = {
+            video: {
+                facingMode: 'environment',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            },
+            audio: false
+        };
+        
+        // Intentar acceder a la cámara
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(function(mediaStream) {
+                stream = mediaStream;
+                cameraView.srcObject = mediaStream;
+                cameraView.style.display = 'block';
+                cameraPlaceholder.style.display = 'none';
+                
+                // Habilitar botones
+                startCameraBtn.disabled = true;
+                captureBtn.disabled = false;
+                
+                // Ajustar el tamaño del canvas al del video
+                cameraView.onloadedmetadata = function() {
+                    cameraCanvas.width = cameraView.videoWidth;
+                    cameraCanvas.height = cameraView.videoHeight;
+                };
+            })
+            .catch(function(error) {
+                console.error("Error al acceder a la cámara:", error);
+                
+                // Mensajes de error más descriptivos
+                let errorMessage = "Error al acceder a la cámara: ";
+                if (error.name === 'PermissionDeniedError') {
+                    errorMessage += "Permiso denegado. Por favor, habilite los permisos de cámara.";
+                } else if (error.name === 'NotFoundError') {
+                    errorMessage += "No se encontró cámara trasera. Intentando con cámara frontal...";
+                    // Intentar con cámara frontal
+                    constraints.video.facingMode = 'user';
+                    navigator.mediaDevices.getUserMedia(constraints)
+                        .then(function(mediaStream) {
+                            stream = mediaStream;
+                            cameraView.srcObject = mediaStream;
+                            cameraView.style.display = 'block';
+                            cameraPlaceholder.style.display = 'none';
+                            startCameraBtn.disabled = true;
+                            captureBtn.disabled = false;
+                            cameraView.onloadedmetadata = function() {
+                                cameraCanvas.width = cameraView.videoWidth;
+                                cameraCanvas.height = cameraView.videoHeight;
+                            };
+                        })
+                        .catch(function(frontError) {
+                            errorMessage = "Error al acceder a la cámara frontal: " + frontError.message;
+                            cameraError.textContent = errorMessage;
+                        });
+                } else {
+                    errorMessage += error.message;
+                    cameraError.textContent = errorMessage;
+                }
+            });
     }
     
     // Detener cámara
     function stopCamera() {
         if (stream) {
-            stream.getTracks().forEach(track => track.stop());
+            stream.getTracks().forEach(function(track) {
+                track.stop();
+            });
             cameraView.srcObject = null;
+            cameraView.style.display = 'none';
+            cameraPlaceholder.style.display = 'block';
+            startCameraBtn.disabled = false;
         }
     }
     
     // Capturar imagen
-    captureBtn.addEventListener('click', function() {
-        cameraCanvas.width = cameraView.videoWidth;
-        cameraCanvas.height = cameraView.videoHeight;
-        cameraCanvas.getContext('2d').drawImage(cameraView, 0, 0);
+    function captureImage() {
+        if (!stream) return;
+        
+        const context = cameraCanvas.getContext('2d');
+        context.drawImage(cameraView, 0, 0, cameraCanvas.width, cameraCanvas.height);
         
         // Mostrar imagen capturada
-        const imageData = cameraCanvas.toDataURL('image/jpeg');
-        capturedImage.src = imageData;
+        capturedImage.src = cameraCanvas.toDataURL('image/jpeg', 0.8);
         capturedImage.style.display = 'block';
-        imageDataInput.value = imageData;
+        imageDataInput.value = capturedImage.src;
         
-        // Ocultar vista de cámara y mostrar botón de retomar
-        cameraView.style.display = 'none';
-        captureBtn.style.display = 'none';
-        retakeBtn.style.display = 'inline-block';
+        // Cambiar estado de los botones
+        captureBtn.disabled = true;
+        retakeBtn.disabled = false;
         
         // Detener la cámara
         stopCamera();
-    });
+    }
     
     // Retomar foto
-    retakeBtn.addEventListener('click', function() {
+    function retakeImage() {
         capturedImage.style.display = 'none';
-        cameraView.style.display = 'block';
-        captureBtn.style.display = 'inline-block';
-        retakeBtn.style.display = 'none';
         imageDataInput.value = '';
+        retakeBtn.disabled = true;
         startCamera();
-    });
+    }
+    
+    // Event listeners
+    startCameraBtn.addEventListener('click', startCamera);
+    captureBtn.addEventListener('click', captureImage);
+    retakeBtn.addEventListener('click', retakeImage);
     
     // Manejar cambio de esquema de metadatos
     $('#id_metadata_schema').change(function() {
         const schemaId = $(this).val();
+        const noMetadataChecked = $('#no_metadata').is(':checked');
         const metadataSection = $('#metadata-fields');
         
-        if (schemaId && !$('#flexSwitchCheckDefault').is(':checked')) {
+        if (schemaId && !noMetadataChecked) {
             // Obtener campos de metadatos dinámicos via AJAX
             $.get(`/gestor/get_metadata_fields/?schema_id=${schemaId}`, function(data) {
                 metadataSection.empty();
@@ -193,32 +270,33 @@ $(document).ready(function() {
                     
                     data.fields.forEach(function(field) {
                         let fieldHtml = '';
+                        const fieldId = `metadata_${field.name.replace(/\s+/g, '_')}`;
                         
                         switch(field.field_type) {
                             case 'text':
                                 fieldHtml = `
                                     <div class="form-group">
-                                        <label for="metadata_${field.name}">${field.name}</label>
-                                        <input type="text" class="form-control" id="metadata_${field.name}" 
-                                               name="metadata_${field.name}" required>
+                                        <label for="${fieldId}">${field.name}</label>
+                                        <input type="text" class="form-control" id="${fieldId}" 
+                                               name="${fieldId}" required>
                                     </div>
                                 `;
                                 break;
                             case 'number':
                                 fieldHtml = `
                                     <div class="form-group">
-                                        <label for="metadata_${field.name}">${field.name}</label>
-                                        <input type="number" class="form-control" id="metadata_${field.name}" 
-                                               name="metadata_${field.name}" required>
+                                        <label for="${fieldId}">${field.name}</label>
+                                        <input type="number" class="form-control" id="${fieldId}" 
+                                               name="${fieldId}" required>
                                     </div>
                                 `;
                                 break;
                             case 'date':
                                 fieldHtml = `
                                     <div class="form-group">
-                                        <label for="metadata_${field.name}">${field.name}</label>
-                                        <input type="date" class="form-control" id="metadata_${field.name}" 
-                                               name="metadata_${field.name}" required>
+                                        <label for="${fieldId}">${field.name}</label>
+                                        <input type="date" class="form-control" id="${fieldId}" 
+                                               name="${fieldId}" required>
                                     </div>
                                 `;
                                 break;
@@ -233,14 +311,14 @@ $(document).ready(function() {
                                 }
                                 
                                 let selectOptions = options.map(opt => 
-                                    `<option value="${opt}">${opt}</option>`
+                                    `<option value="${opt.trim()}">${opt.trim()}</option>`
                                 ).join('');
                                 
                                 fieldHtml = `
                                     <div class="form-group">
-                                        <label for="metadata_${field.name}">${field.name}</label>
-                                        <select class="form-select" id="metadata_${field.name}" 
-                                                name="metadata_${field.name}" required>
+                                        <label for="${fieldId}">${field.name}</label>
+                                        <select class="form-select" id="${fieldId}" 
+                                                name="${fieldId}" required>
                                             <option value="">--- Seleccione ---</option>
                                             ${selectOptions}
                                         </select>
@@ -249,10 +327,10 @@ $(document).ready(function() {
                                 break;
                             case 'checkbox':
                                 fieldHtml = `
-                                    <div class="form-check">
+                                    <div class="form-check mb-3">
                                         <input class="form-check-input" type="checkbox" 
-                                               id="metadata_${field.name}" name="metadata_${field.name}">
-                                        <label class="form-check-label" for="metadata_${field.name}">
+                                               id="${fieldId}" name="${fieldId}">
+                                        <label class="form-check-label" for="${fieldId}">
                                             ${field.name}
                                         </label>
                                     </div>
@@ -262,34 +340,25 @@ $(document).ready(function() {
                         
                         metadataSection.append(fieldHtml);
                     });
-                    
-                    metadataSection.show();
                 } else {
-                    metadataSection.hide();
+                    metadataSection.append('<p class="text-muted">Este esquema no tiene campos de metadatos definidos</p>');
                 }
+            }).fail(function() {
+                metadataSection.html('<div class="alert alert-danger">Error al cargar los campos de metadatos</div>');
             });
         } else {
-            metadataSection.hide();
+            metadataSection.html('<p class="text-muted">Seleccione un esquema de metadatos para ver los campos</p>');
         }
     });
     
-    // Manejar el switch de "Subir sin metadatos"
-    $('#flexSwitchCheckDefault').change(function() {
+    // Manejar el checkbox de "Subir sin metadatos"
+    $('#no_metadata').change(function() {
         if ($(this).is(':checked')) {
             $('#id_metadata_schema').val('').trigger('change');
-            $('#metadata-fields').hide();
         }
     });
     
-    // Iniciar cámara al cargar la página
-    startCamera();
-    
-    // Detener cámara al salir de la página
-    $(window).on('beforeunload', function() {
-        stopCamera();
-    });
-    
-    // Manejar envío del formulario
+    // Validar formulario antes de enviar
     $('#document-form').submit(function(e) {
         if (!imageDataInput.value) {
             e.preventDefault();
@@ -298,15 +367,17 @@ $(document).ready(function() {
         }
         
         // Validar metadatos si es necesario
-        const hasSchema = $('#id_metadata_schema').val() && !$('#flexSwitchCheckDefault').is(':checked');
+        const hasSchema = $('#id_metadata_schema').val() && !$('#no_metadata').is(':checked');
         if (hasSchema) {
             let isValid = true;
             $('#metadata-fields :input[required]').each(function() {
                 if (!$(this).val()) {
                     isValid = false;
                     $(this).addClass('is-invalid');
+                    $(this).after('<div class="invalid-feedback">Este campo es requerido</div>');
                 } else {
                     $(this).removeClass('is-invalid');
+                    $(this).next('.invalid-feedback').remove();
                 }
             });
             
@@ -318,6 +389,11 @@ $(document).ready(function() {
         }
         
         return true;
+    });
+    
+    // Detener cámara al salir de la página
+    $(window).on('beforeunload', function() {
+        stopCamera();
     });
 });
 </script>
