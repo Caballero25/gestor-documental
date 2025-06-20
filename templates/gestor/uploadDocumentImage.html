@@ -3,6 +3,7 @@
 {% block title %}Subir Documento con Cámara{% endblock %}
 
 {% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
     #camera-container {
         position: relative;
@@ -51,6 +52,17 @@
 {% endblock %}
 
 {% block content %}
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-success d-flex align-items-center" role="alert" style="height: 50px!important;">
+                    <svg class="bi flex-shrink-0 me-2" role="img" aria-label="Info:"><use xlink:href="#info-fill"/></svg>
+                    <div>
+                       {{ message }}
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
 <div class="card card-primary card-outline">
     <div class="card-header">
         <h3 class="card-title">Subir Documento con Cámara</h3>
@@ -79,7 +91,7 @@
             
             <!-- Opción para subir sin metadatos -->
             <div class="form-group form-check">
-                <input type="checkbox" class="form-check-input" id="no_metadata" name="no_metadata">
+                <input checked type="checkbox" class="form-check-input" id="no_metadata" name="metadata">
                 <label class="form-check-label" for="no_metadata">Subir sin metadatos</label>
             </div>
             
@@ -107,7 +119,7 @@
                     </button>
                 </div>
                 <div id="camera-error" class="error-message"></div>
-                <input type="hidden" id="image-data" name="image_data">
+               <input type="file" class="d-none" id="formFile" name="file" accept="application/pdf">
             </div>
             
             <!-- Sección de metadatos dinámicos -->
@@ -222,32 +234,64 @@ $(document).ready(function() {
     }
     
     // Capturar imagen
-    function captureImage() {
-        if (!stream) return;
-        
-        const context = cameraCanvas.getContext('2d');
-        context.drawImage(cameraView, 0, 0, cameraCanvas.width, cameraCanvas.height);
-        
-        // Mostrar imagen capturada
-        capturedImage.src = cameraCanvas.toDataURL('image/jpeg', 0.8);
-        capturedImage.style.display = 'block';
-        imageDataInput.value = capturedImage.src;
-        
-        // Cambiar estado de los botones
-        captureBtn.disabled = true;
-        retakeBtn.disabled = false;
-        
-        // Detener la cámara
-        stopCamera();
-    }
+function captureImage() {
+    if (!stream) return;
+    
+    const context = cameraCanvas.getContext('2d');
+    context.drawImage(cameraView, 0, 0, cameraCanvas.width, cameraCanvas.height);
+    
+    // Mostrar vista previa (igual que antes)
+    capturedImage.src = cameraCanvas.toDataURL('image/jpeg');
+    capturedImage.style.display = 'block';
+    
+    // Crear PDF
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({
+        orientation: cameraCanvas.width > cameraCanvas.height ? 'landscape' : 'portrait',
+        unit: 'mm'
+    });
+    
+    const imgData = cameraCanvas.toDataURL('image/jpeg', 0.8);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (cameraCanvas.height * pdfWidth) / cameraCanvas.width;
+    
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+    const pdfBlob = pdf.output('blob');
+    
+    // Crear objeto File
+    const pdfFile = new File([pdfBlob], 'documento_capturado.pdf', { type: 'application/pdf' });
+    
+    // Usar el input file existente en lugar de crear uno nuevo
+    const fileInput = document.getElementById('formFile');
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(pdfFile);
+    fileInput.files = dataTransfer.files;
+    
+    // Cambiar estado de los botones
+    captureBtn.disabled = true;
+    retakeBtn.disabled = false;
+    
+    // Detener la cámara
+    stopCamera();
+}
     
     // Retomar foto
-    function retakeImage() {
-        capturedImage.style.display = 'none';
-        imageDataInput.value = '';
-        retakeBtn.disabled = true;
-        startCamera();
-    }
+function retakeImage() {
+    // Limpiar el input file
+    const fileInput = document.getElementById('formFile');
+    fileInput.value = '';
+    
+    // Ocultar vista previa
+    capturedImage.style.display = 'none';
+    capturedImage.src = '';
+    
+    // Restablecer botones
+    retakeBtn.disabled = true;
+    captureBtn.disabled = false;
+    
+    // Volver a iniciar la cámara
+    startCamera();
+}
     
     // Event listeners
     startCameraBtn.addEventListener('click', startCamera);
@@ -359,13 +403,13 @@ $(document).ready(function() {
     });
     
     // Validar formulario antes de enviar
-    $('#document-form').submit(function(e) {
-        if (!imageDataInput.value) {
-            e.preventDefault();
-            alert('Por favor, capture una imagen del documento antes de enviar.');
-            return false;
-        }
-        
+$('#document-form').submit(function(e) {
+    const fileInput = document.getElementById('formFile');
+    if (!fileInput.files || fileInput.files.length === 0) {
+        e.preventDefault();
+        alert('Por favor, capture un documento antes de enviar.');
+        return false;
+    }
         // Validar metadatos si es necesario
         const hasSchema = $('#id_metadata_schema').val() && !$('#no_metadata').is(':checked');
         if (hasSchema) {

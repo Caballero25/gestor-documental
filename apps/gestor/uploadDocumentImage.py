@@ -6,28 +6,21 @@ from .forms import DocumentAndSchemaForm, DynamicMetadataForm
 import base64
 from django.core.files.base import ContentFile
 import uuid
+from django.contrib import messages
 
 def capture_document_view(request):
     metadata_schemas = MetadataSchema.objects.all()
     
     if request.method == 'POST':
-        form = DocumentAndSchemaForm(request.POST)
+        form = DocumentAndSchemaForm(request.POST, request.FILES) 
         
         if form.is_valid():
             print("isValid")
             # Crear documento
             document = form.save(commit=False)
             
-            # Procesar imagen capturada
-            image_data = request.POST.get('image_data', '')
-            if image_data:
-                print("image_data")
-                format, imgstr = image_data.split(';base64,') 
-                ext = format.split('/')[-1]
-                filename = f"captured_{uuid.uuid4()}.{ext}"
-                
-                data = ContentFile(base64.b64decode(imgstr), name=filename)
-                document.file = data
+            if 'file' in request.FILES:
+                document.file = request.FILES['file']
             
             document.save()
             print(document)
@@ -50,10 +43,16 @@ def capture_document_view(request):
                 
                 document.metadata_values = metadata_values
                 document.save()
-            
-            return redirect('some_success_url')
+            messages.success(request, 'Documento digitalizado correctamente')
+            return redirect('capture_document')
         else:
-            print("formInvalid")
+            print(request.POST)
+            # Imprimir errores del formulario
+            for field, errors in form.errors.items():
+                print(f"Campo '{field}':")
+                for error in errors:
+                    print(f"  - {error}")
+            # También puedes imprimir los datos del POST para depuración
     else:
         form = DocumentAndSchemaForm()
     
