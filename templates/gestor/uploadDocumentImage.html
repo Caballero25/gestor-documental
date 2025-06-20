@@ -52,17 +52,18 @@
 {% endblock %}
 
 {% block content %}
+<div class="container-fluid">
 
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-success d-flex align-items-center" role="alert" style="height: 50px!important;">
-                    <svg class="bi flex-shrink-0 me-2" role="img" aria-label="Info:"><use xlink:href="#info-fill"/></svg>
+                <div class="alert alert-success d-flex align-items-center" role="alert">
                     <div>
-                       {{ message }}
+                      <span style='font-size:20px;'>&#128190;</span> {{ message }}
                     </div>
                 </div>
             {% endfor %}
         {% endif %}
+</div>
 <div class="card card-primary card-outline">
     <div class="card-header">
         <h3 class="card-title">Subir Documento con Cámara</h3>
