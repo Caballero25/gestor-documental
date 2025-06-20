@@ -43,7 +43,7 @@ def capture_document_view(request):
                 
                 document.metadata_values = metadata_values
                 document.save()
-            messages.success(request, 'Documento digitalizado correctamente')
+            messages.success(request, 'Documento digitalizado')
             return redirect('capture_document')
         else:
             print(request.POST)
