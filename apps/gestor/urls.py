@@ -3,6 +3,7 @@ from .views import firstSteptUploadView, secondSteptUploadView, editDocumentView
 from .email_service import sendDocumentLink, searchDocuments, sendEmailDocuments, downloadDocument
 from .document_detail import DocumentView
 from .firma_electronica import signDocument
+from .uploadDocumentImage import capture_document_view, get_metadata_fields
 urlpatterns = [
     #CRUD Documents
     path('documents/', DocumentListView.as_view(), name='document_list'),
@@ -19,7 +20,10 @@ urlpatterns = [
     path('ver/<int:pk>/', DocumentView.as_view(), name='document_viewer'),
 
     #Firma Electrónica
-    
     path('firmar/<int:pk>/', signDocument, name='firmarElectronicamente'),
+
+    #upload with image
+    path('capture/', capture_document_view, name='capture_document'),
+    path('get_metadata_fields/', get_metadata_fields, name='get_metadata_fields'),
 ]
 
