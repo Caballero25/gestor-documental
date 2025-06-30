@@ -155,15 +155,14 @@ $(document).ready(function() {
     
     // Iniciar cámara con manejo de errores mejorado
     function startCamera() {
-        console.log("da")
         cameraError.textContent = '';
         
         // Opciones para la cámara trasera (environment) o frontal (user)
         const constraints = {
             video: {
                 facingMode: 'environment',
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
+                width: { ideal: 3840 },
+                height: { ideal: 2160 }
             },
             audio: false
         };
