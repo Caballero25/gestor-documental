@@ -244,18 +244,43 @@ function captureImage() {
     capturedImage.src = cameraCanvas.toDataURL('image/jpeg');
     capturedImage.style.display = 'block';
     
-    // Crear PDF
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({
         orientation: cameraCanvas.width > cameraCanvas.height ? 'landscape' : 'portrait',
         unit: 'mm'
     });
-    
+
+    // Datos de la imagen
     const imgData = cameraCanvas.toDataURL('image/jpeg', 0.8);
+
+    // Tamaño de página PDF
     const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (cameraCanvas.height * pdfWidth) / cameraCanvas.width;
-    
-    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    // Tamaño real del canvas
+    const imgWidth = cameraCanvas.width;
+    const imgHeight = cameraCanvas.height;
+    const imgAspect = imgWidth / imgHeight;
+    const pdfAspect = pdfWidth / pdfHeight;
+
+    // Cálculo para mantener la imagen entera y centrada
+    let renderWidth, renderHeight, offsetX, offsetY;
+
+    if (imgAspect > pdfAspect) {
+        // Imagen más ancha que la página: ajustar por ancho
+        renderWidth = pdfWidth;
+        renderHeight = pdfWidth / imgAspect;
+        offsetX = 0;
+        offsetY = (pdfHeight - renderHeight) / 2;
+    } else {
+        // Imagen más alta que la página: ajustar por alto
+        renderHeight = pdfHeight;
+        renderWidth = pdfHeight * imgAspect;
+        offsetX = (pdfWidth - renderWidth) / 2;
+        offsetY = 0;
+    }
+
+    pdf.addImage(imgData, 'JPEG', offsetX, offsetY, renderWidth, renderHeight);
     const pdfBlob = pdf.output('blob');
     
     // Crear objeto File
