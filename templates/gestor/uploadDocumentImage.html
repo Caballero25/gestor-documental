@@ -1,239 +1,312 @@
-{% extends 'base/base_adminlte.html' %}
-{% load static %}
-{% block title %}Subir Documento con Cámara{% endblock %}
-
+{% extends 'base/base_adminlte.html' %} 
+{% load static %} 
+{% block title %}Subir Documento con Cámara {% endblock %} 
 {% block extra_head %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-    #camera-container {
-        position: relative;
-        width: 100%;
-        max-width: 500px;
-        margin: 0 auto;
-        border: 2px dashed #ddd;
-        border-radius: 5px;
-        min-height: 300px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }
-    #camera-view {
-        width: 100%;
-        display: none;
-    }
-    #camera-canvas {
-        display: none;
-    }
-    #captured-image {
-        max-width: 100%;
-        display: none;
-        margin-top: 10px;
-    }
-    .camera-placeholder {
-        text-align: center;
-        padding: 20px;
-    }
-    .camera-buttons {
-        margin-top: 15px;
-        text-align: center;
-    }
-    .metadata-section {
-        margin-top: 20px;
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-radius: 4px;
-    }
-    .error-message {
-        color: #dc3545;
-        margin-top: 5px;
-    }
+  #camera-container {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    border: 2px dashed #ddd;
+    border-radius: 5px;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  #camera-view {
+    width: 100%;
+    display: none;
+  }
+  #camera-canvas {
+    display: none;
+  }
+  #captured-image {
+    max-width: 100%;
+    display: none;
+    margin-top: 10px;
+  }
+  .camera-placeholder {
+    text-align: center;
+    padding: 20px;
+  }
+  .camera-buttons {
+    margin-top: 15px;
+    text-align: center;
+  }
+  .metadata-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+  }
+  .error-message {
+    color: #dc3545;
+    margin-top: 5px;
+  }
 </style>
-{% endblock %}
-
+{% endblock %} 
 {% block content %}
 <div class="container-fluid">
-
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-success d-flex align-items-center" role="alert">
-                    <div>
-                     {{ message }}
-                    </div>
-                </div>
-            {% endfor %}
-        {% endif %}
+  {% if messages %} {% for message in messages %}
+  <div class="alert alert-success d-flex align-items-center" role="alert">
+    <div>{{ message }}</div>
+  </div>
+  {% endfor %} {% endif %}
 </div>
 <div class="card card-primary card-outline">
-    <div class="card-header">
-        <h3 class="card-title">Subir Documento con Cámara</h3>
-    </div>
-    <div class="card-body">
-        <form id="document-form" method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            
-            <!-- Campos básicos del documento -->
-            <div class="form-group">
-                <label for="id_code_name">Nombre/Identificador (opcional)</label>
-                <input type="text" class="form-control" id="id_code_name" name="code_name" 
-                       placeholder="Identificador para buscar el documento posteriormente">
-            </div>
-            
-            <!-- Selector de esquema de metadatos -->
-            <div class="form-group">
-                <label for="id_metadata_schema">Esquema de Metadatos</label>
-                <select class="form-select" id="id_metadata_schema" name="metadata_schema">
-                    <option value="">--- Seleccione un esquema ---</option>
-                    {% for schema in metadata_schemas %}
-                        <option value="{{ schema.id }}">{{ schema.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <!-- Opción para subir sin metadatos -->
-            <div class="form-group form-check">
-                <input checked type="checkbox" class="form-check-input" id="no_metadata" name="metadata">
-                <label class="form-check-label" for="no_metadata">Subir sin metadatos</label>
-            </div>
-            
-            <!-- Sección de captura de cámara -->
-            <div class="form-group">
-                <label>Capturar Documento</label>
-                <div id="camera-container">
-                    <div class="camera-placeholder" id="camera-placeholder">
-                        <i class="fas fa-camera fa-3x mb-3"></i>
-                        <p>Haz clic en "Iniciar Cámara" para comenzar</p>
-                    </div>
-                    <video id="camera-view" autoplay playsinline></video>
-                    <canvas id="camera-canvas"></canvas>
-                    <img id="captured-image" alt="Documento capturado">
-                </div>
-                <div class="camera-buttons">
-                    <button type="button" id="start-camera" class="btn btn-primary">
-                        <i class="fas fa-video"></i> Iniciar Cámara
-                    </button>
-                    <button type="button" id="capture-btn" class="btn btn-success" disabled>
-                        <i class="fas fa-camera"></i> Capturar
-                    </button>
-                    <button type="button" id="retake-btn" class="btn btn-warning" disabled>
-                        <i class="fas fa-redo"></i> Volver a tomar
-                    </button>
-                </div>
-                <div id="camera-error" class="error-message"></div>
-               <input type="file" class="d-none" id="formFile" name="file" accept="application/pdf">
-            </div>
-            
-            <!-- Sección de metadatos dinámicos -->
-            <div id="metadata-fields" class="metadata-section">
-                <h5>Metadatos del Documento</h5>
-                <p class="text-muted">Seleccione un esquema de metadatos para ver los campos</p>
-                <!-- Los campos de metadatos se agregarán dinámicamente aquí -->
-            </div>
-            
-            <div class="form-group mt-4">
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-save"></i> Guardar Documento
-                </button>
-            </div>
-        </form>
-    </div>
+  <div class="card-header">
+    <h3 class="card-title">Subir Documento con Cámara</h3>
+  </div>
+  <div class="card-body">
+    <form id="document-form" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <!-- Campos básicos del documento -->
+      <div class="form-group">
+        <label for="id_code_name">Nombre/Identificador (opcional)</label>
+        <input
+          type="text"
+          class="form-control"
+          id="id_code_name"
+          name="code_name"
+          placeholder="Identificador para buscar el documento posteriormente"
+        />
+      </div>
+
+      <!-- Selector de esquema de metadatos -->
+      <div class="form-group">
+        <label for="id_metadata_schema">Esquema de Metadatos</label>
+        <select
+          class="form-select"
+          id="id_metadata_schema"
+          name="metadata_schema"
+        >
+          <option value="">--- Seleccione un esquema ---</option>
+          {% for schema in metadata_schemas %}
+          <option value="{{ schema.id }}">{{ schema.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Opción para subir sin metadatos -->
+      <div class="form-group form-check">
+        <input
+          checked
+          type="checkbox"
+          class="form-check-input"
+          id="no_metadata"
+          name="metadata"
+        />
+        <label class="form-check-label" for="no_metadata"
+          >Subir sin metadatos</label
+        >
+      </div>
+
+      <!-- Sección de captura de cámara -->
+      <div class="form-group">
+        <label>Capturar Documento</label>
+        <div id="camera-container">
+          <div class="camera-placeholder" id="camera-placeholder">
+            <i class="fas fa-camera fa-3x mb-3"></i>
+            <p>Haz clic en "Iniciar Cámara" para comenzar</p>
+          </div>
+          <video id="camera-view" autoplay playsinline></video>
+          <canvas id="camera-canvas"></canvas>
+          <img id="captured-image" alt="Documento capturado" />
+        </div>
+        <div class="camera-buttons">
+          <button type="button" id="start-camera" class="btn btn-primary">
+            <i class="fas fa-video"></i> Iniciar Cámara
+          </button>
+          <button
+            type="button"
+            id="capture-btn"
+            class="btn btn-success"
+            disabled
+          >
+            <i class="fas fa-camera"></i> Capturar
+          </button>
+          <button
+            type="button"
+            id="retake-btn"
+            class="btn btn-warning"
+            disabled
+          >
+            <i class="fas fa-redo"></i> Volver a tomar
+          </button>
+        </div>
+        <div id="camera-error" class="error-message"></div>
+        <input
+          type="file"
+          class="d-none"
+          id="formFile"
+          name="file"
+          accept="application/pdf"
+        />
+      </div>
+
+      <!-- Sección de metadatos dinámicos -->
+      <div id="metadata-fields" class="metadata-section">
+        <h5>Metadatos del Documento</h5>
+        <p class="text-muted">
+          Seleccione un esquema de metadatos para ver los campos
+        </p>
+        <!-- Los campos de metadatos se agregarán dinámicamente aquí -->
+      </div>
+
+      <div class="form-group mt-4">
+        <button type="submit" class="btn btn-success">
+          <i class="fas fa-save"></i> Guardar Documento
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 <script>
-$(document).ready(function() {
+  $(document).ready(function () {
     // Elementos de la cámara
-    const cameraContainer = document.getElementById('camera-container');
-    const cameraPlaceholder = document.getElementById('camera-placeholder');
-    const cameraView = document.getElementById('camera-view');
-    const cameraCanvas = document.getElementById('camera-canvas');
-    const startCameraBtn = document.getElementById('start-camera');
-    const captureBtn = document.getElementById('capture-btn');
-    const retakeBtn = document.getElementById('retake-btn');
-    const capturedImage = document.getElementById('captured-image');
-    const imageDataInput = document.getElementById('image-data');
-    const cameraError = document.getElementById('camera-error');
+    const cameraContainer = document.getElementById("camera-container");
+    const cameraPlaceholder = document.getElementById("camera-placeholder");
+    const cameraView = document.getElementById("camera-view");
+    const cameraCanvas = document.getElementById("camera-canvas");
+    const startCameraBtn = document.getElementById("start-camera");
+    const captureBtn = document.getElementById("capture-btn");
+    const retakeBtn = document.getElementById("retake-btn");
+    const capturedImage = document.getElementById("captured-image");
+    const imageDataInput = document.getElementById("image-data");
+    const cameraError = document.getElementById("camera-error");
     let stream = null;
-    
+
     // Iniciar cámara con manejo de errores mejorado
     function startCamera() {
-        cameraError.textContent = '';
-        
-        // Opciones para la cámara trasera (environment) o frontal (user)
-        const constraints = {
-            video: {
-                facingMode: 'environment',
-                width: { ideal: 3840 },
-                height: { ideal: 2160 }
-            },
-            audio: false
-        };
-        
-        // Intentar acceder a la cámara
-        navigator.mediaDevices.getUserMedia(constraints)
-            .then(function(mediaStream) {
+      cameraError.textContent = "";
+
+      // Opciones para la cámara trasera (environment) o frontal (user)
+      const constraints = {
+        video: {
+          facingMode: "environment",
+          width: { ideal: 3840 },
+          height: { ideal: 2160 },
+        },
+        audio: false,
+      };
+
+      // Intentar acceder a la cámara
+      navigator.mediaDevices
+        .getUserMedia(constraints)
+        .then(function (mediaStream) {
+          stream = mediaStream;
+          cameraView.srcObject = mediaStream;
+          cameraView.style.display = "block";
+          cameraPlaceholder.style.display = "none";
+
+          // Habilitar botones
+          startCameraBtn.disabled = true;
+          captureBtn.disabled = false;
+
+          // Ajustar el tamaño del canvas al del video
+          cameraView.onloadedmetadata = function () {
+            cameraCanvas.width = cameraView.videoWidth;
+            cameraCanvas.height = cameraView.videoHeight;
+          };
+        })
+        .catch(function (error) {
+          console.error("Error al acceder a la cámara:", error);
+
+          // Mensajes de error más descriptivos
+          let errorMessage = "Error al acceder a la cámara: ";
+          if (error.name === "PermissionDeniedError") {
+            errorMessage +=
+              "Permiso denegado. Por favor, habilite los permisos de cámara.";
+          } else if (error.name === "NotFoundError") {
+            errorMessage +=
+              "No se encontró cámara trasera. Intentando con cámara frontal...";
+            // Intentar con cámara frontal
+            constraints.video.facingMode = "user";
+            navigator.mediaDevices
+              .getUserMedia(constraints)
+              .then(function (mediaStream) {
                 stream = mediaStream;
                 cameraView.srcObject = mediaStream;
-                cameraView.style.display = 'block';
-                cameraPlaceholder.style.display = 'none';
-                
-                // Habilitar botones
+                cameraView.style.display = "block";
+                cameraPlaceholder.style.display = "none";
                 startCameraBtn.disabled = true;
                 captureBtn.disabled = false;
-                
-                // Ajustar el tamaño del canvas al del video
-                cameraView.onloadedmetadata = function() {
-                    cameraCanvas.width = cameraView.videoWidth;
-                    cameraCanvas.height = cameraView.videoHeight;
+                cameraView.onloadedmetadata = function () {
+                  cameraCanvas.width = cameraView.videoWidth;
+                  cameraCanvas.height = cameraView.videoHeight;
                 };
-            })
-            .catch(function(error) {
-                console.error("Error al acceder a la cámara:", error);
-                
-                // Mensajes de error más descriptivos
-                let errorMessage = "Error al acceder a la cámara: ";
-                if (error.name === 'PermissionDeniedError') {
-                    errorMessage += "Permiso denegado. Por favor, habilite los permisos de cámara.";
-                } else if (error.name === 'NotFoundError') {
-                    errorMessage += "No se encontró cámara trasera. Intentando con cámara frontal...";
-                    // Intentar con cámara frontal
-                    constraints.video.facingMode = 'user';
-                    navigator.mediaDevices.getUserMedia(constraints)
-                        .then(function(mediaStream) {
-                            stream = mediaStream;
-                            cameraView.srcObject = mediaStream;
-                            cameraView.style.display = 'block';
-                            cameraPlaceholder.style.display = 'none';
-                            startCameraBtn.disabled = true;
-                            captureBtn.disabled = false;
-                            cameraView.onloadedmetadata = function() {
-                                cameraCanvas.width = cameraView.videoWidth;
-                                cameraCanvas.height = cameraView.videoHeight;
-                            };
-                        })
-                        .catch(function(frontError) {
-                            errorMessage = "Error al acceder a la cámara frontal: " + frontError.message;
-                            cameraError.textContent = errorMessage;
-                        });
-                } else {
-                    errorMessage += error.message;
-                    cameraError.textContent = errorMessage;
-                }
-            });
+              })
+              .catch(function (frontError) {
+                errorMessage =
+                  "Error al acceder a la cámara frontal: " + frontError.message;
+                cameraError.textContent = errorMessage;
+              });
+          } else {
+            errorMessage += error.message;
+            cameraError.textContent = errorMessage;
+          }
+        });
     }
-    
+
     // Detener cámara
     function stopCamera() {
-        if (stream) {
-            stream.getTracks().forEach(function(track) {
-                track.stop();
-            });
-            cameraView.srcObject = null;
-            cameraView.style.display = 'none';
-            cameraPlaceholder.style.display = 'block';
-            startCameraBtn.disabled = false;
-        }
+      if (stream) {
+        stream.getTracks().forEach(function (track) {
+          track.stop();
+        });
+        cameraView.srcObject = null;
+        cameraView.style.display = "none";
+        cameraPlaceholder.style.display = "block";
+        startCameraBtn.disabled = false;
+      }
     }
-    
-    // Capturar imagen
+    // Capturar imagen como archivo JPG
+    function captureImage() {
+      if (!stream) return;
+
+      const context = cameraCanvas.getContext("2d");
+      context.drawImage(
+        cameraView,
+        0,
+        0,
+        cameraCanvas.width,
+        cameraCanvas.height
+      );
+
+      // Mostrar la imagen en vista previa
+      capturedImage.src = cameraCanvas.toDataURL("image/jpeg", 0.9);
+      capturedImage.style.display = "block";
+
+      // Convertir canvas a Blob (imagen)
+      cameraCanvas.toBlob(
+        function (blob) {
+          const jpgFile = new File([blob], "documento.jpg", {
+            type: "image/jpeg",
+          });
+
+          // Usar el input file oculto existente
+          const fileInput = document.getElementById("formFile");
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(jpgFile);
+          fileInput.files = dataTransfer.files;
+
+          // Cambiar estado de botones
+          captureBtn.disabled = true;
+          retakeBtn.disabled = false;
+
+          // Detener cámara
+          stopCamera();
+        },
+        "image/jpeg",
+        0.9
+      );
+    }
+    /* Capturar imagen
 function captureImage() {
     if (!stream) return;
     
@@ -299,91 +372,96 @@ function captureImage() {
     // Detener la cámara
     stopCamera();
 }
-    
+    */
     // Retomar foto
-function retakeImage() {
-    // Limpiar el input file
-    const fileInput = document.getElementById('formFile');
-    fileInput.value = '';
-    
-    // Ocultar vista previa
-    capturedImage.style.display = 'none';
-    capturedImage.src = '';
-    
-    // Restablecer botones
-    retakeBtn.disabled = true;
-    captureBtn.disabled = false;
-    
-    // Volver a iniciar la cámara
-    startCamera();
-}
-    
+    function retakeImage() {
+      // Limpiar el input file
+      const fileInput = document.getElementById("formFile");
+      fileInput.value = "";
+
+      // Ocultar vista previa
+      capturedImage.style.display = "none";
+      capturedImage.src = "";
+
+      // Restablecer botones
+      retakeBtn.disabled = true;
+      captureBtn.disabled = false;
+
+      // Volver a iniciar la cámara
+      startCamera();
+    }
+
     // Event listeners
-    startCameraBtn.addEventListener('click', startCamera);
-    captureBtn.addEventListener('click', captureImage);
-    retakeBtn.addEventListener('click', retakeImage);
-    
+    startCameraBtn.addEventListener("click", startCamera);
+    captureBtn.addEventListener("click", captureImage);
+    retakeBtn.addEventListener("click", retakeImage);
+
     // Manejar cambio de esquema de metadatos
-    $('#id_metadata_schema').change(function() {
-        const schemaId = $(this).val();
-        const noMetadataChecked = $('#no_metadata').is(':checked');
-        const metadataSection = $('#metadata-fields');
-        
-        if (schemaId && !noMetadataChecked) {
-            // Obtener campos de metadatos dinámicos via AJAX
-            $.get(`/gestor/get_metadata_fields/?schema_id=${schemaId}`, function(data) {
-                metadataSection.empty();
-                
-                if (data.fields && data.fields.length > 0) {
-                    metadataSection.append('<h5>Metadatos del Documento</h5>');
-                    
-                    data.fields.forEach(function(field) {
-                        let fieldHtml = '';
-                        const fieldId = `metadata_${field.name.replace(/\s+/g, '_')}`;
-                        
-                        switch(field.field_type) {
-                            case 'text':
-                                fieldHtml = `
+    $("#id_metadata_schema").change(function () {
+      const schemaId = $(this).val();
+      const noMetadataChecked = $("#no_metadata").is(":checked");
+      const metadataSection = $("#metadata-fields");
+
+      if (schemaId && !noMetadataChecked) {
+        // Obtener campos de metadatos dinámicos via AJAX
+        $.get(
+          `/gestor/get_metadata_fields/?schema_id=${schemaId}`,
+          function (data) {
+            metadataSection.empty();
+
+            if (data.fields && data.fields.length > 0) {
+              metadataSection.append("<h5>Metadatos del Documento</h5>");
+
+              data.fields.forEach(function (field) {
+                let fieldHtml = "";
+                const fieldId = `metadata_${field.name.replace(/\s+/g, "_")}`;
+
+                switch (field.field_type) {
+                  case "text":
+                    fieldHtml = `
                                     <div class="form-group">
                                         <label for="${fieldId}">${field.name}</label>
                                         <input type="text" class="form-control" id="${fieldId}" 
                                                name="${fieldId}" required>
                                     </div>
                                 `;
-                                break;
-                            case 'number':
-                                fieldHtml = `
+                    break;
+                  case "number":
+                    fieldHtml = `
                                     <div class="form-group">
                                         <label for="${fieldId}">${field.name}</label>
                                         <input type="number" class="form-control" id="${fieldId}" 
                                                name="${fieldId}" required>
                                     </div>
                                 `;
-                                break;
-                            case 'date':
-                                fieldHtml = `
+                    break;
+                  case "date":
+                    fieldHtml = `
                                     <div class="form-group">
                                         <label for="${fieldId}">${field.name}</label>
                                         <input type="date" class="form-control" id="${fieldId}" 
                                                name="${fieldId}" required>
                                     </div>
                                 `;
-                                break;
-                            case 'select':
-                                let options = field.options || [];
-                                if (typeof options === 'string') {
-                                    try {
-                                        options = JSON.parse(options);
-                                    } catch (e) {
-                                        options = options.split(',');
-                                    }
-                                }
-                                
-                                let selectOptions = options.map(opt => 
-                                    `<option value="${opt.trim()}">${opt.trim()}</option>`
-                                ).join('');
-                                
-                                fieldHtml = `
+                    break;
+                  case "select":
+                    let options = field.options || [];
+                    if (typeof options === "string") {
+                      try {
+                        options = JSON.parse(options);
+                      } catch (e) {
+                        options = options.split(",");
+                      }
+                    }
+
+                    let selectOptions = options
+                      .map(
+                        (opt) =>
+                          `<option value="${opt.trim()}">${opt.trim()}</option>`
+                      )
+                      .join("");
+
+                    fieldHtml = `
                                     <div class="form-group">
                                         <label for="${fieldId}">${field.name}</label>
                                         <select class="form-select" id="${fieldId}" 
@@ -393,9 +471,9 @@ function retakeImage() {
                                         </select>
                                     </div>
                                 `;
-                                break;
-                            case 'checkbox':
-                                fieldHtml = `
+                    break;
+                  case "checkbox":
+                    fieldHtml = `
                                     <div class="form-check mb-3">
                                         <input class="form-check-input" type="checkbox" 
                                                id="${fieldId}" name="${fieldId}">
@@ -404,66 +482,101 @@ function retakeImage() {
                                         </label>
                                     </div>
                                 `;
-                                break;
-                        }
-                        
-                        metadataSection.append(fieldHtml);
-                    });
-                } else {
-                    metadataSection.append('<p class="text-muted">Este esquema no tiene campos de metadatos definidos</p>');
+                    break;
                 }
-            }).fail(function() {
-                metadataSection.html('<div class="alert alert-danger">Error al cargar los campos de metadatos</div>');
-            });
-        } else {
-            metadataSection.html('<p class="text-muted">Seleccione un esquema de metadatos para ver los campos</p>');
-        }
-    });
-    
-    // Manejar el checkbox de "Subir sin metadatos"
-    $('#no_metadata').change(function() {
-        if ($(this).is(':checked')) {
-            $('#id_metadata_schema').val('').trigger('change');
-        }
-    });
-    
-    // Validar formulario antes de enviar
-$('#document-form').submit(function(e) {
-    const fileInput = document.getElementById('formFile');
-    if (!fileInput.files || fileInput.files.length === 0) {
-        e.preventDefault();
-        alert('Por favor, capture un documento antes de enviar.');
-        return false;
-    }
-        // Validar metadatos si es necesario
-        const hasSchema = $('#id_metadata_schema').val() && !$('#no_metadata').is(':checked');
-        if (hasSchema) {
-            let isValid = true;
-            $('#metadata-fields :input[required]').each(function() {
-                if (!$(this).val()) {
-                    isValid = false;
-                    $(this).addClass('is-invalid');
-                    $(this).after('<div class="invalid-feedback">Este campo es requerido</div>');
-                } else {
-                    $(this).removeClass('is-invalid');
-                    $(this).next('.invalid-feedback').remove();
-                }
-            });
-            
-            if (!isValid) {
-                e.preventDefault();
-                alert('Por favor, complete todos los campos de metadatos requeridos.');
-                return false;
+
+                metadataSection.append(fieldHtml);
+              });
+            } else {
+              metadataSection.append(
+                '<p class="text-muted">Este esquema no tiene campos de metadatos definidos</p>'
+              );
             }
+          }
+        ).fail(function () {
+          metadataSection.html(
+            '<div class="alert alert-danger">Error al cargar los campos de metadatos</div>'
+          );
+        });
+      } else {
+        metadataSection.html(
+          '<p class="text-muted">Seleccione un esquema de metadatos para ver los campos</p>'
+        );
+      }
+    });
+
+    // Manejar el checkbox de "Subir sin metadatos"
+    $("#no_metadata").change(function () {
+      if ($(this).is(":checked")) {
+        $("#id_metadata_schema").val("").trigger("change");
+      }
+    });
+
+    // Validar formulario antes de enviar
+    $("#document-form").submit(function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+
+      const fileInput = document.getElementById("formFile");
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert("Por favor, capture un documento antes de enviar.");
+        return;
+      }
+
+      const hasSchema =
+        $("#id_metadata_schema").val() && !$("#no_metadata").is(":checked");
+      if (hasSchema) {
+        let isValid = true;
+        $("#metadata-fields :input[required]").each(function () {
+          if (!$(this).val()) {
+            isValid = false;
+            $(this).addClass("is-invalid");
+            $(this).after(
+              '<div class="invalid-feedback">Este campo es requerido</div>'
+            );
+          } else {
+            $(this).removeClass("is-invalid");
+            $(this).next(".invalid-feedback").remove();
+          }
+        });
+
+        if (!isValid) {
+          alert(
+            "Por favor, complete todos los campos de metadatos requeridos."
+          );
+          return;
         }
-        
-        return true;
+      }
+
+      $.ajax({
+        url: "",
+        type: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (response) {
+          if (response.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Documento guardado correctamente',
+                showConfirmButton: false,
+                timer: 1000,
+                timerProgressBar: true
+                });
+            //$("#document-form")[0].reset();
+            $("#captured-image").hide();
+          } else {
+            alert("Ocurrió un error al guardar el documento");
+            console.log(response.errors);
+          }
+        },
+        error: function (xhr, status, error) {
+          console.error("Error en la petición:", error);
+          alert("Error al procesar el formulario");
+        },
+      });
     });
-    
-    // Detener cámara al salir de la página
-    $(window).on('beforeunload', function() {
-        stopCamera();
-    });
-});
+  });
 </script>
 {% endblock %}
