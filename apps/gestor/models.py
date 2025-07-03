@@ -48,3 +48,9 @@ class Document(models.Model):
         
         except Exception as e:
             raise ValueError(f"No se pudo leer el PDF: {e}")
+        
+class DocumentSequence(models.Model):
+    seq_value = models.BigIntegerField(default=1)
+
+    def __str__(self):
+        return f"Secuencia actual: {self.seq_value}"

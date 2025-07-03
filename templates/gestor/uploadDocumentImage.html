@@ -58,8 +58,17 @@
   {% endfor %} {% endif %}
 </div>
 <div class="card card-primary card-outline">
-  <div class="card-header">
-    <h3 class="card-title">Subir Documento con Cámara</h3>
+  <div class="row p-2">
+    <div class="col-4">
+        Digitalización
+    </div>
+    <div class="col-8">
+        <div class="input-group">
+            <label for="seq-value-display"></label>
+            <input type="text" id="seq-value-display" class="form-control ml-1" readonly>
+            <button type="button" id="change-seq-btn" class="btn btn-outline-secondary">C. secuencia</button>
+        </div>
+    </div>
   </div>
   <div class="card-body">
     <form id="document-form" method="post" enctype="multipart/form-data">
@@ -168,6 +177,7 @@
 </div>
 <script>
   $(document).ready(function () {
+    cargarValorSecuencia();
     // Elementos de la cámara
     const cameraContainer = document.getElementById("camera-container");
     const cameraPlaceholder = document.getElementById("camera-placeholder");
@@ -422,7 +432,7 @@ function captureImage() {
                                     <div class="form-group">
                                         <label for="${fieldId}">${field.name}</label>
                                         <input type="text" class="form-control" id="${fieldId}" 
-                                               name="${fieldId}" required>
+                                               name="${fieldId}">
                                     </div>
                                 `;
                     break;
@@ -431,7 +441,7 @@ function captureImage() {
                                     <div class="form-group">
                                         <label for="${fieldId}">${field.name}</label>
                                         <input type="number" class="form-control" id="${fieldId}" 
-                                               name="${fieldId}" required>
+                                               name="${fieldId}">
                                     </div>
                                 `;
                     break;
@@ -440,7 +450,7 @@ function captureImage() {
                                     <div class="form-group">
                                         <label for="${fieldId}">${field.name}</label>
                                         <input type="date" class="form-control" id="${fieldId}" 
-                                               name="${fieldId}" required>
+                                               name="${fieldId}">
                                     </div>
                                 `;
                     break;
@@ -465,7 +475,7 @@ function captureImage() {
                                     <div class="form-group">
                                         <label for="${fieldId}">${field.name}</label>
                                         <select class="form-select" id="${fieldId}" 
-                                                name="${fieldId}" required>
+                                                name="${fieldId}">
                                             <option value="">--- Seleccione ---</option>
                                             ${selectOptions}
                                         </select>
@@ -566,6 +576,7 @@ function captureImage() {
                 });
             //$("#document-form")[0].reset();
             $("#captured-image").hide();
+            cargarValorSecuencia();
           } else {
             alert("Ocurrió un error al guardar el documento");
             console.log(response.errors);
@@ -578,5 +589,58 @@ function captureImage() {
       });
     });
   });
+  // Obtener valor actual del seq_value
+function cargarValorSecuencia() {
+    $.get("{% url 'get_seq_value' %}", function (data) {
+        if (data.success) {
+            $('#seq-value-display').val(data.seq_value);
+        } else {
+            $('#seq-value-display').val("Error");
+        }
+    }).fail(function () {
+        $('#seq-value-display').val("Error");
+    });
+}
+
+// Abrir prompt para cambiar la secuencia
+$('#change-seq-btn').click(function () {
+    Swal.fire({
+        title: 'Nuevo valor de la secuencia',
+        input: 'number',
+        inputLabel: 'Ingrese el valor inicial deseado',
+        inputAttributes: {
+            min: 0
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Guardar',
+        cancelButtonText: 'Cancelar',
+        inputValidator: (value) => {
+            if (!value || parseInt(value) < 0) {
+                return 'Ingrese un número válido mayor o igual a 0';
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: "{% url 'set_seq_value' %}",
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ seq_value: parseInt(result.value) }),
+                success: function (data) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Secuencia actualizada',
+                        showConfirmButton: false,
+                        timer: 1000
+                    });
+                    cargarValorSecuencia();
+                },
+                error: function () {
+                    Swal.fire('Error', 'No se pudo actualizar la secuencia', 'error');
+                }
+            });
+        }
+    });
+});
 </script>
 {% endblock %}

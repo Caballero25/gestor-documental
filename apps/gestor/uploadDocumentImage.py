@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from .models import Document
+from .models import Document, DocumentSequence
 from ..metadata.models import MetadataSchema, MetadataField
 from .forms import DocumentAndSchemaForm, DynamicMetadataForm
 import base64
@@ -29,7 +29,7 @@ def capture_document_view(request):
                 metadata_schema = form.cleaned_data['metadata_schema']
                 metadata_fields = metadata_schema.fields.all()
                 metadata_values = {}
-
+                #field_namemetadata_Número de registro - secuencial
                 for field in metadata_fields:
                     field_name = f"metadata_{field.name}"
                     field_value = request.POST.get(field_name, '')
@@ -37,6 +37,13 @@ def capture_document_view(request):
                     if field_value:
                         metadata_values[field.name] = field_value == 'on' if field.field_type == 'checkbox' else field_value
 
+                try:
+                    secuence = DocumentSequence.objects.filter().first()
+                    metadata_values['Número de registro'] = secuence.seq_value
+                    secuence.seq_value = secuence.seq_value + 1
+                    secuence.save()
+                except:
+                    print("Error en el secuencial")
                 document.metadata_values = metadata_values
                 document.save()
 
