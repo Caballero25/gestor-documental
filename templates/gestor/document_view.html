@@ -22,8 +22,12 @@
         
     {% elif document.file.name|lower|slice:'-4:' in '.jpg,.jpeg,.png,.gif' %}
         <!-- Visualización de imágenes -->
-        <img src="data:{{ mime_type }};base64,{{ file_base64 }}" alt="{{ document.code_name }}" class="rounded mx-auto d-block">
-          
+        <img 
+            src="data:{{ mime_type }};base64,{{ file_base64 }}" 
+            alt="{{ document.code_name }}" 
+            class="img-fluid rounded mx-auto d-block"
+            style="max-width: 100%; height: auto;"
+        >
     {% elif document.file.name|lower|slice:'-4:' in '.mp4,.ogg' %}
         <!-- Visualización de video -->
         <video width="100%" controls>
