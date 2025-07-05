@@ -71,6 +71,16 @@
     </div>
   </div>
   <div class="card-body">
+    <div class="form-group">
+    <label for="aspect-ratio">Relación de Aspecto</label>
+      <select class="form-select" id="aspect-ratio">
+        <option value="16:9">16:9 (Widescreen)</option>
+        <option value="4:3">4:3 (Estándar)</option>
+        <option value="1:1">1:1 (Cuadrado)</option>
+        <option value="3:2">3:2 (Fotografía)</option>
+        <option value="auto">Auto (Dispositivo)</option>
+      </select>
+    </div>
     <form id="document-form" method="post" enctype="multipart/form-data">
       {% csrf_token %}
 
@@ -190,40 +200,66 @@
     const imageDataInput = document.getElementById("image-data");
     const cameraError = document.getElementById("camera-error");
     let stream = null;
-
-    // Iniciar cámara con manejo de errores mejorado
-    function startCamera() {
-      cameraError.textContent = "";
-
-      // Opciones para la cámara trasera (environment) o frontal (user)
-      const constraints = {
+    function getConstraints(aspectRatio) {
+      const baseConstraints = {
         video: {
           facingMode: "environment",
-          width: { ideal: 3840 },
-          height: { ideal: 2160 },
-        },
-        audio: false,
+          audio: false
+        }
       };
+      
+      // Definir resoluciones ideales para cada relación de aspecto
+      const resolutions = {
+        "16:9": { width: 3840, height: 2160 },   // 4K UHD
+        "4:3": { width: 3264, height: 2448 },    // ~8MP (común en móviles)
+        "1:1": { width: 3024, height: 3024 },    // Cuadrado (máx. iPhone)
+        "3:2": { width: 4032, height: 2688 },    // ~11MP (algunas cámaras)
+        "auto": { width: { ideal: 4096 }, height: { ideal: 2160 } } // Máxima resolución
+      };
+      
+      if (aspectRatio === 'auto') {
+        return baseConstraints;
+      }
+      
+      if (resolutions[aspectRatio]) {
+        baseConstraints.video.width = { ideal: resolutions[aspectRatio].width };
+        baseConstraints.video.height = { ideal: resolutions[aspectRatio].height };
+        baseConstraints.video.aspectRatio = parseFloat(aspectRatio.split(':')[0]) / 
+                                          parseFloat(aspectRatio.split(':')[1]);
+      }
+      
+      return baseConstraints;
+    }
 
-      // Intentar acceder a la cámara
-      navigator.mediaDevices
-        .getUserMedia(constraints)
-        .then(function (mediaStream) {
-          stream = mediaStream;
-          cameraView.srcObject = mediaStream;
-          cameraView.style.display = "block";
-          cameraPlaceholder.style.display = "none";
-
-          // Habilitar botones
-          startCameraBtn.disabled = true;
-          captureBtn.disabled = false;
-
-          // Ajustar el tamaño del canvas al del video
-          cameraView.onloadedmetadata = function () {
-            cameraCanvas.width = cameraView.videoWidth;
-            cameraCanvas.height = cameraView.videoHeight;
-          };
-        })
+    // Iniciar cámara con manejo de errores mejorado
+  function startCamera() {
+    stopCamera()
+        cameraError.textContent = "";
+        
+        // Obtener relación de aspecto seleccionada
+        const aspectRatio = $("#aspect-ratio").val();
+        const constraints = getConstraints(aspectRatio);
+        
+        // Resto del código de startCamera permanece igual...
+        navigator.mediaDevices
+          .getUserMedia(constraints)
+          .then(function (mediaStream) {
+            stream = mediaStream;
+            cameraView.srcObject = mediaStream;
+            cameraView.style.display = "block";
+            cameraPlaceholder.style.display = "none";
+            
+            startCameraBtn.disabled = true;
+            captureBtn.disabled = false;
+            
+            cameraView.onloadedmetadata = function () {
+              cameraCanvas.width = cameraView.videoWidth;
+              cameraCanvas.height = cameraView.videoHeight;
+              
+              // Opcional: Mostrar info de la resolución actual
+              console.log(`Resolución actual: ${cameraView.videoWidth}x${cameraView.videoHeight}`);
+            };
+          })
         .catch(function (error) {
           console.error("Error al acceder a la cámara:", error);
 
