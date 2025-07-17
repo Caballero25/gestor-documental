@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import home
-from .views_extras import modules, submodules
+from .views_extras import modules, submodules, sequence
 
 urlpatterns = [
     path('', home, name="home-url"),
@@ -15,6 +15,12 @@ urlpatterns = [
     path('submodules/create', submodules.subModuleCreateView, name="submodule_create"),
     path('submodules/edit/<str:id>', submodules.subModuleUpdateView, name="submodule_edit"),
     path('submodules/delete/<str:id>', submodules.subModuleDeleteView, name="submodule_delete"),
+
+    #Secuenciales
+    path('sequence/', sequence.SequenceListView.as_view(), name='sequence_list'),
+    path('sequence/create', sequence.sequenceCreateView, name="sequence_create"),
+    path('sequence/edit/<str:id>', sequence.sequenceUpdateView, name="sequence_edit"),
+    path('sequence/delete/<str:id>', sequence.sequenceDeleteView, name="sequence_delete"),
 
 
 ]

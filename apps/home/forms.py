@@ -1,6 +1,7 @@
 from django.utils.translation import gettext_lazy as _
 from django import forms
 from .models import Module, SubModule
+from apps.gestor.models import DocumentSequence
 
 class ModuleForm(forms.ModelForm):
     class Meta:
@@ -47,5 +48,23 @@ class SubModuleForm(forms.ModelForm):
             },
             'module': {
                 'required': _("El submódulo debe alojarse en un módulo."),
+            },
+        }
+
+class DocumentSequenceForm(forms.ModelForm):
+    class Meta:
+        model = DocumentSequence
+        fields = ['libro', 'seq_value']
+        widgets = {
+            'libro': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del libro a digitalizar'}),
+            'seq_value': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Inicio de secuencia'}),
+        }
+        error_messages = {
+            'libro': {
+                'unique': _("Ya existe un libro con este nombre."),
+                'required': _("El nombre del libro es obligatorio."),
+            },
+            'seq_value': {
+                'required': _("La secuencia del libro es obligatoria."),
             },
         }
