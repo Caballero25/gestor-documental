@@ -59,10 +59,12 @@ def capture_document_view(request):
 
     else:
         form = DocumentAndSchemaForm()
+    secuenciales = DocumentSequence.objects.filter().all()
 
     return render(request, 'gestor/uploadDocumentImage.html', {
         'metadata_schemas': metadata_schemas,
         'form': form,
+        'secuenciales': secuenciales
     })
 
 def get_metadata_fields(request):

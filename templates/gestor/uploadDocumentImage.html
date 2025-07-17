@@ -65,6 +65,11 @@
     <div class="col-8">
         <div class="input-group">
             <label for="seq-value-display"></label>
+            <select class="form-control" id="seq-selector">
+              {% for secuencial in secuenciales %}
+              <option value="{{secuencial.id}}">{{secuencial.libro}}</option>
+              {% endfor %}
+            </select>
             <input type="text" id="seq-value-display" class="form-control ml-1" readonly>
             <button type="button" id="change-seq-btn" class="btn btn-outline-secondary">C. secuencia</button>
         </div>
@@ -546,7 +551,8 @@
   });
   // Obtener valor actual del seq_value
 function cargarValorSecuencia() {
-    $.get("{% url 'get_seq_value' %}", function (data) {
+    const selectedId = $('#seq-selector').val();
+    $.get(`{% url 'get_seq_value' %}`, {id: selectedId}, function (data) {
         if (data.success) {
             $('#seq-value-display').val(data.seq_value);
         } else {
@@ -559,6 +565,8 @@ function cargarValorSecuencia() {
 
 // Abrir prompt para cambiar la secuencia
 $('#change-seq-btn').click(function () {
+    const selectedId = $('#seq-selector').val();
+    
     Swal.fire({
         title: 'Nuevo valor de la secuencia',
         input: 'number',
@@ -580,7 +588,10 @@ $('#change-seq-btn').click(function () {
                 url: "{% url 'set_seq_value' %}",
                 method: "POST",
                 contentType: "application/json",
-                data: JSON.stringify({ seq_value: parseInt(result.value) }),
+                data: JSON.stringify({ 
+                    id: selectedId,
+                    seq_value: parseInt(result.value) 
+                }),
                 success: function (data) {
                     Swal.fire({
                         icon: 'success',
@@ -596,6 +607,16 @@ $('#change-seq-btn').click(function () {
             });
         }
     });
+});
+
+// Cargar valor cuando cambia el select
+$('#seq-selector').change(function() {
+    cargarValorSecuencia();
+});
+
+// Cargar valor inicial al cargar la página
+$(document).ready(function() {
+    cargarValorSecuencia();
 });
 </script>
 {% endblock %}

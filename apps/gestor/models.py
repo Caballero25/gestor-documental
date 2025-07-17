@@ -50,6 +50,7 @@ class Document(models.Model):
             raise ValueError(f"No se pudo leer el PDF: {e}")
         
 class DocumentSequence(models.Model):
+    libro = models.CharField(max_length=200, verbose_name="Tipo de libro a digitalizar", default="BAUTIZO", null=False, blank=False)
     seq_value = models.BigIntegerField(default=1)
 
     def __str__(self):
