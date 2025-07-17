@@ -38,11 +38,11 @@ def capture_document_view(request):
                         metadata_values[field.name] = field_value == 'on' if field.field_type == 'checkbox' else field_value
 
                 try:
-                    secuence = DocumentSequence.objects.filter().first()
+                    secuence = DocumentSequence.objects.get(id=int(request.POST.get('sequence_id')))
                     metadata_values['Número de registro'] = secuence.seq_value
                     secuence.seq_value = secuence.seq_value + 1
                     secuence.save()
-                except:
+                except Exception as e:
                     print("Error en el secuencial")
                 document.metadata_values = metadata_values
                 document.save()
