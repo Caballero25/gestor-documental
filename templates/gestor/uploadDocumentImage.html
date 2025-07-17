@@ -129,23 +129,15 @@
       <div class="form-group">
         <label>Capturar Documento</label>
         <div id="camera-container">
-          <div class="camera-placeholder" id="camera-placeholder">
-            <i class="fas fa-camera fa-3x mb-3"></i>
-            <p>Haz clic en "Iniciar Cámara" para comenzar</p>
-          </div>
           <video id="camera-view" autoplay playsinline></video>
           <canvas id="camera-canvas"></canvas>
           <img id="captured-image" alt="Documento capturado" />
         </div>
-        <div class="camera-buttons">
-          <button type="button" id="start-camera" class="btn btn-primary">
-            <i class="fas fa-video"></i> Iniciar Cámara
-          </button>
+       <div class="camera-buttons">
           <button
             type="button"
             id="capture-btn"
             class="btn btn-success"
-            disabled
           >
             <i class="fas fa-camera"></i> Capturar
           </button>
@@ -156,6 +148,9 @@
             disabled
           >
             <i class="fas fa-redo"></i> Volver a tomar
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i> Enviar
           </button>
         </div>
         <div id="camera-error" class="error-message"></div>
@@ -190,10 +185,8 @@
     cargarValorSecuencia();
     // Elementos de la cámara
     const cameraContainer = document.getElementById("camera-container");
-    const cameraPlaceholder = document.getElementById("camera-placeholder");
     const cameraView = document.getElementById("camera-view");
     const cameraCanvas = document.getElementById("camera-canvas");
-    const startCameraBtn = document.getElementById("start-camera");
     const captureBtn = document.getElementById("capture-btn");
     const retakeBtn = document.getElementById("retake-btn");
     const capturedImage = document.getElementById("captured-image");
@@ -247,9 +240,7 @@
             stream = mediaStream;
             cameraView.srcObject = mediaStream;
             cameraView.style.display = "block";
-            cameraPlaceholder.style.display = "none";
-            
-            startCameraBtn.disabled = true;
+
             captureBtn.disabled = false;
             
             cameraView.onloadedmetadata = function () {
@@ -279,8 +270,6 @@
                 stream = mediaStream;
                 cameraView.srcObject = mediaStream;
                 cameraView.style.display = "block";
-                cameraPlaceholder.style.display = "none";
-                startCameraBtn.disabled = true;
                 captureBtn.disabled = false;
                 cameraView.onloadedmetadata = function () {
                   cameraCanvas.width = cameraView.videoWidth;
@@ -307,8 +296,6 @@
         });
         cameraView.srcObject = null;
         cameraView.style.display = "none";
-        cameraPlaceholder.style.display = "block";
-        startCameraBtn.disabled = false;
       }
     }
     // Capturar imagen como archivo JPG
@@ -352,74 +339,7 @@
         0.9
       );
     }
-    /* Capturar imagen
-function captureImage() {
-    if (!stream) return;
-    
-    const context = cameraCanvas.getContext('2d');
-    context.drawImage(cameraView, 0, 0, cameraCanvas.width, cameraCanvas.height);
-    
-    // Mostrar vista previa (igual que antes)
-    capturedImage.src = cameraCanvas.toDataURL('image/jpeg');
-    capturedImage.style.display = 'block';
-    
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({
-        orientation: cameraCanvas.width > cameraCanvas.height ? 'landscape' : 'portrait',
-        unit: 'mm'
-    });
-
-    // Datos de la imagen
-    const imgData = cameraCanvas.toDataURL('image/jpeg', 0.8);
-
-    // Tamaño de página PDF
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-
-    // Tamaño real del canvas
-    const imgWidth = cameraCanvas.width;
-    const imgHeight = cameraCanvas.height;
-    const imgAspect = imgWidth / imgHeight;
-    const pdfAspect = pdfWidth / pdfHeight;
-
-    // Cálculo para mantener la imagen entera y centrada
-    let renderWidth, renderHeight, offsetX, offsetY;
-
-    if (imgAspect > pdfAspect) {
-        // Imagen más ancha que la página: ajustar por ancho
-        renderWidth = pdfWidth;
-        renderHeight = pdfWidth / imgAspect;
-        offsetX = 0;
-        offsetY = (pdfHeight - renderHeight) / 2;
-    } else {
-        // Imagen más alta que la página: ajustar por alto
-        renderHeight = pdfHeight;
-        renderWidth = pdfHeight * imgAspect;
-        offsetX = (pdfWidth - renderWidth) / 2;
-        offsetY = 0;
-    }
-
-    pdf.addImage(imgData, 'JPEG', offsetX, offsetY, renderWidth, renderHeight);
-    const pdfBlob = pdf.output('blob');
-    
-    // Crear objeto File
-    const pdfFile = new File([pdfBlob], 'documento_capturado.pdf', { type: 'application/pdf' });
-    
-    // Usar el input file existente en lugar de crear uno nuevo
-    const fileInput = document.getElementById('formFile');
-    const dataTransfer = new DataTransfer();
-    dataTransfer.items.add(pdfFile);
-    fileInput.files = dataTransfer.files;
-    
-    // Cambiar estado de los botones
-    captureBtn.disabled = true;
-    retakeBtn.disabled = false;
-    
-    // Detener la cámara
-    stopCamera();
-}
-    */
-    // Retomar foto
+    startCamera();
     function retakeImage() {
       // Limpiar el input file
       const fileInput = document.getElementById("formFile");
@@ -438,7 +358,6 @@ function captureImage() {
     }
 
     // Event listeners
-    startCameraBtn.addEventListener("click", startCamera);
     captureBtn.addEventListener("click", captureImage);
     retakeBtn.addEventListener("click", retakeImage);
 
