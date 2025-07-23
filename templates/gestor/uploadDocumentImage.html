@@ -207,13 +207,13 @@
       };
       
       // Definir resoluciones ideales para cada relación de aspecto
-      const resolutions = {
-        "16:9": { width: 3840, height: 2160 },   // 4K UHD
-        "4:3": { width: 3264, height: 2448 },    // ~8MP (común en móviles)
-        "1:1": { width: 3024, height: 3024 },    // Cuadrado (máx. iPhone)
-        "3:2": { width: 4032, height: 2688 },    // ~11MP (algunas cámaras)
-        "auto": { width: { ideal: 4096 }, height: { ideal: 2160 } } // Máxima resolución
-      };
+    const resolutions = {
+        "16:9": { width: 1920, height: 1080 },   // 4K UHD reducido a Full HD (50%)
+        "4:3": { width: 1632, height: 1224 },    // ~8MP → ~4MP (50%)
+        "1:1": { width: 1512, height: 1512 },    // Cuadrado reducido a la mitad
+        "3:2": { width: 2016, height: 1344 },    // ~11MP → ~5.5MP (50%)
+        "auto": { width: { ideal: 2048 }, height: { ideal: 1080 } } // Mitad de la resolución máxima
+    };
       
       if (aspectRatio === 'auto') {
         return baseConstraints;
