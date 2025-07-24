@@ -188,6 +188,7 @@
 <script>
   $(document).ready(function () {
     cargarValorSecuencia();
+    let isSaving = false;
     // Elementos de la cámara
     const cameraContainer = document.getElementById("camera-container");
     const cameraView = document.getElementById("camera-view");
@@ -485,6 +486,10 @@
     // Validar formulario antes de enviar
     $("#document-form").submit(function (e) {
       e.preventDefault();
+      if (isSaving) {
+        console.log("El formulario ya se está enviando, por favor espere...");
+        return;
+      }
       const formData = new FormData(this);
       const selectedId = $('#seq-selector').val();
       formData.append('sequence_id', selectedId);
@@ -494,6 +499,10 @@
         alert("Por favor, capture un documento antes de enviar.");
         return;
       }
+
+      isSaving = true;
+      $('button[type="submit"]').prop('disabled', true);
+      $('button[type="submit"]').html('<i class="fas fa-spinner fa-spin"></i> Guardando...');
 
       const hasSchema =
         $("#id_metadata_schema").val() && !$("#no_metadata").is(":checked");
@@ -527,6 +536,9 @@
         processData: false,
         contentType: false,
         success: function (response) {
+        isSaving = false;
+        $('button[type="submit"]').prop('disabled', false);
+        $('button[type="submit"]').html('<i class="fas fa-spinner fa-spin"></i> Enviar');
           if (response.success) {
             Swal.fire({
                 icon: 'success',
@@ -545,6 +557,9 @@
           }
         },
         error: function (xhr, status, error) {
+          isSaving = false;
+          $('button[type="submit"]').prop('disabled', false);
+          $('button[type="submit"]').html('<i class="fas fa-spinner fa-spin"></i> Enviar');
           console.error("Error en la petición:", error);
           alert("Error al procesar el formulario");
         },
