@@ -26,11 +26,11 @@
         
         {% elif document.file.name|lower|slice:'-4:' in '.jpg,.jpeg,.png,.gif' %}
         <!-- Controles de rotación -->
-        <div class="text-center mb-3 col-12">
-            <button class="btn btn-secondary me-2 col-6" onclick="rotateImage(-90)">
+        <div class="text-center mb-3 col-12 d-flex">
+            <button class="btn btn-secondary  btn-sm col-6" onclick="rotateImage(-90)">
                 <i class="bi bi-arrow-counterclockwise"></i>Izquierda
             </button>
-            <button class="btn btn-secondary col-6" onclick="rotateImage(90)">
+            <button class="btn btn-secondary btn-sm col-6" onclick="rotateImage(90)">
                 <i class="bi bi-arrow-clockwise"></i>Derecha
             </button>
         </div>
