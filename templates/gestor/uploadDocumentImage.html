@@ -23,36 +23,37 @@
     display: none;
   }*/
 
-    #camera-container {
+  #camera-container {
     position: relative;
     width: 100%;
-    max-width: 500px;
+    max-width: 100%;
     margin: 0 auto;
     border: 2px dashed #ddd;
     border-radius: 5px;
     min-height: 200px;
-    /*max-height: 90vh; /* Limita la altura al 70% del viewport */
-    /*overflow: hidden; /* Evita que el contenido se desborde */
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    aspect-ratio: 4/3;
+    aspect-ratio: 4/1; /* Fijo para 4:1 */
+    overflow: hidden;
+    background-color: #f0f0f0; /* Fondo visible cuando la cámara no llena el espacio */
   }
-  
+
   #camera-view {
-    width: 100%;
+    width: auto;
     height: 100%;
-    object-fit: contain; /* Mantiene la relación de aspecto */
-    display: none;
+    object-fit: cover; /* Prioriza llenar el contenedor verticalmente */
   }
   #camera-canvas {
     display: none;
   }
   #captured-image {
-    max-width: 100%;
-    display: none;
-    margin-top: 10px;
+    width: 100%;
+    height: auto;
+    max-height: 400px;
+    object-fit: contain; /* Muestra toda la imagen capturada */
+    border: 1px solid #ccc;
+    background: white;
   }
   .camera-placeholder {
     text-align: center;
