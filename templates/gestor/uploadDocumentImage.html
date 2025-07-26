@@ -1,7 +1,7 @@
-{% extends 'base/base_adminlte.html' %} 
-{% load static %} 
-{% block title %}Subir Documento con Cámara {% endblock %} 
-{% block extra_head %}
+{% extends 'base/base_adminlte.html' %}
+ {% load static %} 
+ {% block title %}Subir Documento con Cámara {% endblock %} 
+ {% block extra_head %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   /*#camera-container {
@@ -73,7 +73,7 @@
     color: #dc3545;
     margin-top: 5px;
   }
-    /* Media query para dispositivos móviles */
+  /* Media query para dispositivos móviles */
   @media (max-width: 768px) {
     #camera-container {
       max-height: 80vh; /* Altura aún más reducida en móviles */
@@ -91,25 +91,34 @@
 </div>
 <div class="card card-primary card-outline">
   <div class="row p-2">
-    <div class="col-4">
-        Digitalización
-    </div>
+    <div class="col-4">Digitalización</div>
     <div class="col-8">
-        <div class="input-group">
-            <label for="seq-value-display"></label>
-            <select class="form-control" id="seq-selector">
-              {% for secuencial in secuenciales %}
-              <option value="{{secuencial.id}}">{{secuencial.libro}}</option>
-              {% endfor %}
-            </select>
-            <input type="text" id="seq-value-display" class="form-control ml-1" readonly>
-            <button type="button" id="change-seq-btn" class="btn btn-outline-secondary">C. secuencia</button>
-        </div>
+      <div class="input-group">
+        <label for="seq-value-display"></label>
+        <select class="form-control" id="seq-selector">
+          {% for secuencial in secuenciales %}
+          <option value="{{secuencial.id}}">{{secuencial.libro}}</option>
+          {% endfor %}
+        </select>
+        <input
+          type="text"
+          id="seq-value-display"
+          class="form-control ml-1"
+          readonly
+        />
+        <button
+          type="button"
+          id="change-seq-btn"
+          class="btn btn-outline-secondary"
+        >
+          C. secuencia
+        </button>
+      </div>
     </div>
   </div>
   <div class="card-body">
     <div class="form-group">
-    <label for="aspect-ratio">Relación de Aspecto</label>
+      <label for="aspect-ratio">Relación de Aspecto</label>
       <select class="form-select" id="aspect-ratio">
         <option value="16:9">16:9 (Widescreen)</option>
         <option value="16:3">9:3 (Personalizada)</option>
@@ -172,12 +181,8 @@
           <canvas id="camera-canvas"></canvas>
           <img id="captured-image" alt="Documento capturado" />
         </div>
-       <div class="camera-buttons">
-          <button
-            type="button"
-            id="capture-btn"
-            class="btn btn-success btn-lg"
-          >
+        <div class="camera-buttons">
+          <button type="button" id="capture-btn" class="btn btn-success btn-lg">
             <i class="fas fa-camera"></i> Capturar
           </button>
           <button type="submit" class="btn btn-primary btn-lg">
@@ -237,66 +242,71 @@
       const baseConstraints = {
         video: {
           facingMode: "environment",
-          audio: false
-        }
+          audio: false,
+        },
       };
-      
+
       // Definir resoluciones ideales para cada relación de aspecto
-    const resolutions = {
-        "16:9": { width: 1920, height: 1080 },   // 4K UHD reducido a Full HD (50%)
+      const resolutions = {
+        "16:9": { width: 1920, height: 1080 }, // 4K UHD reducido a Full HD (50%)
         "16:3": { width: 1920, height: 360 },
         "4:1": { width: 1600, height: 400 },
         "6:1": { width: 2400, height: 400 },
         "8:1": { width: 1920, height: 240 },
         "10:1": { width: 2000, height: 200 },
         "12:1": { width: 2400, height: 200 },
-        "4:3": { width: 1632, height: 1224 },    // ~8MP → ~4MP (50%)
-        "1:1": { width: 1512, height: 1512 },    // Cuadrado reducido a la mitad
-        "3:2": { width: 2016, height: 1344 },    // ~11MP → ~5.5MP (50%)
-        "auto": { width: { ideal: 2048 }, height: { ideal: 1080 } } // Mitad de la resolución máxima
-    };
-      
-      if (aspectRatio === 'auto') {
+        "4:3": { width: 1632, height: 1224 }, // ~8MP → ~4MP (50%)
+        "1:1": { width: 1512, height: 1512 }, // Cuadrado reducido a la mitad
+        "3:2": { width: 2016, height: 1344 }, // ~11MP → ~5.5MP (50%)
+        auto: { width: { ideal: 2048 }, height: { ideal: 1080 } }, // Mitad de la resolución máxima
+      };
+
+      if (aspectRatio === "auto") {
         return baseConstraints;
       }
-      
+
       if (resolutions[aspectRatio]) {
         baseConstraints.video.width = { ideal: resolutions[aspectRatio].width };
-        baseConstraints.video.height = { ideal: resolutions[aspectRatio].height };
-        baseConstraints.video.aspectRatio = parseFloat(aspectRatio.split(':')[0]) / 
-                                          parseFloat(aspectRatio.split(':')[1]);
+        baseConstraints.video.height = {
+          ideal: resolutions[aspectRatio].height,
+        };
+        baseConstraints.video.aspectRatio =
+          parseFloat(aspectRatio.split(":")[0]) /
+          parseFloat(aspectRatio.split(":")[1]);
       }
-      
+
       return baseConstraints;
     }
 
     // Iniciar cámara con manejo de errores mejorado
-  function startCamera() {
-    stopCamera()
-        cameraError.textContent = "";
-        
-        // Obtener relación de aspecto seleccionada
-        const aspectRatio = $("#aspect-ratio").val();
-        const constraints = getConstraints(aspectRatio);
-        
-        // Resto del código de startCamera permanece igual...
-        navigator.mediaDevices
-          .getUserMedia(constraints)
-          .then(function (mediaStream) {
-            stream = mediaStream;
-            cameraView.srcObject = mediaStream;
-            cameraView.style.display = "block";
+    function startCamera() {
+      stopCamera();
+      cameraError.textContent = "";
 
-            captureBtn.disabled = false;
-            
-            cameraView.onloadedmetadata = function () {
-              cameraCanvas.width = cameraView.videoWidth;
-              cameraCanvas.height = cameraView.videoHeight;
-              
-              // Opcional: Mostrar info de la resolución actual
-              console.log(`Resolución actual: ${cameraView.videoWidth}x${cameraView.videoHeight}`);
-            };
-          })
+      // Obtener relación de aspecto seleccionada
+      const aspectRatio = $("#aspect-ratio").val();
+      const constraints = getConstraints(aspectRatio);
+
+      // Resto del código de startCamera permanece igual...
+      navigator.mediaDevices
+        .getUserMedia(constraints)
+        .then(function (mediaStream) {
+          stream = mediaStream;
+          cameraView.srcObject = mediaStream;
+          cameraView.style.display = "block";
+
+          captureBtn.disabled = false;
+
+          cameraView.onloadedmetadata = function () {
+            cameraCanvas.width = cameraView.videoWidth;
+            cameraCanvas.height = cameraView.videoHeight;
+
+            // Opcional: Mostrar info de la resolución actual
+            console.log(
+              `Resolución actual: ${cameraView.videoWidth}x${cameraView.videoHeight}`
+            );
+          };
+        })
         .catch(function (error) {
           console.error("Error al acceder a la cámara:", error);
 
@@ -531,8 +541,8 @@
         return;
       }
       const formData = new FormData(this);
-      const selectedId = $('#seq-selector').val();
-      formData.append('sequence_id', selectedId);
+      const selectedId = $("#seq-selector").val();
+      formData.append("sequence_id", selectedId);
 
       const fileInput = document.getElementById("formFile");
       if (!fileInput.files || fileInput.files.length === 0) {
@@ -541,8 +551,10 @@
       }
 
       isSaving = true;
-      $('button[type="submit"]').prop('disabled', true);
-      $('button[type="submit"]').html('<i class="fas fa-spinner fa-spin"></i> Guardando...');
+      $('button[type="submit"]').prop("disabled", true);
+      $('button[type="submit"]').html(
+        '<i class="fas fa-spinner fa-spin"></i> Guardando...'
+      );
 
       const hasSchema =
         $("#id_metadata_schema").val() && !$("#no_metadata").is(":checked");
@@ -576,20 +588,22 @@
         processData: false,
         contentType: false,
         success: function (response) {
-        isSaving = false;
-        $('button[type="submit"]').prop('disabled', false);
-        $('button[type="submit"]').html('<i class="fas fa-spinner fa-spin"></i> Enviar');
+          isSaving = false;
+          $('button[type="submit"]').prop("disabled", false);
+          $('button[type="submit"]').html(
+            '<i class="fas fa-spinner fa-spin"></i> Enviar'
+          );
           if (response.success) {
             Swal.fire({
-                icon: 'success',
-                title: 'Documento guardado correctamente',
-                showConfirmButton: false,
-                timer: 1000,
-                timerProgressBar: true
-                });
+              icon: "success",
+              title: "Documento guardado correctamente",
+              showConfirmButton: false,
+              timer: 1000,
+              timerProgressBar: true,
+            });
             //$("#document-form")[0].reset();
             $("#captured-image").hide();
-            retakeImage()
+            retakeImage();
             cargarValorSecuencia();
           } else {
             alert("Ocurrió un error al guardar el documento");
@@ -598,8 +612,10 @@
         },
         error: function (xhr, status, error) {
           isSaving = false;
-          $('button[type="submit"]').prop('disabled', false);
-          $('button[type="submit"]').html('<i class="fas fa-spinner fa-spin"></i> Enviar');
+          $('button[type="submit"]').prop("disabled", false);
+          $('button[type="submit"]').html(
+            '<i class="fas fa-spinner fa-spin"></i> Enviar'
+          );
           console.error("Error en la petición:", error);
           alert("Error al procesar el formulario");
         },
@@ -607,73 +623,73 @@
     });
   });
   // Obtener valor actual del seq_value
-function cargarValorSecuencia() {
-    const selectedId = $('#seq-selector').val();
-    $.get(`{% url 'get_seq_value' %}`, {id: selectedId}, function (data) {
-        if (data.success) {
-            $('#seq-value-display').val(data.seq_value);
-        } else {
-            $('#seq-value-display').val("Error");
-        }
+  function cargarValorSecuencia() {
+    const selectedId = $("#seq-selector").val();
+    $.get(`{% url 'get_seq_value' %}`, { id: selectedId }, function (data) {
+      if (data.success) {
+        $("#seq-value-display").val(data.seq_value);
+      } else {
+        $("#seq-value-display").val("Error");
+      }
     }).fail(function () {
-        $('#seq-value-display').val("Error");
+      $("#seq-value-display").val("Error");
     });
-}
+  }
 
-// Abrir prompt para cambiar la secuencia
-$('#change-seq-btn').click(function () {
-    const selectedId = $('#seq-selector').val();
-    
+  // Abrir prompt para cambiar la secuencia
+  $("#change-seq-btn").click(function () {
+    const selectedId = $("#seq-selector").val();
+
     Swal.fire({
-        title: 'Nuevo valor de la secuencia',
-        input: 'number',
-        inputLabel: 'Ingrese el valor inicial deseado',
-        inputAttributes: {
-            min: 0
-        },
-        showCancelButton: true,
-        confirmButtonText: 'Guardar',
-        cancelButtonText: 'Cancelar',
-        inputValidator: (value) => {
-            if (!value || parseInt(value) < 0) {
-                return 'Ingrese un número válido mayor o igual a 0';
-            }
+      title: "Nuevo valor de la secuencia",
+      input: "number",
+      inputLabel: "Ingrese el valor inicial deseado",
+      inputAttributes: {
+        min: 0,
+      },
+      showCancelButton: true,
+      confirmButtonText: "Guardar",
+      cancelButtonText: "Cancelar",
+      inputValidator: (value) => {
+        if (!value || parseInt(value) < 0) {
+          return "Ingrese un número válido mayor o igual a 0";
         }
+      },
     }).then((result) => {
-        if (result.isConfirmed) {
-            $.ajax({
-                url: "{% url 'set_seq_value' %}",
-                method: "POST",
-                contentType: "application/json",
-                data: JSON.stringify({ 
-                    id: selectedId,
-                    seq_value: parseInt(result.value) 
-                }),
-                success: function (data) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Secuencia actualizada',
-                        showConfirmButton: false,
-                        timer: 1000
-                    });
-                    cargarValorSecuencia();
-                },
-                error: function () {
-                    Swal.fire('Error', 'No se pudo actualizar la secuencia', 'error');
-                }
+      if (result.isConfirmed) {
+        $.ajax({
+          url: "{% url 'set_seq_value' %}",
+          method: "POST",
+          contentType: "application/json",
+          data: JSON.stringify({
+            id: selectedId,
+            seq_value: parseInt(result.value),
+          }),
+          success: function (data) {
+            Swal.fire({
+              icon: "success",
+              title: "Secuencia actualizada",
+              showConfirmButton: false,
+              timer: 1000,
             });
-        }
+            cargarValorSecuencia();
+          },
+          error: function () {
+            Swal.fire("Error", "No se pudo actualizar la secuencia", "error");
+          },
+        });
+      }
     });
-});
+  });
 
-// Cargar valor cuando cambia el select
-$('#seq-selector').change(function() {
+  // Cargar valor cuando cambia el select
+  $("#seq-selector").change(function () {
     cargarValorSecuencia();
-});
+  });
 
-// Cargar valor inicial al cargar la página
-$(document).ready(function() {
+  // Cargar valor inicial al cargar la página
+  $(document).ready(function () {
     cargarValorSecuencia();
-});
+  });
 </script>
 {% endblock %}
