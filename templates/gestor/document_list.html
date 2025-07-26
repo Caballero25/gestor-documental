@@ -2,7 +2,7 @@
 
 {% block thead %}
     <th style="width: 5%;">Nro</th>
-    <th style="width: 20%;">Código</th>
+    <th style="width: 20%;">Tomo</th>
     <th style="width: 35%;">Documento</th>
     <th style="width: 10%;">Esquema</th>
     <th style="width: 20%;" class="text-center">Opciones</th>
@@ -12,10 +12,10 @@
     {% for i in object_list %}
         <tr>
             <td>{{ i.id }}</td>
-            {% if i.code_name %}
-                <td>{{ i.code_name }}</td>
+            {% if i.metadata_values.TOMO %}
+                <td>{{ i.metadata_values.TOMO }}</td>
             {% else %}
-                <td class="text-secondary">Sin Código</td>
+                <td class="text-secondary">Sin TOMO asignado</td>
             {% endif %}
             <td>{{ i.file }}</td>
             {% if i.metadata_schema %}
