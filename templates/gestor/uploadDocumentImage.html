@@ -562,6 +562,20 @@
       const selectedId = $("#seq-selector").val();
       formData.append("sequence_id", selectedId);
 
+      const tomoField = $("[name='metadata_TOMO']");
+      if (tomoField.length > 0 && !tomoField.val()) {
+          Swal.fire({
+              icon: 'error',
+              title: 'Campo requerido',
+              text: 'El campo TOMO es obligatorio para enviar el documento',
+              confirmButtonText: 'Entendido'
+          });
+          tomoField.addClass('is-invalid');
+          tomoField.after('<div class="invalid-feedback">Este campo es requerido</div>');
+          tomoField.focus();
+          return false;
+      }
+
       const fileInput = document.getElementById("formFile");
       if (!fileInput.files || fileInput.files.length === 0) {
         alert("Por favor, capture un documento antes de enviar.");
