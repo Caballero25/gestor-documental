@@ -61,6 +61,41 @@
       max-height: 80vh; /* Altura aún más reducida en móviles */
     }
   }
+    .seq-bubble {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #007bff;
+    color: white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .seq-bubble:hover {
+    background-color: #0069d9;
+    transform: translateY(-50%) scale(1.05);
+  }
+
+  /* Para dispositivos móviles */
+  @media (max-width: 768px) {
+    .seq-bubble {
+      width: 30px;
+      height: 30px;
+      font-size: 1rem;
+      right: 10px;
+    }
+  }
 </style>
 {% endblock %} 
 {% block content %}
@@ -206,6 +241,7 @@
         </button>
       </div>
     </form>
+    <div id="seq-bubble" class="seq-bubble" title="Secuencia actual"></div>
   </div>
 </div>
 <script>
@@ -610,11 +646,14 @@
     $.get(`{% url 'get_seq_value' %}`, { id: selectedId }, function (data) {
       if (data.success) {
         $("#seq-value-display").val(data.seq_value);
+        $("#seq-bubble").text(data.seq_value);
       } else {
         $("#seq-value-display").val("Error");
+        $("#seq-bubble").text("Error");
       }
     }).fail(function () {
       $("#seq-value-display").val("Error");
+      $("#seq-bubble").text("Error");
     });
   }
 
