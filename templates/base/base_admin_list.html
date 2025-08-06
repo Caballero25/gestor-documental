@@ -32,8 +32,8 @@
 <!-- Controles de paginación -->
 <div class="container-fluid">
     {% if is_paginated %}
-    <nav aria-label="Paginación">
-        <ul class="pagination">
+    <nav aria-label="Paginación" class="d-flex" style="max-width: 100vw;">
+      <ul class="pagination">
           {% if page_obj.has_previous %}
             <li class="page-item">
               <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Anterior</a>
@@ -43,7 +43,8 @@
               <span class="page-link">Anterior</span>
             </li>
           {% endif %}
-  
+        </ul>
+        <ul class="pagination" style="overflow-y: scroll;">
           {% for num in paginator.page_range %}
             {% if num == page_obj.number %}
               <li class="page-item active" aria-current="page">
@@ -55,16 +56,17 @@
               </li>
             {% endif %}
           {% endfor %}
-  
-          {% if page_obj.has_next %}
+        </ul>
+        <ul class="pagination">
+        {% if page_obj.has_next %}
             <li class="page-item">
               <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Siguiente</a>
             </li>
-          {% else %}
+        {% else %}
             <li class="page-item disabled">
               <span class="page-link">Siguiente</span>
             </li>
-          {% endif %}
+        {% endif %}
         </ul>
       </nav>
       
