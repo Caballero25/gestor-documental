@@ -1,0 +1,191 @@
+{% extends 'base/base_adminlte.html' %}
+
+{# Nota: si tu base usa {% block 'extra_head' %} con comillas, cámbialo abajo para coincidir. #}
+{% block extra_head %}
+<style>
+  /* Layout y tipografía */
+  .tomo-title {
+    font-weight: 700;
+    letter-spacing: .3px;
+  }
+
+  /* Grid card como botón accesible */
+  .doc-card {
+    position: relative;
+    display: block;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    text-align: left;
+    outline: none;
+  }
+  .doc-card:focus-visible {
+    box-shadow: 0 0 0 .25rem rgba(13,110,253,.25);
+    border-radius: 1rem;
+  }
+
+  /* Contenedor visual cuadrado */
+  .doc-card .card {
+    border: 1px solid rgba(0,0,0,.06);
+    border-radius: 1rem;
+    overflow: hidden;
+    height: 100%;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+  }
+
+  /* Hace la tarjeta cuadrada usando aspect-ratio (BS5+ ok en navegadores modernos) */
+  .doc-card .card-body {
+    aspect-ratio: 1 / 1;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+  }
+
+  /* Contenido interior */
+  .doc-card .inner {
+    display: grid;
+    grid-template-rows: auto auto;
+    grid-row-gap: .5rem;
+    justify-items: center;
+  }
+
+  /* Ícono */
+  .doc-icon {
+    width: 56px;
+    height: 56px;
+    opacity: .9;
+    transition: transform .2s ease, opacity .2s ease;
+  }
+
+  /* Títulos */
+  .doc-label{
+    /* mostrar texto completo */
+    white-space: normal;          /* permite salto de línea */
+    overflow: visible;            /* no recorta el contenido */
+    text-overflow: clip;          /* sin puntos suspensivos */
+    max-width: none;              /* sin límite artificial de ancho */
+    word-break: break-word;       /* evita desbordes en palabras largas */
+    overflow-wrap: anywhere;      /* ayuda a cortar strings continuos */
+    text-align: center;
+    line-height: 1.2;
+    font-weight: 600;
+    font-size: clamp(.9rem, 1vw + .8rem, 1.05rem);
+  }
+
+  /* Estilos base */
+  .card-neutral {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  }
+  .card-neutral:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px -12px rgba(0,0,0,.25);
+    border-color: rgba(0,0,0,.12);
+  }
+  .card-neutral:hover .doc-icon {
+    transform: translateY(-2px) scale(1.02);
+    opacity: 1;
+  }
+
+  /* Variante "SIN TOMO" */
+  .card-warning-soft {
+    background: linear-gradient(180deg, #fff7e6 0%, #fff1cc 100%);
+    border-color: rgba(255,193,7,.35);
+  }
+  .card-warning-soft .doc-label {
+    color: #8a6d1f;
+  }
+  .card-warning-soft .doc-icon path {
+    fill: #b58900;
+  }
+  .card-warning-soft:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px -12px rgba(255,193,7,.55);
+    border-color: rgba(255,193,7,.6);
+  }
+
+  /* Micro interacción hover global */
+  .doc-card:hover .shine::after {
+    transform: translateX(120%);
+  }
+  .shine {
+    position: relative;
+  }
+  .shine::after {
+    content: "";
+    position: absolute;
+    top: -20%;
+    left: -40%;
+    width: 40%;
+    height: 140%;
+    background: linear-gradient(120deg, rgba(255,255,255,.0) 0%, rgba(255,255,255,.35) 50%, rgba(255,255,255,0) 100%);
+    transform: translateX(-120%) rotate(10deg);
+    transition: transform .6s ease;
+    pointer-events: none;
+  }
+
+  /* Estados deshabilitados/empty */
+  .empty-state {
+    border-radius: 1rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1 class="mb-4 tomo-title">{{ title }}</h1>
+
+  <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+
+    <!-- Card para "SIN TOMO" -->
+    <div class="col">
+      <form method="get" action="{% url 'document_list' %}">
+        <input type="hidden" name="tomo" value="SIN TOMO" />
+        <button type="submit" class="doc-card" aria-label="Filtrar por SIN TOMO">
+          <div class="card card-warning-soft shine">
+            <div class="card-body">
+              <div class="inner">
+                <!-- SVG Carpeta con hoja -->
+                <svg class="doc-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M6 12a4 4 0 0 1 4-4h8l3 3h17a4 4 0 0 1 4 4v3H6v-6Z" fill="#d1a300"/>
+                  <path d="M6 18h36v18a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4V18Z" fill="#ffd24d"/>
+                  <path d="M30 24h6v10H22v-6h8v-4Z" fill="#a67c00"/>
+                </svg>
+                <div class="doc-label">SIN TOMO</div>
+              </div>
+            </div>
+          </div>
+        </button>
+      </form>
+    </div>
+
+    {% for tomo in tomos %}
+      <div class="col">
+        <form method="get" action="{% url 'document_list' %}">
+          <input type="hidden" name="tomo" value="{{ tomo }}" />
+          <button type="submit" class="doc-card" aria-label="Filtrar por tomo {{ tomo }}">
+            <div class="card card-neutral shine">
+              <div class="card-body">
+                <div class="inner">
+                  <!-- SVG Carpeta genérica -->
+                  <svg class="doc-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M6 14a4 4 0 0 1 4-4h9l3 3h16a4 4 0 0 1 4 4v17a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4V14Z" fill="#94a3b8"/>
+                    <path d="M6 18h36v3H6z" fill="#cbd5e1"/>
+                  </svg>
+                  <div class="doc-label" title="{{ tomo }}">{{ tomo }}</div>
+                </div>
+              </div>
+            </div>
+          </button>
+        </form>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="alert alert-info text-center empty-state">
+          No hay tomos disponibles.
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

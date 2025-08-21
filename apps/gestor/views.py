@@ -2,6 +2,7 @@
 from django.views.generic import ListView
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.decorators import permission_required
+from django.db.models.fields.json import KeyTextTransform
 from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
@@ -138,7 +139,7 @@ def documentDeleteView(request, id):
             return JsonResponse({"error": str(e)}, status=HTTPStatus.BAD_REQUEST)
     return render(request, 'gestor/document_delete.html', context)
 
-
+"""
 class DocumentListView(PermissionRequiredMixin, ListView):
     model = Document
     template_name = 'gestor/document_list.html'
@@ -171,3 +172,71 @@ class DocumentListView(PermissionRequiredMixin, ListView):
         context['breadcrumb_previous'] = "Inicio"
         context['breadcrumb_previous_link'] = "home-url"
         return context
+"""
+class DocumentListView(PermissionRequiredMixin, ListView):
+    model = Document
+    template_name = 'gestor/document_list.html'
+    permission_required = 'view_user'
+    paginate_by = 10  
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        query = self.request.GET.get('q')
+        tomo_filtro = self.request.GET.get('tomo')
+        page = self.request.GET.get('page')
+
+        # Aplicar filtro de tomo primero
+        if tomo_filtro:
+            tomo_key = KeyTextTransform('TOMO', 'metadata_values')
+            if tomo_filtro == 'SIN TOMO':
+                queryset = queryset.exclude(tomo_key__isnull=False).union(
+                    queryset.filter(tomo_key__exact='')
+                )
+            else:
+                queryset = queryset.annotate(tomo=tomo_key).filter(tomo__iexact=tomo_filtro)
+
+        # Luego aplicar la búsqueda general sobre los resultados filtrados por tomo
+        if query:
+            filters = (
+                Q(code_name__icontains=query) |
+                Q(file__icontains=query) |
+                Q(metadata_values__icontains=query) |
+                Q(metadata_schema__name__icontains=query)
+            )
+            if query.isdigit():
+                filters |= Q(id=int(query))
+            queryset = queryset.filter(filters)
+
+        return queryset.order_by('-id')
+
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Listado de Documentos'
+        context['parametroBusqueda'] = 'Nro - Nombre - Código - Metadato'
+        context['query'] = self.request.GET.get('q', '')
+        context['create_url'] = "first-stept-upload"
+        context['delete_url'] = "document_delete"
+        context['update_url'] = "edit_document_view"
+        context['send_email_link'] = "send_email_link"
+        context['breadcrumb_previous'] = "Inicio"
+        context['breadcrumb_previous_link'] = "home-url"
+        context['tomo_filtro'] = self.request.GET.get('tomo', '')
+        return context
+    
+
+def lista_tomos(request):
+    tomos = Document.objects \
+        .annotate(tomo=KeyTextTransform('TOMO', 'metadata_values')) \
+        .values_list('tomo', flat=True) \
+        .distinct()
+
+    context = {
+        'title': 'Lista de Tomos',
+        'tomos': tomos,
+        'breadcrumb_previous': "Documentos",
+        'breadcrumb_previous_link': "document_list"
+    }
+    return render(request, 'gestor/lista_tomos.html', context)

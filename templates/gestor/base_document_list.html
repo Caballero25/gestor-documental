@@ -1,0 +1,83 @@
+{% extends 'base/base_adminlte.html' %}
+{% block extra_head %}
+
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid mt-3">
+    <strong style="font-size: 1.5rem; color: #1E3A5F;"><i class="bi bi-list-ol"></i> {{title}}</strong>
+    <form method="GET">
+        <!-- Campo oculto para mantener el filtro de tomo -->
+        {% if tomo_filtro %}
+        <input type="hidden" name="tomo" value="{{ tomo_filtro }}">
+        {% endif %}
+        
+        <div class="col-sm-8 col-md-8 col-lg-4" style="display: flex;">
+            <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Buscar por {{ parametroBusqueda }}" aria-label="Busqueda" aria-describedby="basic-addon2">
+            <div class="input-group-append">
+                <button type="submit" class="btn btn-outline-primary">Buscar</button>
+            </div>
+        </div>
+    </form>
+    <table class="table table-striped table-hover mt-1">
+        <thead class="table-dark">
+            {% block thead %}
+
+            {% endblock %}
+        </thead>
+        <tbody>
+            {% block tbody %}
+            
+            {% endblock %}
+        </tbody>
+    </table>
+</div>
+<!-- Controles de paginación -->
+<div class="container-fluid">
+    {% if is_paginated %}
+<nav aria-label="Paginación" class="d-flex" style="max-width: 100vw;">
+  <ul class="pagination">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?tomo={{ tomo_filtro|urlencode }}&q={{ query|urlencode }}&page={{ page_obj.previous_page_number }}">Anterior</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Anterior</span>
+        </li>
+      {% endif %}
+    </ul>
+    <ul class="pagination" style="overflow-y: scroll;">
+      {% for num in paginator.page_range %}
+        {% if num == page_obj.number %}
+          <li class="page-item active" aria-current="page">
+            <span class="page-link">{{ num }}</span>
+          </li>
+        {% else %}
+          <li class="page-item">
+            <a class="page-link" href="?tomo={{ tomo_filtro|urlencode }}&q={{ query|urlencode }}&page={{ num }}">{{ num }}</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+    <ul class="pagination">
+    {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?tomo={{ tomo_filtro|urlencode }}&q={{ query|urlencode }}&page={{ page_obj.next_page_number }}">Siguiente</a>
+        </li>
+    {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Siguiente</span>
+        </li>
+    {% endif %}
+    </ul>
+  </nav>
+{% endif %}
+    <div><a class="btn btn-outline-primary" href="{% url create_url %}"><i class="bi bi-folder-plus"></i> &nbsp; Crear Registro</a></div>
+</div>
+
+
+</div>
+{% endblock %}
+
