@@ -15,6 +15,34 @@
     }
 
 </style>
+{% if file_base64 %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const base64Image = "data:image/*;base64,{{ file_base64 }}";
+    const img = new Image();
+    img.src = base64Image;
+
+    img.onload = function () {
+        const canvas = document.getElementById('rotatedImageCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Configurar nuevo tamaño para rotación 90° (alto ↔ ancho)
+        canvas.width = img.height;
+        canvas.height = img.width;
+
+        // Mover origen al nuevo punto (esquina superior izquierda tras rotación)
+        ctx.translate(0, img.width);
+
+        // Rotar 90 grados en sentido horario
+        ctx.rotate(-90 * Math.PI / 180);
+
+        // Dibujar la imagen en la nueva orientación
+        ctx.drawImage(img, 0, 0);
+    };
+});
+</script>
+{% endif %}
+
 {% endblock %}
 
 {% block content %}
@@ -34,28 +62,34 @@
             {% endfor %}
         {% endif %}
         <div class="container-fluid mt-3 pb-4">
+        {% if file_base64 %}
+            <div class="d-flex justify-content-center mb-4">
+                <canvas id="rotatedImageCanvas" style="max-width: 100%; height: auto; border: 1px solid #ccc;"></canvas>
+            </div>
+        {% endif %}
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                {% for field in document_form %}
-                    <div class="mb-3">
-                        {% if field.name != 'metadata' %}
-                        {{ field.label_tag }}
-                        {{ field }}
-                        {% else %}
-                        <hr>
-                        <div class="form-check form-switch">
-                            {{ field }}
-                            <label class="form-check-label" for="flexSwitchCheckDefault">Subir Sin Metadatos</label>
-                        </div>
-                        {% endif %}
-                        {% if field.errors %}
-                            <div class="text-danger">
-                                {{ field.errors|striptags }}
-                            </div>
-                        {% endif %}
-                    </div>
-                {% endfor %}
+                <div class="row d-flex">
                 {% for field in metadata_form %}
+                    <div class="m-1 col-2">
+                        {% if field.name != 'metadata' %}
+                        {{ field.label_tag }}
+                        {{ field }}
+                        {% else %}
+                        <hr>
+                        <div class="form-check form-switch">
+                            {{ field }}
+                            <label class="form-check-label" for="flexSwitchCheckDefault">Subir Sin Metadatos</label>
+                        </div>
+                        {% endif %}
+                        {% if field.errors %}
+                            <div class="text-danger">
+                                {{ field.errors|striptags }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                                {% for field in document_form %}
                     <div class="mb-3">
                         {% if field.name != 'metadata' %}
                         {{ field.label_tag }}
@@ -74,6 +108,7 @@
                         {% endif %}
                     </div>
                 {% endfor %}
+                </div>
                 <button type="submit" class="btn btn-primary mt-2" id="submitFormButton">Actualizar metadatos del documento <i class="bi bi-file-earmark-arrow-up"></i></i></button>
             </form>
         </div>

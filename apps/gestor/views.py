@@ -12,6 +12,9 @@ from .models import Document
 from ..metadata.models import MetadataSchema
 from .forms import DocumentAndSchemaForm, DynamicMetadataForm, DynamicFileMetadataForm, DocumentForm
 from datetime import datetime
+import base64
+from mimetypes import guess_type
+from django.core.files.base import ContentFile
 
 def firstSteptUploadView(request, id=None):
     context = {}
@@ -102,6 +105,13 @@ def editDocumentView(request, id):
     else:
         document_form = DocumentForm(instance=document)
         initial_data = document.metadata_values or {}
+        file_base64 = None
+        if document.file and guess_type(document.file.url)[0] and guess_type(document.file.url)[0].startswith("image"):
+            try:
+                file_content = document.file.read()
+                file_base64 = base64.b64encode(file_content).decode('utf-8')
+            except Exception as e:
+                file_base64 = None
         if initial_data:
             for key, value in initial_data.items():
                 if isinstance(value, str):
@@ -120,6 +130,7 @@ def editDocumentView(request, id):
         'metadata_form': metadata_form,
         'document': document,
         'schema': schema,
+        'file_base64': file_base64,
     })
 
 @permission_required("delete_user")
