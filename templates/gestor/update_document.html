@@ -50,9 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="container-fluid mt-3">
     
     <div class="card">
-        <div class="card-header text-center">
-            <strong style="font-size: 1.5rem; color: #1E3A5F;"><i class="bi bi-file-earmark-spreadsheet" style="color: #4caf50;"></i> Editar: {{ document }}</strong>
-        </div>
         {% if messages %}
             {% for message in messages %}
             <div class="alert alert-success alert-dismissible fade show" role="alert">
