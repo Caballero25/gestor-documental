@@ -67,8 +67,90 @@ document.addEventListener('DOMContentLoaded', () => {
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="row d-flex">
-                {% for field in metadata_form %}
-                    <div class="m-1 col-2">
+                    {% with metadata_form as mf %}
+                    {% if mf.BAUTIZADO %}
+                        <div class="m-1 col-2">
+                        {{ mf.BAUTIZADO.label_tag }}
+                        {{ mf.BAUTIZADO }}
+                        {% if mf.BAUTIZADO.errors %}
+                            <div class="text-danger">{{ mf.BAUTIZADO.errors|striptags }}</div>
+                        {% endif %}
+                        </div>
+                    {% endif %}
+                    {% if mf.CONFIRMADO %}
+                        <div class="m-1 col-2">
+                        {{ mf.CONFIRMADO.label_tag }}
+                        {{ mf.CONFIRMADO }}
+                        {% if mf.CONFIRMADO.errors %}
+                            <div class="text-danger">{{ mf.CONFIRMADO.errors|striptags }}</div>
+                        {% endif %}
+                        </div>
+                    {% endif %}
+                    {% if mf.NOMBRE_NOVIO %}
+                        <div class="m-1 col-2">
+                        {{ mf.NOMBRE_NOVIO.label_tag }}
+                        {{ mf.NOMBRE_NOVIO }}
+                        {% if mf.NOMBRE_NOVIO.errors %}
+                            <div class="text-danger">{{ mf.NOMBRE_NOVIO.errors|striptags }}</div>
+                        {% endif %}
+                        </div>
+                    {% endif %}
+                    {% if mf.NOMBRE_NOVIA %}
+                        <div class="m-1 col-2">
+                        {{ mf.NOMBRE_NOVIA.label_tag }}
+                        {{ mf.NOMBRE_NOVIA }}
+                        {% if mf.NOMBRE_NOVIA.errors %}
+                            <div class="text-danger">{{ mf.NOMBRE_NOVIA.errors|striptags }}</div>
+                        {% endif %}
+                        </div>
+                    {% endif %}
+                    {% if mf.AÑO %}
+                        <div class="m-1 col-2">
+                        {{ mf.AÑO.label_tag }}
+                        {{ mf.AÑO }}
+                        {% if mf.AÑO.errors %}
+                            <div class="text-danger">{{ mf.AÑO.errors|striptags }}</div>
+                        {% endif %}
+                        </div>
+                    {% endif %}
+                    {% if mf.SACERDOTE %}
+                        <div class="m-1 col-2">
+                        {{ mf.SACERDOTE.label_tag }}
+                        {{ mf.SACERDOTE }}
+                        {% if mf.SACERDOTE.errors %}
+                            <div class="text-danger">{{ mf.SACERDOTE.errors|striptags }}</div>
+                        {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {# Mostrar los demás campos que no son los anteriores ni 'metadata' #}
+                    {% for field in mf %}
+                        {% if field.name not in 'BAUTIZADO CONFIRMADO NOMBRE NOVIO NOMBRE NOVIA AÑO SACERDOTE metadata' %}
+                        <div class="m-1 col-2">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.errors %}
+                            <div class="text-danger">{{ field.errors|striptags }}</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    {# Campo metadata con switch #}
+                    {% if mf.metadata %}
+                        <div class="m-1 col-12">
+                        <hr>
+                        <div class="form-check form-switch">
+                            {{ mf.metadata }}
+                            <label class="form-check-label" for="flexSwitchCheckDefault">Subir Sin Metadatos</label>
+                        </div>
+                        </div>
+                    {% endif %}
+                    {% endwith %}
+
+                    {# Campos del document_form #}
+                    {% for field in document_form %}
+                    <div class="mb-3 col-12">
                         {% if field.name != 'metadata' %}
                         {{ field.label_tag }}
                         {{ field }}
@@ -80,34 +162,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         {% endif %}
                         {% if field.errors %}
-                            <div class="text-danger">
-                                {{ field.errors|striptags }}
-                            </div>
+                        <div class="text-danger">{{ field.errors|striptags }}</div>
                         {% endif %}
                     </div>
-                {% endfor %}
-                                {% for field in document_form %}
-                    <div class="mb-3">
-                        {% if field.name != 'metadata' %}
-                        {{ field.label_tag }}
-                        {{ field }}
-                        {% else %}
-                        <hr>
-                        <div class="form-check form-switch">
-                            {{ field }}
-                            <label class="form-check-label" for="flexSwitchCheckDefault">Subir Sin Metadatos</label>
-                        </div>
-                        {% endif %}
-                        {% if field.errors %}
-                            <div class="text-danger">
-                                {{ field.errors|striptags }}
-                            </div>
-                        {% endif %}
-                    </div>
-                {% endfor %}
+                    {% endfor %}
                 </div>
-                <button type="submit" class="btn btn-primary mt-2" id="submitFormButton">Actualizar metadatos del documento <i class="bi bi-file-earmark-arrow-up"></i></i></button>
-            </form>
+
+                <button type="submit" class="btn btn-primary mt-2" id="submitFormButton">
+                    Actualizar metadatos del documento <i class="bi bi-file-earmark-arrow-up"></i>
+                </button>
+                </form>
+
         </div>
 </div>
 {% endblock %}
