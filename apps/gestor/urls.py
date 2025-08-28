@@ -1,5 +1,5 @@
 from django.urls import path, re_path
-from .views import firstSteptUploadView, secondSteptUploadView, editDocumentView, DocumentListView, documentDeleteView, lista_tomos
+from .views import firstSteptUploadView, secondSteptUploadView, editDocumentView, editDocumentIndexacionView, DocumentListView, documentDeleteView, lista_tomos
 from .email_service import sendDocumentLink, searchDocuments, sendEmailDocuments, downloadDocument
 from .document_detail import DocumentView
 from .firma_electronica import signDocument
@@ -11,6 +11,7 @@ urlpatterns = [
     re_path(r'^upload/stept/first/(?:(?P<id>\d+)/)?$', firstSteptUploadView, name="first-stept-upload"),
     path('upload/stept/second/<str:id>', secondSteptUploadView, name="second-stept-upload"),
     path('document/edit/<str:id>', editDocumentView, name="edit_document_view"),
+    path('document/indexacion/edit/<str:id>', editDocumentIndexacionView, name="edit_document_indexacion_view"),
     path('document/delete/<str:id>', documentDeleteView, name="document_delete"),
     
     #Email

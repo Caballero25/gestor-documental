@@ -13,8 +13,80 @@
         position: relative; 
         padding-left: 30px; 
     }
-
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Lista de campos a buscar (en orden de prioridad)
+    const camposABuscar = ['BAUTIZADO', 'CONFIRMADO', 'NOMBRE_NOVIO'];
+    
+    // Buscar el primer campo disponible
+    for (const campo of camposABuscar) {
+        const input = document.querySelector(`[name="${campo}"]`);
+        if (input) {
+            input.focus();
+            break; // Salir del bucle al encontrar el primer campo
+        }
+    }
+
+    // Manejar el envío del formulario
+    const form = document.querySelector('form');
+    const submitButton = document.getElementById('submitFormButton');
+    let submitMethod = 'button'; // Por defecto, asumimos que se usa el botón
+    
+    // Detectar si se presiona Enter en cualquier campo de entrada
+    const inputs = form.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitMethod = 'enter';
+                form.requestSubmit();
+            }
+        });
+    });
+    
+    // Cuando se hace clic en el botón de enviar
+    submitButton.addEventListener('click', function(e) {
+        submitMethod = 'button';
+    });
+    
+    // Interceptar el envío del formulario
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Determinar la URL de destino según el método de envío
+        let actionUrl = form.getAttribute('action');
+        
+        if (submitMethod === 'enter') {
+            actionUrl = "{% url 'edit_document_indexacion_view' document.id %}";  // Reemplaza con tu URL real
+        } else {
+            actionUrl = "{% url 'edit_document_view' document.id %}";  // Reemplaza con tu URL real
+        }
+        
+        // Crear un formulario temporal para enviar los datos
+        const tempForm = document.createElement('form');
+        tempForm.method = form.method;
+        tempForm.action = actionUrl;
+        tempForm.enctype = form.enctype;
+        
+        // Copiar todos los campos del formulario original
+        const formData = new FormData(form);
+        for (const [name, value] of formData.entries()) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            tempForm.appendChild(input);
+        }
+        
+        // Agregar el formulario temporal al DOM y enviarlo
+        document.body.appendChild(tempForm);
+        tempForm.submit();
+    });
+});
+</script>
+
 {% if file_base64 %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -39,16 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Dibujar la imagen en la nueva orientación
         ctx.drawImage(img, 0, 0);
     };
-    const camposABuscar = ['BAUTIZADO', 'CONFIRMADO', 'NOMBRE_NOVIO'];
-    
-    // Buscar el primer campo disponible
-    for (const campo of camposABuscar) {
-        const input = document.querySelector(`[name="${campo}"]`);
-        if (input) {
-            input.focus();
-            break; // Salir del bucle al encontrar el primer campo
-        }
-    }
 });
 </script>
 {% endif %}

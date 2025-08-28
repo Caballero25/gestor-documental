@@ -133,6 +133,54 @@ def editDocumentView(request, id):
         'file_base64': file_base64,
     })
 
+def editDocumentIndexacionView(request, id):
+    document = get_object_or_404(Document, id=id)
+    schema = document.metadata_schema
+    
+    if request.method == 'POST':
+        document_form = DocumentForm(request.POST, request.FILES, instance=document)
+        metadata_form = DynamicFileMetadataForm(request.POST, schema=schema, initial=document.metadata_values or {})
+        
+        if document_form.is_valid() and metadata_form.is_valid():
+            # Guardar los datos básicos del documento
+            doc = document_form.save()
+            
+            # Procesar los metadatos
+            cleaned_metadata = metadata_form.cleaned_data
+            for key, value in cleaned_metadata.items():
+                if hasattr(value, 'isoformat'):
+                    cleaned_metadata[key] = value.isoformat()
+            
+            # Actualizar los metadatos manteniendo campos que no están en el formulario
+            current_metadata = doc.metadata_values or {}
+            doc.metadata_values = {**current_metadata, **cleaned_metadata}
+            
+            # Marcar como indexado
+            doc.indexado = True
+            doc.save()
+            
+            # Buscar el siguiente documento con el mismo tomo que no esté indexado
+            tomo_actual = doc.metadata_values.get('TOMO')
+            
+            if tomo_actual:
+                # Buscar documentos con el mismo TOMO y que no estén indexados
+                siguiente_documento = Document.objects.filter(
+                    metadata_values__has_key='TOMO',
+                    metadata_values__TOMO=tomo_actual,
+                    indexado=False
+                ).exclude(id=doc.id).first()
+                
+                if siguiente_documento:
+                    messages.success(request, "Documento actualizado correctamente. Pasando al siguiente documento del tomo.")
+                    return redirect('edit_document_view', id=siguiente_documento.id)
+                else:
+                    messages.success(request, "Documento actualizado correctamente. ¡Este tomo ha finalizado!")
+                    return redirect('edit_document_view', id=doc.id)
+            else:
+                # Si no hay tomo, redirigir al mismo documento
+                messages.success(request, "Documento actualizado correctamente")
+                return redirect('edit_document_view', id=doc.id)
+
 @permission_required("delete_user")
 def documentDeleteView(request, id):
     record = Document.objects.get(id=id) 
