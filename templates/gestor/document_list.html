@@ -10,7 +10,11 @@
 
 {% block tbody %}
     {% for i in object_list %}
+        {% if i.indexado %}
+        <tr class="table-secondary">
+        {% else %}
         <tr>
+        {% endif %}
             <td>{{ i.id }}</td>
             {% if i.metadata_values.TOMO %}
                 <td>{{ i.metadata_values.TOMO }}</td>
