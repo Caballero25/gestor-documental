@@ -29,6 +29,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Si existe un año en el contexto y existe el campo AÑO, establecer su valor
+    {% if anio %}
+        const anioField = document.querySelector('input[name="AÑO"]');
+        if (anioField && !anioField.value) {
+            anioField.value = "{{ anio }}";
+        }
+    {% endif %}
+
     // Manejar el envío del formulario
     const form = document.querySelector('form');
     const submitButton = document.getElementById('submitFormButton');
