@@ -160,25 +160,27 @@
     </div>
 
     {% for tomo in tomos %}
-      <div class="col">
-        <form method="get" action="{% url 'document_list' %}">
-          <input type="hidden" name="tomo" value="{{ tomo }}" />
-          <button type="submit" class="doc-card" aria-label="Filtrar por tomo {{ tomo }}">
-            <div class="card card-neutral shine">
-              <div class="card-body">
-                <div class="inner">
-                  <!-- SVG Carpeta genérica -->
-                  <svg class="doc-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path d="M6 14a4 4 0 0 1 4-4h9l3 3h16a4 4 0 0 1 4 4v17a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4V14Z" fill="#94a3b8"/>
-                    <path d="M6 18h36v3H6z" fill="#cbd5e1"/>
-                  </svg>
-                  <div class="doc-label" title="{{ tomo }}">{{ tomo }}</div>
+      {% if tomo != None %}
+        <div class="col">
+          <form method="get" action="{% url 'document_list' %}">
+            <input type="hidden" name="tomo" value="{{ tomo }}" />
+            <button type="submit" class="doc-card" aria-label="Filtrar por tomo {{ tomo }}">
+              <div class="card card-neutral shine">
+                <div class="card-body">
+                  <div class="inner">
+                    <!-- SVG Carpeta genérica -->
+                    <svg class="doc-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <path d="M6 14a4 4 0 0 1 4-4h9l3 3h16a4 4 0 0 1 4 4v17a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4V14Z" fill="#94a3b8"/>
+                      <path d="M6 18h36v3H6z" fill="#cbd5e1"/>
+                    </svg>
+                    <div class="doc-label" title="{{ tomo }}">{{ tomo }}</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </button>
-        </form>
-      </div>
+            </button>
+          </form>
+        </div>
+      {% endif %}
     {% empty %}
       <div class="col-12">
         <div class="alert alert-info text-center empty-state">
