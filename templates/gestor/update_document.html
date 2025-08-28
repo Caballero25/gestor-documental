@@ -39,6 +39,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Dibujar la imagen en la nueva orientación
         ctx.drawImage(img, 0, 0);
     };
+    const camposABuscar = ['BAUTIZADO', 'CONFIRMADO', 'NOMBRE_NOVIO'];
+    
+    // Buscar el primer campo disponible
+    for (const campo of camposABuscar) {
+        const input = document.querySelector(`[name="${campo}"]`);
+        if (input) {
+            input.focus();
+            break; // Salir del bucle al encontrar el primer campo
+        }
+    }
 });
 </script>
 {% endif %}
