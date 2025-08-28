@@ -11,6 +11,7 @@ urlpatterns = [
     re_path(r'^upload/stept/first/(?:(?P<id>\d+)/)?$', firstSteptUploadView, name="first-stept-upload"),
     path('upload/stept/second/<str:id>', secondSteptUploadView, name="second-stept-upload"),
     path('document/edit/<str:id>', editDocumentView, name="edit_document_view"),
+    path('document/edit/<str:id>/<str:anio>', editDocumentView, name="edit_document_view_year"),
     path('document/indexacion/edit/<str:id>', editDocumentIndexacionView, name="edit_document_indexacion_view"),
     path('document/delete/<str:id>', documentDeleteView, name="document_delete"),
     

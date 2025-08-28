@@ -77,7 +77,7 @@ def secondSteptUploadView(request, id):
     return render(request, 'gestor/second_stept_create.html', context) 
 
 
-def editDocumentView(request, id):
+def editDocumentView(request, id, anio=None):
     document = get_object_or_404(Document, id=id)
     schema = document.metadata_schema
     
@@ -131,6 +131,7 @@ def editDocumentView(request, id):
         'document': document,
         'schema': schema,
         'file_base64': file_base64,
+        'anio': anio
     })
 
 def editDocumentIndexacionView(request, id):
@@ -161,7 +162,8 @@ def editDocumentIndexacionView(request, id):
             
             # Buscar el siguiente documento con el mismo tomo que no esté indexado
             tomo_actual = doc.metadata_values.get('TOMO')
-            
+            anio_actual = doc.metadata_values.get('AÑO') if doc.metadata_values.get('AÑO') else ""
+    
             if tomo_actual:
                 # Buscar documentos con el mismo TOMO y que no estén indexados
                 siguiente_documento = Document.objects.filter(
@@ -172,7 +174,10 @@ def editDocumentIndexacionView(request, id):
                 
                 if siguiente_documento:
                     messages.success(request, "Documento actualizado correctamente. Pasando al siguiente documento del tomo.")
-                    return redirect('edit_document_view', id=siguiente_documento.id)
+                    if anio_actual:
+                        return redirect('edit_document_view_year', id=siguiente_documento.id, anio=anio_actual)
+                    else:
+                        return redirect('edit_document_view', id=siguiente_documento.id)
                 else:
                     messages.success(request, "Documento actualizado correctamente. ¡Este tomo ha finalizado!")
                     return redirect('edit_document_view', id=doc.id)
