@@ -4,6 +4,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.decorators import permission_required
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models import Q
+from django.db.models import F, Func
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.http import JsonResponse
@@ -14,7 +15,7 @@ from .forms import DocumentAndSchemaForm, DynamicMetadataForm, DynamicFileMetada
 from datetime import datetime
 import base64
 from mimetypes import guess_type
-from django.core.files.base import ContentFile
+import re
 
 def firstSteptUploadView(request, id=None):
     context = {}
@@ -162,13 +163,14 @@ def editDocumentIndexacionView(request, id):
             
             # Buscar el siguiente documento con el mismo tomo que no esté indexado
             tomo_actual = doc.metadata_values.get('TOMO')
+            tomo_normalizado = tomo_actual.strip() if tomo_actual else ""
             anio_actual = doc.metadata_values.get('AÑO') if doc.metadata_values.get('AÑO') else ""
     
             if tomo_actual:
-                # Buscar documentos con el mismo TOMO y que no estén indexados
+                tomo_clean = tomo_actual.strip()
+                # Buscar documentos cuyo TOMO (después de quitar espacios) coincida
                 siguiente_documento = Document.objects.filter(
-                    metadata_values__has_key='TOMO',
-                    metadata_values__TOMO=tomo_actual,
+                    metadata_values__TOMO__iregex=r'^\s*' + re.escape(tomo_clean) + r'\s*$',
                     indexado=False
                 ).exclude(id=doc.id).first()
                 
