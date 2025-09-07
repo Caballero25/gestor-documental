@@ -13,6 +13,17 @@
         position: relative; 
         padding-left: 30px; 
     }
+    input[type="date"].datepicker-left::-webkit-calendar-picker-indicator {
+        left: 10px; 
+        right: unset; 
+        position: absolute;
+        z-index: 1;
+    }
+
+    input[type="date"].datepicker-left {
+        position: relative; 
+        padding-left: 30px; 
+    }
 </style>
 
 <script>
@@ -58,6 +69,30 @@ document.addEventListener('DOMContentLoaded', () => {
     submitButton.addEventListener('click', function(e) {
         submitMethod = 'button';
     });
+
+    // ==================================================================
+    // INICIO: Código para persistencia del campo PARROQUIA
+    // ==================================================================
+    const parroquiaSelect = document.querySelector('[name="PARROQUIA"]');
+
+    if (parroquiaSelect) {
+        console.log(parroquiaSelect.value)
+        // 1. Cargar el valor guardado desde localStorage al iniciar la página
+        const savedParroquia = localStorage.getItem('selectedParroquia');
+        
+        // 2. Si hay un valor guardado y el campo actual está vacío, se lo asignamos
+        if (savedParroquia && !parroquiaSelect.value) {
+            parroquiaSelect.value = savedParroquia;
+        }
+
+        // 3. Guardar el valor en localStorage cada vez que cambie la selección
+        parroquiaSelect.addEventListener('change', (event) => {
+            localStorage.setItem('selectedParroquia', event.target.value);
+        });
+    }
+    // ==================================================================
+    // FIN: Código para persistencia del campo PARROQUIA
+    // ==================================================================
     
     // Interceptar el envío del formulario
     form.addEventListener('submit', function(e) {
@@ -192,6 +227,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         {% endif %}
                         </div>
                     {% endif %}
+                    {% if mf.PARROQUIA %}
+                        <div class="m-1 col-2">
+                        {{ mf.PARROQUIA.label_tag }}
+                        {{ mf.PARROQUIA }}
+                        {% if mf.PARROQUIA.errors %}
+                            <div class="text-danger">{{ mf.PARROQUIA.errors|striptags }}</div>
+                        {% endif %}
+                        </div>
+                    {% endif %}
                     {% if mf.SACERDOTE %}
                         <div class="m-1 col-2">
                         {{ mf.SACERDOTE.label_tag }}
@@ -204,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     {# Mostrar los demás campos que no son los anteriores ni 'metadata' #}
                     {% for field in mf %}
-                        {% if field.name not in 'BAUTIZADO CONFIRMADO NOMBRE NOVIO NOMBRE NOVIA AÑO SACERDOTE metadata' %}
+                        {% if field.name not in 'BAUTIZADO CONFIRMADO NOMBRE NOVIO NOMBRE PARROQUIA NOVIA AÑO SACERDOTE metadata' %}
                         <div class="m-1 col-2">
                             {{ field.label_tag }}
                             {{ field }}
