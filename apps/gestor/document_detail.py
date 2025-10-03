@@ -30,5 +30,19 @@ class DocumentView(DetailView):
                     context['mime_type'] = mime_type
             except Exception as e:
                 context['file_error'] = str(e)
+        if document.file2:
+            try:
+                with document.file2.open('rb') as file2:
+                    file2_content = file2.read()
+                    file2_base64 = base64.b64encode(file2_content).decode('utf-8')
+
+                    context['file2_base64'] = file2_base64
+                    
+                    # Incluir tipo MIME si es necesario
+                    import mimetypes
+                    mime_type, _ = mimetypes.guess_type(document.file2.name)
+                    context['mime_type'] = mime_type
+            except Exception as e:
+                context['file2_error'] = str(e)
         
         return context

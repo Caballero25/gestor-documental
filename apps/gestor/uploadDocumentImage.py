@@ -22,6 +22,8 @@ def capture_document_view(request):
 
             if 'file' in request.FILES:
                 document.file = request.FILES['file']
+            if 'file2' in request.FILES:
+                document.file2 = request.FILES['file2']
             
             document.save()
 

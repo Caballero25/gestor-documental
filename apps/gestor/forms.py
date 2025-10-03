@@ -20,10 +20,11 @@ class DocumentAndSchemaForm(forms.ModelForm):
     )
     class Meta:
         model = Document 
-        fields = ['code_name', 'file', 'metadata_schema']
+        fields = ['code_name', 'file', 'file2', 'metadata_schema']
         widgets = {
             'code_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '(?) Opcional: Identificador para buscar el documento posteriormente'}),
             'file': CustomClearableFileInput(attrs={'class': "form-control", 'id': "formFile"}),
+            'file2': CustomClearableFileInput(attrs={'class': "form-control", 'id': "formFile2"}),
             'metadata_schema': forms.Select(attrs={'class': "form-select"})
         }
         error_messages = {

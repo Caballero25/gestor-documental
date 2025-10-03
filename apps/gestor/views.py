@@ -107,12 +107,19 @@ def editDocumentView(request, id, anio=None):
         document_form = DocumentForm(instance=document)
         initial_data = document.metadata_values or {}
         file_base64 = None
+        file2_base64 = None
         if document.file and guess_type(document.file.url)[0] and guess_type(document.file.url)[0].startswith("image"):
             try:
                 file_content = document.file.read()
                 file_base64 = base64.b64encode(file_content).decode('utf-8')
             except Exception as e:
                 file_base64 = None
+        if document.file2 and guess_type(document.file2.url)[0] and guess_type(document.file2.url)[0].startswith("image"):
+            try:
+                file2_content = document.file2.read()
+                file2_base64 = base64.b64encode(file2_content).decode('utf-8')
+            except Exception as e:
+                file2_base64 = None
         if initial_data:
             for key, value in initial_data.items():
                 if isinstance(value, str):
@@ -132,6 +139,7 @@ def editDocumentView(request, id, anio=None):
         'document': document,
         'schema': schema,
         'file_base64': file_base64,
+        'file2_base64': file2_base64,
         'anio': anio
     })
 

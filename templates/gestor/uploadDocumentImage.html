@@ -4,7 +4,7 @@
  {% block extra_head %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-  #camera-container {
+  #camera-container, .camera-container {
     position: relative;
     width: 100%;
     max-width: 100%;
@@ -21,15 +21,17 @@
     background-color: #f0f0f0; /* Fondo visible cuando la cámara no llena el espacio */
   }
 
-  #camera-view {
+  .camera-view {
     width: auto;
     height: 100%;
     object-fit: cover; /* Prioriza llenar el contenedor verticalmente */
   }
-  #camera-canvas {
+  
+  .camera-canvas {
     display: none;
   }
-  #captured-image {
+
+  .captured-image {
     width: 100%;
     height: auto;
     max-height: 400px;
@@ -37,6 +39,7 @@
     border: 1px solid #ccc;
     background: white;
   }
+
   .camera-placeholder {
     text-align: center;
     padding: 20px;
@@ -57,7 +60,7 @@
   }
   /* Media query para dispositivos móviles */
   @media (max-width: 768px) {
-    #camera-container {
+    #camera-container, .camera-container {
       max-height: 80vh; /* Altura aún más reducida en móviles */
     }
   }
@@ -151,7 +154,6 @@
     <form id="document-form" method="post" enctype="multipart/form-data">
       {% csrf_token %}
 
-      <!-- Campos básicos del documento -->
       <div class="form-group">
         <label for="id_code_name">Nombre/Identificador (opcional)</label>
         <input
@@ -163,7 +165,6 @@
         />
       </div>
 
-      <!-- Selector de esquema de metadatos -->
       <div class="form-group">
         <label for="id_metadata_schema">Esquema de Metadatos</label>
         <select
@@ -178,7 +179,6 @@
         </select>
       </div>
 
-      <!-- Opción para subir sin metadatos -->
       <div class="form-group form-check">
         <input
           type="checkbox"
@@ -191,52 +191,80 @@
         >
       </div>
 
-      <!-- Sección de captura de cámara -->
       <div class="form-group">
-        <label>Capturar Documento</label>
-        <div id="camera-container">
-          <video id="camera-view" autoplay playsinline></video>
-          <canvas id="camera-canvas"></canvas>
-          <img id="captured-image" alt="Documento capturado" />
+        <label>Capturar Documento 1 (Principal)</label>
+        <div id="camera-container-1" class="camera-container">
+          <video id="camera-view-1" class="camera-view" autoplay playsinline></video>
+          <canvas id="camera-canvas-1" class="camera-canvas" style="display: none;"></canvas>
+          <img id="captured-image-1" class="captured-image" alt="Documento capturado 1" style="display: none;"/>
         </div>
         <div class="camera-buttons">
-          <button type="button" id="capture-btn" class="btn btn-success btn-lg">
-            <i class="fas fa-camera"></i> Capturar
-          </button>
-          <button type="submit" class="btn btn-primary btn-lg">
-            <i class="fas fa-paper-plane"></i> Enviar
+          <button type="button" id="capture-btn-1" class="btn btn-success btn-lg">
+            <i class="fas fa-camera"></i> Capturar 1
           </button>
           <button
             type="button"
-            id="retake-btn"
+            id="retake-btn-1"
             class="btn btn-warning btn-lg"
             disabled
           >
-            <i class="fas fa-redo"></i> Volver a tomar
+            <i class="fas fa-redo"></i> Volver a tomar 1
           </button>
         </div>
-        <div id="camera-error" class="error-message"></div>
+        <div id="camera-error-1" class="error-message"></div>
         <input
           type="file"
           class="d-none"
           id="formFile"
           name="file"
-          accept="application/pdf"
         />
       </div>
 
-      <!-- Sección de metadatos dinámicos -->
+      <hr/>
+      
+      <button type="button" id="add-second-photo-btn" class="btn btn-info mb-3">
+          <i class="fas fa-plus"></i> Añadir segunda foto (opcional)
+      </button>
+
+      <div id="camera-section-2" class="form-group" style="display: none;">
+        <label>Capturar Documento 2 (Opcional)</label>
+        <div id="camera-container-2" class="camera-container">
+          <video id="camera-view-2" class="camera-view" autoplay playsinline></video>
+          <canvas id="camera-canvas-2" class="camera-canvas" style="display: none;"></canvas>
+          <img id="captured-image-2" class="captured-image" alt="Documento capturado 2" style="display: none;"/>
+        </div>
+        <div class="camera-buttons">
+          <button type="button" id="capture-btn-2" class="btn btn-success btn-lg">
+            <i class="fas fa-camera"></i> Capturar 2
+          </button>
+          <button
+            type="button"
+            id="retake-btn-2"
+            class="btn btn-warning btn-lg"
+            disabled
+          >
+            <i class="fas fa-redo"></i> Volver a tomar 2
+          </button>
+        </div>
+        <div id="camera-error-2" class="error-message"></div>
+        <input
+          type="file"
+          class="d-none"
+          id="formFile2"
+          name="file2"
+        />
+      </div>
+
       <div id="metadata-fields" class="metadata-section">
         <h5>Metadatos del Documento</h5>
         <p class="text-muted">
           Seleccione un esquema de metadatos para ver los campos
         </p>
-        <!-- Los campos de metadatos se agregarán dinámicamente aquí -->
-      </div>
+        </div>
 
       <div class="form-group mt-4">
-        <button type="submit" class="btn btn-success btn-lg">
-          <i class="fas fa-save"></i> Guardar Documento
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fas fa-paper-plane"></i> Enviar Documento
         </button>
       </div>
     </form>
@@ -245,18 +273,39 @@
 </div>
 <script>
   $(document).ready(function () {
+    // --- CONFIGURACIÓN GENERAL ---
     cargarValorSecuencia();
     let isSaving = false;
-    // Elementos de la cámara
-    const cameraContainer = document.getElementById("camera-container");
-    const cameraView = document.getElementById("camera-view");
-    const cameraCanvas = document.getElementById("camera-canvas");
-    const captureBtn = document.getElementById("capture-btn");
-    const retakeBtn = document.getElementById("retake-btn");
-    const capturedImage = document.getElementById("captured-image");
-    const imageDataInput = document.getElementById("image-data");
-    const cameraError = document.getElementById("camera-error");
-    let stream = null;
+
+    // --- OBJETOS DE CÁMARA ---
+    // Creamos objetos para mantener los elementos y el estado de cada cámara
+    const camera1 = {
+        stream: null,
+        container: $("#camera-container-1"),
+        view: document.getElementById("camera-view-1"),
+        canvas: document.getElementById("camera-canvas-1"),
+        captureBtn: $("#capture-btn-1"),
+        retakeBtn: $("#retake-btn-1"),
+        capturedImage: $("#captured-image-1"),
+        fileInput: $("#formFile"),
+        errorDisplay: $("#camera-error-1")
+    };
+
+    const camera2 = {
+        stream: null,
+        container: $("#camera-container-2"),
+        view: document.getElementById("camera-view-2"),
+        canvas: document.getElementById("camera-canvas-2"),
+        captureBtn: $("#capture-btn-2"),
+        retakeBtn: $("#retake-btn-2"),
+        capturedImage: $("#captured-image-2"),
+        fileInput: $("#formFile2"),
+        errorDisplay: $("#camera-error-2")
+    };
+    
+    // --- FUNCIONES DE CÁMARA REFACTORIZADAS ---
+    // Estas funciones ahora aceptan un objeto de cámara para trabajar
+    
     function getConstraints(aspectRatio) {
       const baseConstraints = {
         video: {
@@ -265,17 +314,16 @@
         },
       };
 
-      // Definir resoluciones ideales para cada relación de aspecto
       const resolutions = {
-        "16:9": { width: 1920, height: 1080 }, // 4K UHD reducido a Full HD (50%)
+        "16:9": { width: 1920, height: 1080 },
         "16:3": { width: 1920, height: 360 },
         "3:1": { width: 1440, height: 480 },
         "4:1": { width: 1600, height: 400 },
         "5:2": { width: 1200, height: 480 },
-        "4:3": { width: 1632, height: 1224 }, // ~8MP → ~4MP (50%)
-        "1:1": { width: 1512, height: 1512 }, // Cuadrado reducido a la mitad
-        "3:2": { width: 2016, height: 1344 }, // ~11MP → ~5.5MP (50%)
-        auto: { width: { ideal: 2048 }, height: { ideal: 1080 } }, // Mitad de la resolución máxima
+        "4:3": { width: 1632, height: 1224 },
+        "1:1": { width: 1512, height: 1512 },
+        "3:2": { width: 2016, height: 1344 },
+        auto: { width: { ideal: 2048 }, height: { ideal: 1080 } },
       };
 
       if (aspectRatio === "auto") {
@@ -295,144 +343,98 @@
       return baseConstraints;
     }
 
-    // Iniciar cámara con manejo de errores mejorado
-    function startCamera() {
-      stopCamera();
-      cameraError.textContent = "";
+    function stopCamera(cam) {
+        if (cam.stream) {
+            cam.stream.getTracks().forEach(track => track.stop());
+            cam.view.srcObject = null;
+            $(cam.view).hide();
+            cam.stream = null;
+        }
+    }
 
-      // Obtener relación de aspecto seleccionada
-      const aspectRatio = $("#aspect-ratio").val();
-      const constraints = getConstraints(aspectRatio);
+    function startCamera(cam) {
+        stopCamera(cam);
+        cam.errorDisplay.text("");
+        const aspectRatio = $("#aspect-ratio").val();
+        const constraints = getConstraints(aspectRatio);
 
-      // Resto del código de startCamera permanece igual...
-      navigator.mediaDevices
-        .getUserMedia(constraints)
-        .then(function (mediaStream) {
-          stream = mediaStream;
-          cameraView.srcObject = mediaStream;
-          cameraView.style.display = "block";
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(mediaStream => {
+                cam.stream = mediaStream;
+                cam.view.srcObject = mediaStream;
+                $(cam.view).show();
+                cam.captureBtn.prop("disabled", false);
 
-          captureBtn.disabled = false;
-
-          cameraView.onloadedmetadata = function () {
-            cameraCanvas.width = cameraView.videoWidth;
-            cameraCanvas.height = cameraView.videoHeight;
-
-            // Opcional: Mostrar info de la resolución actual
-            console.log(
-              `Resolución actual: ${cameraView.videoWidth}x${cameraView.videoHeight}`
-            );
-          };
-        })
-        .catch(function (error) {
-          console.error("Error al acceder a la cámara:", error);
-
-          // Mensajes de error más descriptivos
-          let errorMessage = "Error al acceder a la cámara: ";
-          if (error.name === "PermissionDeniedError") {
-            errorMessage +=
-              "Permiso denegado. Por favor, habilite los permisos de cámara.";
-          } else if (error.name === "NotFoundError") {
-            errorMessage +=
-              "No se encontró cámara trasera. Intentando con cámara frontal...";
-            // Intentar con cámara frontal
-            constraints.video.facingMode = "user";
-            navigator.mediaDevices
-              .getUserMedia(constraints)
-              .then(function (mediaStream) {
-                stream = mediaStream;
-                cameraView.srcObject = mediaStream;
-                cameraView.style.display = "block";
-                captureBtn.disabled = false;
-                cameraView.onloadedmetadata = function () {
-                  cameraCanvas.width = cameraView.videoWidth;
-                  cameraCanvas.height = cameraView.videoHeight;
+                cam.view.onloadedmetadata = () => {
+                    cam.canvas.width = cam.view.videoWidth;
+                    cam.canvas.height = cam.view.videoHeight;
+                    console.log(`Cámara lista: ${cam.view.videoWidth}x${cam.view.videoHeight}`);
                 };
-              })
-              .catch(function (frontError) {
-                errorMessage =
-                  "Error al acceder a la cámara frontal: " + frontError.message;
-                cameraError.textContent = errorMessage;
-              });
-          } else {
-            errorMessage += error.message;
-            cameraError.textContent = errorMessage;
-          }
-        });
+            })
+            .catch(error => {
+                console.error("Error de cámara:", error);
+                let errorMessage = `Error al acceder a la cámara: ${error.name}. Verifique los permisos.`;
+                if (error.name === "NotFoundError") {
+                    errorMessage = "No se encontró una cámara compatible.";
+                }
+                cam.errorDisplay.text(errorMessage);
+            });
     }
 
-    // Detener cámara
-    function stopCamera() {
-      if (stream) {
-        stream.getTracks().forEach(function (track) {
-          track.stop();
-        });
-        cameraView.srcObject = null;
-        cameraView.style.display = "none";
-      }
-    }
-    // Capturar imagen como archivo JPG
-    function captureImage() {
-      if (!stream) return;
+    function captureImage(cam) {
+        if (!cam.stream) return;
+        const context = cam.canvas.getContext("2d");
+        context.drawImage(cam.view, 0, 0, cam.canvas.width, cam.canvas.height);
 
-      const context = cameraCanvas.getContext("2d");
-      context.drawImage(
-        cameraView,
-        0,
-        0,
-        cameraCanvas.width,
-        cameraCanvas.height
-      );
+        cam.capturedImage.attr("src", cam.canvas.toDataURL("image/jpeg", 0.9)).show();
 
-      // Mostrar la imagen en vista previa
-      capturedImage.src = cameraCanvas.toDataURL("image/jpeg", 0.9);
-      capturedImage.style.display = "block";
+        cam.canvas.toBlob(blob => {
+            const jpgFile = new File([blob], "documento.jpg", { type: "image/jpeg" });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(jpgFile);
+            cam.fileInput[0].files = dataTransfer.files;
 
-      // Convertir canvas a Blob (imagen)
-      cameraCanvas.toBlob(
-        function (blob) {
-          const jpgFile = new File([blob], "documento.jpg", {
-            type: "image/jpeg",
-          });
-
-          // Usar el input file oculto existente
-          const fileInput = document.getElementById("formFile");
-          const dataTransfer = new DataTransfer();
-          dataTransfer.items.add(jpgFile);
-          fileInput.files = dataTransfer.files;
-
-          // Cambiar estado de botones
-          captureBtn.disabled = true;
-          retakeBtn.disabled = false;
-
-          // Detener cámara
-          stopCamera();
-        },
-        "image/jpeg",
-        0.9
-      );
-    }
-    startCamera();
-    function retakeImage() {
-      // Limpiar el input file
-      const fileInput = document.getElementById("formFile");
-      fileInput.value = "";
-
-      // Ocultar vista previa
-      capturedImage.style.display = "none";
-      capturedImage.src = "";
-
-      // Restablecer botones
-      retakeBtn.disabled = true;
-      captureBtn.disabled = false;
-
-      // Volver a iniciar la cámara
-      startCamera();
+            cam.captureBtn.prop("disabled", true);
+            cam.retakeBtn.prop("disabled", false);
+            stopCamera(cam);
+        }, "image/jpeg", 0.9);
     }
 
-    // Event listeners
-    captureBtn.addEventListener("click", captureImage);
-    retakeBtn.addEventListener("click", retakeImage);
+    function retakeImage(cam) {
+        cam.fileInput.val("");
+        cam.capturedImage.hide().attr("src", "");
+        cam.retakeBtn.prop("disabled", true);
+        cam.captureBtn.prop("disabled", false);
+        startCamera(cam);
+    }
+
+    // --- EVENT LISTENERS ---
+
+    // Iniciar la primera cámara al cargar la página
+    startCamera(camera1);
+
+    // Event listeners para la Cámara 1
+    camera1.captureBtn.on("click", () => captureImage(camera1));
+    camera1.retakeBtn.on("click", () => retakeImage(camera1));
+    
+    // Event listeners para la Cámara 2
+    camera2.captureBtn.on("click", () => captureImage(camera2));
+    camera2.retakeBtn.on("click", () => retakeImage(camera2));
+
+    // Mostrar e iniciar la segunda cámara cuando se hace clic en el botón
+    $("#add-second-photo-btn").on("click", function() {
+        $("#camera-section-2").slideDown();
+        startCamera(camera2);
+        $(this).hide(); // Ocultar el botón después de hacer clic
+    });
+    
+    // Reiniciar cámaras si cambia la relación de aspecto
+    $("#aspect-ratio").change(function() {
+        retakeImage(camera1); // Reinicia la cámara principal para aplicar el cambio
+        if ($("#camera-section-2").is(":visible")) {
+            retakeImage(camera2); // Reinicia la segunda si está visible
+        }
+    });
 
     // Manejar cambio de esquema de metadatos
     $("#id_metadata_schema").change(function () {
@@ -557,173 +559,144 @@
         console.log("El formulario ya se está enviando, por favor espere...");
         return;
       }
-      const formData = new FormData(this);
-      const selectedId = $("#seq-selector").val();
-      formData.append("sequence_id", selectedId);
 
-      const tomoField = $("[name='metadata_TOMO']");
-      if (tomoField.length > 0 && !tomoField.val()) {
-          Swal.fire({
-              icon: 'error',
-              title: 'Campo requerido',
-              text: 'El campo TOMO es obligatorio para enviar el documento',
-              confirmButtonText: 'Entendido'
-          });
-          tomoField.addClass('is-invalid');
-          tomoField.after('<div class="invalid-feedback">Este campo es requerido</div>');
-          tomoField.focus();
-          return false;
-      }
-
-      const fileInput = document.getElementById("formFile");
-      if (!fileInput.files || fileInput.files.length === 0) {
-        alert("Por favor, capture un documento antes de enviar.");
+      const fileInput1 = document.getElementById("formFile");
+      if (!fileInput1.files || fileInput1.files.length === 0) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Falta el documento principal',
+            text: 'Por favor, capture al menos la primera imagen antes de enviar.',
+            confirmButtonText: 'Entendido'
+        });
         return;
       }
 
       isSaving = true;
-      $('button[type="submit"]').prop("disabled", true);
-      $('button[type="submit"]').html(
+      const submitButton = $('button[type="submit"]');
+      submitButton.prop("disabled", true).html(
         '<i class="fas fa-spinner fa-spin"></i> Guardando...'
       );
 
-      const hasSchema =
-        $("#id_metadata_schema").val() && !$("#no_metadata").is(":checked");
-      if (hasSchema) {
-        let isValid = true;
-        $("#metadata-fields :input[required]").each(function () {
-          if (!$(this).val()) {
-            isValid = false;
-            $(this).addClass("is-invalid");
-            $(this).after(
-              '<div class="invalid-feedback">Este campo es requerido</div>'
-            );
-          } else {
-            $(this).removeClass("is-invalid");
-            $(this).next(".invalid-feedback").remove();
-          }
-        });
-
-        if (!isValid) {
-          alert(
-            "Por favor, complete todos los campos de metadatos requeridos."
-          );
-          return;
-        }
-      }
-
+      const formData = new FormData(this);
+      const selectedId = $("#seq-selector").val();
+      formData.append("sequence_id", selectedId);
+      
       $.ajax({
-        url: "",
+        url: "", // Se envía al mismo URL de la vista
         type: "POST",
         data: formData,
         processData: false,
         contentType: false,
         success: function (response) {
-          isSaving = false;
-          $('button[type="submit"]').prop("disabled", false);
-          $('button[type="submit"]').html(
-            '<i class="fas fa-spinner fa-spin"></i> Enviar'
-          );
           if (response.success) {
             Swal.fire({
               icon: "success",
-              title: "Documento guardado correctamente",
+              title: "Documento guardado",
+              text: "El documento se ha guardado correctamente.",
               showConfirmButton: false,
-              timer: 1000,
-              timerProgressBar: true,
+              timer: 1500,
             });
-            //$("#document-form")[0].reset();
-            $("#captured-image").hide();
-            retakeImage();
+            // Resetear todo para la siguiente captura
+            $("#document-form")[0].reset();
+            retakeImage(camera1);
+            if ($("#camera-section-2").is(":visible")) {
+                retakeImage(camera2);
+                $("#camera-section-2").hide();
+                $("#add-second-photo-btn").show();
+            }
+            $("#id_metadata_schema").trigger("change"); // Limpia los campos de metadatos
             cargarValorSecuencia();
           } else {
-            alert("Ocurrió un error al guardar el documento");
-            console.log(response.errors);
+            Swal.fire({
+              icon: "error",
+              title: "Error al guardar",
+              text: "Ocurrió un error: " + JSON.stringify(response.errors),
+            });
           }
         },
         error: function (xhr, status, error) {
-          isSaving = false;
-          $('button[type="submit"]').prop("disabled", false);
-          $('button[type="submit"]').html(
-            '<i class="fas fa-spinner fa-spin"></i> Enviar'
-          );
           console.error("Error en la petición:", error);
-          alert("Error al procesar el formulario");
+          Swal.fire({
+              icon: "error",
+              title: "Error de conexión",
+              text: "No se pudo procesar el formulario. Intente de nuevo.",
+            });
         },
+        complete: function() {
+            isSaving = false;
+            submitButton.prop("disabled", false).html(
+                '<i class="fas fa-paper-plane"></i> Enviar Documento'
+            );
+        }
       });
     });
-  });
-  // Obtener valor actual del seq_value
-  function cargarValorSecuencia() {
-    const selectedId = $("#seq-selector").val();
-    $.get(`{% url 'get_seq_value' %}`, { id: selectedId }, function (data) {
-      if (data.success) {
-        $("#seq-value-display").val(data.seq_value);
-        $("#seq-bubble").text(data.seq_value);
-      } else {
-        $("#seq-value-display").val("Error");
-        $("#seq-bubble").text("Error");
-      }
-    }).fail(function () {
-      $("#seq-value-display").val("Error");
-      $("#seq-bubble").text("Error");
-    });
-  }
-
-  // Abrir prompt para cambiar la secuencia
-  $("#change-seq-btn").click(function () {
-    const selectedId = $("#seq-selector").val();
-
-    Swal.fire({
-      title: "Nuevo valor de la secuencia",
-      input: "number",
-      inputLabel: "Ingrese el valor inicial deseado",
-      inputAttributes: {
-        min: 0,
-      },
-      showCancelButton: true,
-      confirmButtonText: "Guardar",
-      cancelButtonText: "Cancelar",
-      inputValidator: (value) => {
-        if (!value || parseInt(value) < 0) {
-          return "Ingrese un número válido mayor o igual a 0";
+  
+    // --- FUNCIONES DE SECUENCIA ---
+    function cargarValorSecuencia() {
+        const selectedId = $("#seq-selector").val();
+        $.get(`{% url 'get_seq_value' %}`, { id: selectedId }, function (data) {
+        if (data.success) {
+            $("#seq-value-display").val(data.seq_value);
+            $("#seq-bubble").text(data.seq_value);
+        } else {
+            $("#seq-value-display").val("Error");
+            $("#seq-bubble").text("E");
         }
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        $.ajax({
-          url: "{% url 'set_seq_value' %}",
-          method: "POST",
-          contentType: "application/json",
-          data: JSON.stringify({
-            id: selectedId,
-            seq_value: parseInt(result.value),
-          }),
-          success: function (data) {
-            Swal.fire({
-              icon: "success",
-              title: "Secuencia actualizada",
-              showConfirmButton: false,
-              timer: 1000,
-            });
-            cargarValorSecuencia();
-          },
-          error: function () {
-            Swal.fire("Error", "No se pudo actualizar la secuencia", "error");
-          },
+        }).fail(function () {
+        $("#seq-value-display").val("Error");
+        $("#seq-bubble").text("E");
         });
-      }
+    }
+
+    $("#change-seq-btn").click(function () {
+        const selectedId = $("#seq-selector").val();
+
+        Swal.fire({
+        title: "Nuevo valor de la secuencia",
+        input: "number",
+        inputLabel: "Ingrese el valor inicial deseado",
+        inputAttributes: {
+            min: 1,
+        },
+        showCancelButton: true,
+        confirmButtonText: "Guardar",
+        cancelButtonText: "Cancelar",
+        inputValidator: (value) => {
+            if (!value || parseInt(value) < 1) {
+            return "Ingrese un número válido mayor o igual a 1";
+            }
+        },
+        }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+            url: "{% url 'set_seq_value' %}",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+                id: selectedId,
+                seq_value: parseInt(result.value),
+            }),
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }, // Asegurar token CSRF
+            success: function (data) {
+                Swal.fire({
+                icon: "success",
+                title: "Secuencia actualizada",
+                showConfirmButton: false,
+                timer: 1000,
+                });
+                cargarValorSecuencia();
+            },
+            error: function () {
+                Swal.fire("Error", "No se pudo actualizar la secuencia", "error");
+            },
+            });
+        }
+        });
     });
-  });
 
-  // Cargar valor cuando cambia el select
-  $("#seq-selector").change(function () {
-    cargarValorSecuencia();
-  });
-
-  // Cargar valor inicial al cargar la página
-  $(document).ready(function () {
-    cargarValorSecuencia();
+    $("#seq-selector").change(function () {
+        cargarValorSecuencia();
+    });
   });
 </script>
 {% endblock %}

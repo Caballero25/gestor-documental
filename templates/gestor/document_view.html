@@ -72,5 +72,38 @@
         <p>Este tipo de archivo no puede ser visualizado directamente.</p>
         
     {% endif %}
+    {% if document.file2.name|lower|slice:'-4:' in '.jpg,.jpeg,.png,.gif' %}
+    <div class="" style="height: 20px;"></div>
+        <!-- Controles de rotación -->
+        <div class="text-center mb-3">
+            <button class="btn btn-secondary me-2" onclick="rotateImage(-90)">
+                <i class="bi bi-arrow-counterclockwise"></i> Rotar Izquierda
+            </button>
+            <button class="btn btn-secondary" onclick="rotateImage(90)">
+                <i class="bi bi-arrow-clockwise"></i> Rotar Derecha
+            </button>
+        </div>
+
+        <!-- Visualización de imagen rotada -->
+        <div id="image-container" class="text-center mt-2">
+            <img 
+                id="rotatable-image"
+                src="data:{{ mime_type }};base64,{{ file2_base64 }}" 
+                alt="{{ document.code_name }}" 
+                class="img-fluid rounded"
+                style="max-width: 100%; height: auto; transform: rotate(270deg); transition: transform 0.3s ease;"
+            >
+        </div>
+
+        <!-- Script para manejar la rotación -->
+        <script>
+            let currentRotation = 90;
+            function rotateImage(degrees) {
+                currentRotation = (currentRotation + degrees) % 360;
+                document.getElementById("rotatable-image").style.transform = `rotate(${currentRotation}deg)`;
+            }
+        </script>
+    {% endif %}
+
 </div>
 {% endblock %}

@@ -134,8 +134,11 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const base64Image = "data:image/*;base64,{{ file_base64 }}";
+    const base64Image2 = "data:image/*;base64,{{ file2_base64 }}";
     const img = new Image();
     img.src = base64Image;
+    const img2 = new Image();
+    img2.src = base64Image2;
 
     img.onload = function () {
         const canvas = document.getElementById('rotatedImageCanvas');
@@ -153,6 +156,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Dibujar la imagen en la nueva orientación
         ctx.drawImage(img, 0, 0);
+    };
+    img2.onload = function () {
+        const canvas = document.getElementById('rotatedImageCanvas2');
+        const ctx = canvas.getContext('2d');
+
+        // Configurar nuevo tamaño para rotación 90° (alto ↔ ancho)
+        canvas.width = img2.height;
+        canvas.height = img2.width;
+
+        // Mover origen al nuevo punto (esquina superior izquierda tras rotación)
+        ctx.translate(0, img2.width);
+
+        // Rotar 90 grados en sentido horario
+        ctx.rotate(-90 * Math.PI / 180);
+
+        // Dibujar la imagen en la nueva orientación
+        ctx.drawImage(img2, 0, 0);
     };
 });
 </script>
@@ -173,11 +193,18 @@ document.addEventListener('DOMContentLoaded', () => {
             {% endfor %}
         {% endif %}
         <div class="container-fluid mt-3 pb-4">
+        <div class="d-flex">
         {% if file_base64 %}
-            <div class="d-flex justify-content-center mb-4">
+            <div class="col-6 justify-content-center mb-4">
                 <canvas id="rotatedImageCanvas" style="max-width: 100%; height: auto; border: 1px solid #ccc;"></canvas>
             </div>
         {% endif %}
+        {% if file2_base64 %}
+            <div class="col-6 justify-content-center mb-4">
+                <canvas id="rotatedImageCanvas2" style="max-width: 100%; height: auto; border: 1px solid #ccc;"></canvas>
+            </div>
+        {% endif %}
+        </div>
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="row d-flex">
