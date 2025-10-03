@@ -179,7 +179,7 @@
         </select>
       </div>
 
-      <div class="form-group form-check">
+      <div class="form-group form-check d-none">
         <input
           type="checkbox"
           class="form-check-input"
@@ -209,6 +209,9 @@
             disabled
           >
             <i class="fas fa-redo"></i> Volver a tomar 1
+          </button>
+          <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fas fa-paper-plane"></i> Enviar
           </button>
         </div>
         <div id="camera-error-1" class="error-message"></div>
@@ -244,6 +247,9 @@
             disabled
           >
             <i class="fas fa-redo"></i> Volver a tomar 2
+          </button>
+          <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fas fa-paper-plane"></i> Enviar
           </button>
         </div>
         <div id="camera-error-2" class="error-message"></div>
@@ -558,6 +564,51 @@
       if (isSaving) {
         console.log("El formulario ya se está enviando, por favor espere...");
         return;
+      }
+
+            // --- 1. VALIDACIÓN DE ESQUEMA OBLIGATORIO ---
+      const schemaSelector = $("#id_metadata_schema");
+      const noMetadataCheckbox = $("#no_metadata");
+
+      if (!schemaSelector.val() || noMetadataCheckbox.is(":checked")) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Esquema Requerido',
+            text: 'Es obligatorio seleccionar un esquema. La opción "Subir sin metadatos" debe estar desactivada.',
+            confirmButtonText: 'Entendido'
+        });
+        // Añadir feedback visual si no se ha seleccionado un esquema
+        if (!schemaSelector.val()){
+            schemaSelector.addClass('is-invalid');
+        }
+        return; // DETIENE EL ENVÍO
+      } else {
+        schemaSelector.removeClass('is-invalid');
+      }
+
+      // --- 2. VALIDACIÓN DE CAMPO "TOMO" OBLIGATORIO ---
+      const tomoField = $("[name='metadata_TOMO']");
+
+      // La condición ahora es: el campo TOMO no existe O (existe pero está vacío)
+      if (tomoField.length === 0 || !tomoField.val()) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Campo Requerido',
+            text: 'El esquema seleccionado exige el campo "TOMO", el cual es obligatorio y no puede estar vacío.',
+            confirmButtonText: 'Entendido'
+        });
+        // Si el campo existe pero está vacío, se le añade la clase de error
+        if (tomoField.length > 0) {
+             tomoField.addClass('is-invalid').focus();
+             if (tomoField.next('.invalid-feedback').length === 0) {
+                 tomoField.after('<div class="invalid-feedback">Este campo es requerido.</div>');
+             }
+        }
+        return; // DETIENE EL ENVÍO
+      } else {
+        // Si pasa la validación, se limpia cualquier clase de error previa
+        tomoField.removeClass('is-invalid');
+        tomoField.next('.invalid-feedback').remove();
       }
 
       const fileInput1 = document.getElementById("formFile");
