@@ -200,7 +200,7 @@
         </div>
         <div class="camera-buttons">
           <button type="button" id="capture-btn-1" class="btn btn-success btn-lg">
-            <i class="fas fa-camera"></i> Capturar 1
+            <i class="bi bi-camera"></i> 1
           </button>
           <button
             type="button"
@@ -208,11 +208,16 @@
             class="btn btn-warning btn-lg"
             disabled
           >
-            <i class="fas fa-redo"></i> Volver a tomar 1
+            <i class="bi bi-arrow-clockwise">Reintentar</i>
           </button>
           <button type="submit" class="btn btn-primary btn-lg">
             <i class="fas fa-paper-plane"></i> Enviar
           </button>
+          <div class="mt-1">
+          <button type="button" id="add-second-photo-btn" class="btn btn-info">
+            <i class="fas fa-plus"></i> Añadir segunda foto (opcional)
+          </button>
+     </div>
         </div>
         <div id="camera-error-1" class="error-message"></div>
         <input
@@ -223,12 +228,6 @@
         />
       </div>
 
-      <hr/>
-      
-      <button type="button" id="add-second-photo-btn" class="btn btn-info mb-3">
-          <i class="fas fa-plus"></i> Añadir segunda foto (opcional)
-      </button>
-
       <div id="camera-section-2" class="form-group" style="display: none;">
         <label>Capturar Documento 2 (Opcional)</label>
         <div id="camera-container-2" class="camera-container">
@@ -238,7 +237,7 @@
         </div>
         <div class="camera-buttons">
           <button type="button" id="capture-btn-2" class="btn btn-success btn-lg">
-            <i class="fas fa-camera"></i> Capturar 2
+            <i class="bi bi-camera"></i> 2
           </button>
           <button
             type="button"
@@ -246,7 +245,7 @@
             class="btn btn-warning btn-lg"
             disabled
           >
-            <i class="fas fa-redo"></i> Volver a tomar 2
+            <i class="bi bi-arrow-clockwise">Reintentar</i>
           </button>
           <button type="submit" class="btn btn-primary btn-lg">
             <i class="fas fa-paper-plane"></i> Enviar
@@ -279,6 +278,34 @@
 </div>
 <script>
   $(document).ready(function () {
+    // --- INICIO: CÓDIGO DE PERSISTENCIA DE DATOS ---
+    const persistentFields = ['metadata_PARROQUIA', 'metadata_TOMO', 'metadata_AÑO'];
+
+    // Función para cargar los valores guardados en los campos del formulario
+    function loadPersistentFields() {
+      persistentFields.forEach(fieldId => {
+        const savedValue = localStorage.getItem(fieldId);
+        if (savedValue) {
+          const field = $(`#${fieldId}`);
+        if (field.length) {
+        field.val(savedValue);
+        }
+        }
+      });
+    }
+
+    // Evento que guarda el valor de un campo CADA VEZ que el usuario lo modifica
+    // Se usa delegación de eventos para que funcione con campos creados dinámicamente.
+    $("#metadata-fields").on("change", "#metadata_PARROQUIA, #metadata_TOMO, #metadata_AÑO", function() {
+      if (this.value) {
+        // Guarda el valor en localStorage usando el ID del campo como clave
+        localStorage.setItem(this.id, this.value);
+      } else {
+        // Si el usuario borra el campo, también lo eliminamos del recuerdo
+          localStorage.removeItem(this.id);
+      }
+    });
+    // --- FIN: CÓDIGO DE PERSISTENCIA DE DATOS ---
     // --- CONFIGURACIÓN GENERAL ---
     cargarValorSecuencia();
     let isSaving = false;
@@ -428,11 +455,19 @@
     camera2.retakeBtn.on("click", () => retakeImage(camera2));
 
     // Mostrar e iniciar la segunda cámara cuando se hace clic en el botón
-    $("#add-second-photo-btn").on("click", function() {
-        $("#camera-section-2").slideDown();
-        startCamera(camera2);
-        $(this).hide(); // Ocultar el botón después de hacer clic
-    });
+$("#add-second-photo-btn").on("click", function() {
+    const cameraSection2 = $("#camera-section-2");
+
+    cameraSection2.slideDown(function() {
+      // Se ejecuta cuando la animación de slideDown termina
+      startCamera(camera2);
+      
+      // AÑADIR ESTA LÍNEA PARA EL SCROLL
+      cameraSection2[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    $(this).hide(); // Ocultar el botón después de hacer clic
+});
     
     // Reiniciar cámaras si cambia la relación de aspecto
     $("#aspect-ratio").change(function() {
@@ -538,6 +573,7 @@
                 '<p class="text-muted">Este esquema no tiene campos de metadatos definidos</p>'
               );
             }
+            loadPersistentFields();
           }
         ).fail(function () {
           metadataSection.html(
@@ -648,7 +684,7 @@
               timer: 1500,
             });
             // Resetear todo para la siguiente captura
-            $("#document-form")[0].reset();
+            loadPersistentFields();
             retakeImage(camera1);
             if ($("#camera-section-2").is(":visible")) {
                 retakeImage(camera2);
