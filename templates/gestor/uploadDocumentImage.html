@@ -456,17 +456,16 @@
 
     // Mostrar e iniciar la segunda cámara cuando se hace clic en el botón
 $("#add-second-photo-btn").on("click", function() {
-    const cameraSection2 = $("#camera-section-2");
+    const cameraSection2 = $("#camera-section-2");
+    cameraSection2.slideDown(function() {
+    // Se ejecuta cuando la animación de slideDown termina
+    startCamera(camera2);
+ 
+// AÑADIR ESTA LÍNEA PARA EL SCROLL
+    cameraSection2[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
 
-    cameraSection2.slideDown(function() {
-      // Se ejecuta cuando la animación de slideDown termina
-      startCamera(camera2);
-      
-      // AÑADIR ESTA LÍNEA PARA EL SCROLL
-      cameraSection2[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-
-    $(this).hide(); // Ocultar el botón después de hacer clic
+  $(this).hide(); // Ocultar el botón después de hacer clic
 });
     
     // Reiniciar cámaras si cambia la relación de aspecto
@@ -693,6 +692,7 @@ $("#add-second-photo-btn").on("click", function() {
             }
             $("#id_metadata_schema").trigger("change"); // Limpia los campos de metadatos
             cargarValorSecuencia();
+            $("#camera-container-1")[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
           } else {
             Swal.fire({
               icon: "error",
