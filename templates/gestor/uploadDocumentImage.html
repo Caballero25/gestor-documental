@@ -693,6 +693,9 @@ $("#add-second-photo-btn").on("click", function() {
             $("#id_metadata_schema").trigger("change"); // Limpia los campos de metadatos
             cargarValorSecuencia();
             $("#camera-container-1")[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => {
+              window.scrollBy({ top: -40, behavior: 'smooth' });
+            }, 500);
           } else {
             Swal.fire({
               icon: "error",
