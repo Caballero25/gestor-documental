@@ -87,7 +87,7 @@
         <!-- Visualización de imagen rotada -->
         <div id="image-container" class="text-center mt-2">
             <img 
-                id="rotatable-image"
+                id="rotatable-image2"
                 src="data:{{ mime_type }};base64,{{ file2_base64 }}" 
                 alt="{{ document.code_name }}" 
                 class="img-fluid rounded"
@@ -100,7 +100,7 @@
             let currentRotation = 90;
             function rotateImage(degrees) {
                 currentRotation = (currentRotation + degrees) % 360;
-                document.getElementById("rotatable-image").style.transform = `rotate(${currentRotation}deg)`;
+                document.getElementById("rotatable-image2").style.transform = `rotate(${currentRotation}deg)`;
             }
         </script>
     {% endif %}
