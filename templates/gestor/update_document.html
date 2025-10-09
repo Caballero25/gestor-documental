@@ -227,23 +227,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         {% endif %}
                         </div>
                     {% endif %}
-                    {% if mf.NOMBRE_NOVIO %}
+                    {% if mf['NOMBRE NOVIO'] %}
                         <div class="m-1 col-4">
-                        {{ mf.NOMBRE_NOVIO.label_tag }}
-                        {{ mf.NOMBRE_NOVIO }}
-                        {% if mf.NOMBRE_NOVIO.errors %}
-                            <div class="text-danger">{{ mf.NOMBRE_NOVIO.errors|striptags }}</div>
+                        {{ mf['NOMBRE NOVIO'].label_tag }}
+                        {{ mf['NOMBRE NOVIO'] }}
+                        {% if mf['NOMBRE NOVIO'].errors %}
+                            <div class="text-danger">{{ mf['NOMBRE NOVIO'].errors|striptags }}</div>
                         {% endif %}
                         </div>
                     {% endif %}
-                    {% if mf.NOMBRE_NOVIA %}
-                        <div class="m-1 col-4">
-                        {{ mf.NOMBRE_NOVIA.label_tag }}
-                        {{ mf.NOMBRE_NOVIA }}
-                        {% if mf.NOMBRE_NOVIA.errors %}
-                            <div class="text-danger">{{ mf.NOMBRE_NOVIA.errors|striptags }}</div>
+                    {% if mf['NOMBRE NOVIA'] %}
+                    <div class="m-1 col-4">
+                        {{ mf['NOMBRE NOVIA'].label_tag }}
+                        {{ mf['NOMBRE NOVIA'] }}
+                        {% if mf['NOMBRE NOVIA'].errors %}
+                            <div class="text-danger">{{ mf['NOMBRE NOVIA'].errors|striptags }}</div>
                         {% endif %}
-                        </div>
+                    </div>
                     {% endif %}
                     {% if mf.AÑO %}
                         <div class="m-1 col-2">
