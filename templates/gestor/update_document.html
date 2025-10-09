@@ -1,28 +1,19 @@
 {% extends 'base/base_adminlte.html' %}
+
 {% block extra_head %}
+
 <style>
     /* Estilos para mover el icono de fecha hacia la izquierda */
     input[type="date"].datepicker-left::-webkit-calendar-picker-indicator {
-        left: 10px; 
-        right: unset; 
+        left: 10px;
+        right: unset;
         position: absolute;
         z-index: 1;
     }
 
     input[type="date"].datepicker-left {
-        position: relative; 
-        padding-left: 30px; 
-    }
-    input[type="date"].datepicker-left::-webkit-calendar-picker-indicator {
-        left: 10px; 
-        right: unset; 
-        position: absolute;
-        z-index: 1;
-    }
-
-    input[type="date"].datepicker-left {
-        position: relative; 
-        padding-left: 30px; 
+        position: relative;
+        padding-left: 30px;
     }
 </style>
 
@@ -30,7 +21,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Lista de campos a buscar (en orden de prioridad)
     const camposABuscar = ['BAUTIZADO', 'CONFIRMADO', 'NOMBRE_NOVIO'];
-    
+   
     // Buscar el primer campo disponible
     for (const campo of camposABuscar) {
         const input = document.querySelector(`[name="${campo}"]`);
@@ -52,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('form');
     const submitButton = document.getElementById('submitFormButton');
     let submitMethod = 'button'; // Por defecto, asumimos que se usa el botón
-    
+   
     // Detectar si se presiona Enter en cualquier campo de entrada
     const inputs = form.querySelectorAll('input, select, textarea');
     inputs.forEach(input => {
@@ -64,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-    
+   
     // Cuando se hace clic en el botón de enviar
     submitButton.addEventListener('click', function(e) {
         submitMethod = 'button';
@@ -79,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(parroquiaSelect.value)
         // 1. Cargar el valor guardado desde localStorage al iniciar la página
         const savedParroquia = localStorage.getItem('selectedParroquia');
-        
+       
         // 2. Si hay un valor guardado y el campo actual está vacío, se lo asignamos
         if (savedParroquia && !parroquiaSelect.value) {
             parroquiaSelect.value = savedParroquia;
@@ -93,26 +84,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==================================================================
     // FIN: Código para persistencia del campo PARROQUIA
     // ==================================================================
-    
+   
     // Interceptar el envío del formulario
     form.addEventListener('submit', function(e) {
         e.preventDefault();
-        
+       
         // Determinar la URL de destino según el método de envío
         let actionUrl = form.getAttribute('action');
-        
+       
         if (submitMethod === 'enter') {
             actionUrl = "{% url 'edit_document_indexacion_view' document.id %}";  // Reemplaza con tu URL real
         } else {
             actionUrl = "{% url 'edit_document_view' document.id %}";  // Reemplaza con tu URL real
         }
-        
+       
         // Crear un formulario temporal para enviar los datos
         const tempForm = document.createElement('form');
         tempForm.method = form.method;
         tempForm.action = actionUrl;
         tempForm.enctype = form.enctype;
-        
+       
         // Copiar todos los campos del formulario original
         const formData = new FormData(form);
         for (const [name, value] of formData.entries()) {
@@ -122,12 +113,13 @@ document.addEventListener('DOMContentLoaded', () => {
             input.value = value;
             tempForm.appendChild(input);
         }
-        
+       
         // Agregar el formulario temporal al DOM y enviarlo
         document.body.appendChild(tempForm);
         tempForm.submit();
     });
 });
+
 </script>
 
 {% if file_base64 %}
@@ -181,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
 {% endblock %}
 
 {% block content %}
-    
+   
 <div class="container-fluid mt-3">
     <div class="card">
         {% if messages %}
@@ -209,73 +201,95 @@ document.addEventListener('DOMContentLoaded', () => {
                 {% csrf_token %}
                 <div class="row d-flex">
                     {% with metadata_form as mf %}
-                    {% if mf.BAUTIZADO %}
+                    
+                    {# Primero: Buscar campos específicos por nombre #}
+                    {% for field in mf %}
+                        {% if field.name == "BAUTIZADO" %}
+                            <div class="m-1 col-4">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger">{{ field.errors|striptags }}</div>
+                            {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% for field in mf %}
+                        {% if field.name == "CONFIRMADO" %}
+                            <div class="m-1 col-4">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger">{{ field.errors|striptags }}</div>
+                            {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% for field in mf %}
+                        {% if field.name == "NOMBRE NOVIO" %}
+                            <div class="m-1 col-4">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger">{{ field.errors|striptags }}</div>
+                            {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% for field in mf %}
+                        {% if field.name == "NOMBRE NOVIA" %}
                         <div class="m-1 col-4">
-                        {{ mf.BAUTIZADO.label_tag }}
-                        {{ mf.BAUTIZADO }}
-                        {% if mf.BAUTIZADO.errors %}
-                            <div class="text-danger">{{ mf.BAUTIZADO.errors|striptags }}</div>
-                        {% endif %}
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger">{{ field.errors|striptags }}</div>
+                            {% endif %}
                         </div>
-                    {% endif %}
-                    {% if mf.CONFIRMADO %}
-                        <div class="m-1 col-4">
-                        {{ mf.CONFIRMADO.label_tag }}
-                        {{ mf.CONFIRMADO }}
-                        {% if mf.CONFIRMADO.errors %}
-                            <div class="text-danger">{{ mf.CONFIRMADO.errors|striptags }}</div>
                         {% endif %}
-                        </div>
-                    {% endif %}
-                    {% if mf['NOMBRE NOVIO'] %}
-                        <div class="m-1 col-4">
-                        {{ mf['NOMBRE NOVIO'].label_tag }}
-                        {{ mf['NOMBRE NOVIO'] }}
-                        {% if mf['NOMBRE NOVIO'].errors %}
-                            <div class="text-danger">{{ mf['NOMBRE NOVIO'].errors|striptags }}</div>
+                    {% endfor %}
+
+                    {% for field in mf %}
+                        {% if field.name == "AÑO" %}
+                            <div class="m-1 col-2">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger">{{ field.errors|striptags }}</div>
+                            {% endif %}
+                            </div>
                         {% endif %}
-                        </div>
-                    {% endif %}
-                    {% if mf['NOMBRE NOVIA'] %}
-                    <div class="m-1 col-4">
-                        {{ mf['NOMBRE NOVIA'].label_tag }}
-                        {{ mf['NOMBRE NOVIA'] }}
-                        {% if mf['NOMBRE NOVIA'].errors %}
-                            <div class="text-danger">{{ mf['NOMBRE NOVIA'].errors|striptags }}</div>
+                    {% endfor %}
+
+                    {% for field in mf %}
+                        {% if field.name == "PARROQUIA" %}
+                            <div class="m-1 col-2">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger">{{ field.errors|striptags }}</div>
+                            {% endif %}
+                            </div>
                         {% endif %}
-                    </div>
-                    {% endif %}
-                    {% if mf.AÑO %}
-                        <div class="m-1 col-2">
-                        {{ mf.AÑO.label_tag }}
-                        {{ mf.AÑO }}
-                        {% if mf.AÑO.errors %}
-                            <div class="text-danger">{{ mf.AÑO.errors|striptags }}</div>
+                    {% endfor %}
+
+                    {% for field in mf %}
+                        {% if field.name == "SACERDOTE" %}
+                            <div class="m-1 col-2">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger">{{ field.errors|striptags }}</div>
+                            {% endif %}
+                            </div>
                         {% endif %}
-                        </div>
-                    {% endif %}
-                    {% if mf.PARROQUIA %}
-                        <div class="m-1 col-2">
-                        {{ mf.PARROQUIA.label_tag }}
-                        {{ mf.PARROQUIA }}
-                        {% if mf.PARROQUIA.errors %}
-                            <div class="text-danger">{{ mf.PARROQUIA.errors|striptags }}</div>
-                        {% endif %}
-                        </div>
-                    {% endif %}
-                    {% if mf.SACERDOTE %}
-                        <div class="m-1 col-2">
-                        {{ mf.SACERDOTE.label_tag }}
-                        {{ mf.SACERDOTE }}
-                        {% if mf.SACERDOTE.errors %}
-                            <div class="text-danger">{{ mf.SACERDOTE.errors|striptags }}</div>
-                        {% endif %}
-                        </div>
-                    {% endif %}
+                    {% endfor %}
 
                     {# Mostrar los demás campos que no son los anteriores ni 'metadata' #}
                     {% for field in mf %}
-                        {% if field.name not in 'BAUTIZADO CONFIRMADO NOMBRE NOVIO NOMBRE PARROQUIA NOVIA AÑO SACERDOTE metadata' %}
+                        {% if field.name not in "BAUTIZADO CONFIRMADO NOMBRE NOVIO NOMBRE NOVIA PARROQUIA AÑO SACERDOTE metadata" %}
                         <div class="m-1 col-2">
                             {{ field.label_tag }}
                             {{ field }}
@@ -287,15 +301,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     {% endfor %}
 
                     {# Campo metadata con switch #}
-                    {% if mf.metadata %}
-                        <div class="m-1 col-12">
-                        <hr>
-                        <div class="form-check form-switch">
-                            {{ mf.metadata }}
-                            <label class="form-check-label" for="flexSwitchCheckDefault">Subir Sin Metadatos</label>
-                        </div>
-                        </div>
-                    {% endif %}
+                    {% for field in mf %}
+                        {% if field.name == "metadata" %}
+                            <div class="m-1 col-12">
+                            <hr>
+                            <div class="form-check form-switch">
+                                {{ field }}
+                                <label class="form-check-label" for="flexSwitchCheckDefault">Subir Sin Metadatos</label>
+                            </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
                     {% endwith %}
 
                     {# Campos del document_form #}
