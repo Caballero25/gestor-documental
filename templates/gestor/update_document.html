@@ -39,6 +39,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     {% endif %}
 
+        // ==================================================================
+    // CONVERSIÓN AUTOMÁTICA A MAYÚSCULAS
+    // ==================================================================
+    function convertirAMayusculas(input) {
+        input.value = input.value.toUpperCase();
+    }
+
+    const camposMayusculas = ['PADRINOS', 'BAUTIZADO', 'CONFIRMADO', 'NOMBRE NOVIO', 'NOMBRE NOVIA', 'SACERDOTE'];
+
+    camposMayusculas.forEach(nombreCampo => {
+        const input = document.querySelector(`[name="${nombreCampo}"]`);
+        if (input) {
+            input.addEventListener('input', function() {
+                convertirAMayusculas(this);
+            });
+            
+            input.addEventListener('blur', function() {
+                convertirAMayusculas(this);
+            });
+            
+            if (input.value) {
+                convertirAMayusculas(input);
+            }
+        }
+    });
+    // ==================================================================
+
     // Manejar el envío del formulario
     const form = document.querySelector('form');
     const submitButton = document.getElementById('submitFormButton');
