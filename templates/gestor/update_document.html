@@ -15,6 +15,21 @@
         position: relative;
         padding-left: 30px;
     }
+/* Estilos para campos con error */
+.is-invalid {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+#error-anio {
+    font-size: 0.875em;
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 </style>
 
 <script>
@@ -66,6 +81,71 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     // ==================================================================
 
+        // ==================================================================
+    // VALIDACIÓN DEL CAMPO AÑO (OBLIGATORIO)
+    // ==================================================================
+    function validarAnio() {
+        const anioFieldValidation = document.querySelector('input[name="AÑO"]');
+        if (anioFieldValidation) {
+            const valor = anioFieldValidation.value.trim();
+            if (!valor) {
+                // Mostrar error
+                mostrarErrorAnio('El campo AÑO es obligatorio');
+                return false;
+            }
+            
+            // Validar que sea un año válido (opcional)
+            const anioNum = parseInt(valor);
+            if (isNaN(anioNum) || anioNum < 1000 || anioNum > new Date().getFullYear() + 1) {
+                mostrarErrorAnio('Por favor ingrese un año válido');
+                return false;
+            }
+            
+            // Limpiar error si existe
+                limpiarErrorAnio();
+            return true;
+        }
+        return true; // Si no existe el campo, no hay problema
+    }
+
+    function mostrarErrorAnio(mensaje) {
+        limpiarErrorAnio();
+        
+        const anioFieldValidation = document.querySelector('input[name="AÑO"]');
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'text-danger mt-1 small';
+        errorDiv.id = 'error-anio';
+        errorDiv.innerHTML = `<i class="bi bi-exclamation-triangle"></i> ${mensaje}`;
+        
+        anioFieldValidation.classList.add('is-invalid');
+        anioFieldValidation.parentNode.appendChild(errorDiv);
+    }
+
+    function limpiarErrorAnio() {
+        const errorDiv = document.getElementById('error-anio');
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+        
+        const anioFieldValidation = document.querySelector('input[name="AÑO"]');
+        if (anioFieldValidation) {
+            anioFieldValidation.classList.remove('is-invalid');
+        }
+    }
+
+    // Agregar validación en tiempo real al campo AÑO
+    const anioFieldValidation = document.querySelector('input[name="AÑO"]');
+    if (anioFieldValidation) {
+        anioFieldValidation.addEventListener('blur', validarAnio);
+        anioFieldValidation.addEventListener('input', function() {
+            // Limpiar error mientras el usuario escribe
+            if (this.value.trim()) {
+                limpiarErrorAnio();
+            }
+        });
+    }
+    // ==================================================================
+
     // Manejar el envío del formulario
     const form = document.querySelector('form');
     const submitButton = document.getElementById('submitFormButton');
@@ -78,6 +158,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 submitMethod = 'enter';
+                if (!validarAnio()) {
+                    return; // Detener el envío si la validación falla
+                }
                 form.requestSubmit();
             }
         });
@@ -86,6 +169,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cuando se hace clic en el botón de enviar
     submitButton.addEventListener('click', function(e) {
         submitMethod = 'button';
+        if (!validarAnio()) {
+            e.preventDefault(); // Detener el envío si la validación falla
+            // Hacer scroll al campo con error
+            const anioField = document.querySelector('input[name="AÑO"]');
+            if (anioField) {
+                anioField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                anioField.focus();
+            }
+        }
     });
 
     // ==================================================================
@@ -115,6 +207,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Interceptar el envío del formulario
     form.addEventListener('submit', function(e) {
         e.preventDefault();
+        if (!validarAnio()) {
+            e.preventDefault();
+            return;
+        }
        
         // Determinar la URL de destino según el método de envío
         let actionUrl = form.getAttribute('action');
