@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="row d-flex">
                     {% with metadata_form as mf %}
                     {% if mf.BAUTIZADO %}
-                        <div class="m-1 col-2">
+                        <div class="m-1 col-4">
                         {{ mf.BAUTIZADO.label_tag }}
                         {{ mf.BAUTIZADO }}
                         {% if mf.BAUTIZADO.errors %}
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     {% endif %}
                     {% if mf.CONFIRMADO %}
-                        <div class="m-1 col-2">
+                        <div class="m-1 col-4">
                         {{ mf.CONFIRMADO.label_tag }}
                         {{ mf.CONFIRMADO }}
                         {% if mf.CONFIRMADO.errors %}
@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     {% endif %}
                     {% if mf.NOMBRE_NOVIO %}
-                        <div class="m-1 col-2">
+                        <div class="m-1 col-4">
                         {{ mf.NOMBRE_NOVIO.label_tag }}
                         {{ mf.NOMBRE_NOVIO }}
                         {% if mf.NOMBRE_NOVIO.errors %}
@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     {% endif %}
                     {% if mf.NOMBRE_NOVIA %}
-                        <div class="m-1 col-2">
+                        <div class="m-1 col-4">
                         {{ mf.NOMBRE_NOVIA.label_tag }}
                         {{ mf.NOMBRE_NOVIA }}
                         {% if mf.NOMBRE_NOVIA.errors %}
