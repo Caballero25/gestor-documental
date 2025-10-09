@@ -5,39 +5,41 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   #camera-container, .camera-container {
-    position: relative;
-    width: 100%;
-    max-width: 100%;
-    margin: 0 auto;
-    border: 2px dashed #ddd;
-    border-radius: 5px;
-    min-height: 200px;
-    display: flex;
-    height: 700px;
-    justify-content: center;
-    align-items: center;
-    aspect-ratio: 4/1; /* Fijo para 4:1 */
-    overflow: hidden;
-    background-color: #f0f0f0; /* Fondo visible cuando la cámara no llena el espacio */
+      position: relative;
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      border: 2px dashed #ddd;
+      border-radius: 5px;
+      min-height: 300px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      background-color: #f0f0f0;
   }
 
   .camera-view {
-    width: auto;
-    height: 100%;
-    object-fit: cover; /* Prioriza llenar el contenedor verticalmente */
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* Cambiado de 'cover' a 'contain' */
   }
+  .camera-container {
+    aspect-ratio: 4/3; /* Más realista para documentos */
+    max-height: 70vh; /* Limitar altura máxima */
+}
   
   .camera-canvas {
     display: none;
   }
 
   .captured-image {
-    width: 100%;
-    height: auto;
-    max-height: 400px;
-    object-fit: contain; /* Muestra toda la imagen capturada */
-    border: 1px solid #ccc;
-    background: white;
+      width: 100%;
+      height: auto;
+      max-height: 400px;
+      object-fit: contain;
+      border: 1px solid #ccc;
+      background: white;
   }
 
   .camera-placeholder {
@@ -59,11 +61,22 @@
     margin-top: 5px;
   }
   /* Media query para dispositivos móviles */
-  @media (max-width: 768px) {
+@media (max-width: 768px) {
     #camera-container, .camera-container {
-      max-height: 80vh; /* Altura aún más reducida en móviles */
+        max-height: 60vh;
+        aspect-ratio: 3/4; /* Mejor para móviles en portrait */
     }
-  }
+    
+    .camera-view {
+        object-fit: contain; /* Siempre mostrar toda la imagen */
+    }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+    #camera-container, .camera-container {
+        max-height: 65vh;
+    }
+}
+
     .seq-bubble {
     position: fixed;
     right: 20px;
@@ -338,43 +351,41 @@
     
     // --- FUNCIONES DE CÁMARA REFACTORIZADAS ---
     // Estas funciones ahora aceptan un objeto de cámara para trabajar
-    
-    function getConstraints(aspectRatio) {
-      const baseConstraints = {
+function getConstraints(aspectRatio) {
+    const baseConstraints = {
         video: {
-          facingMode: "environment",
-          audio: false,
+            facingMode: "environment",
+            audio: false,
         },
-      };
+    };
 
-      const resolutions = {
-        "16:9": { width: 1920, height: 1080 },
-        "16:3": { width: 1920, height: 360 },
-        "3:1": { width: 1440, height: 480 },
-        "4:1": { width: 1600, height: 400 },
-        "5:2": { width: 1200, height: 480 },
-        "4:3": { width: 1632, height: 1224 },
-        "1:1": { width: 1512, height: 1512 },
-        "3:2": { width: 2016, height: 1344 },
-        auto: { width: { ideal: 2048 }, height: { ideal: 1080 } },
-      };
+    // Simplificar las resoluciones
+    const aspectRatios = {
+        "16:9": { aspectRatio: 16/9 },
+        "4:3": { aspectRatio: 4/3 },
+        "1:1": { aspectRatio: 1 },
+        "3:2": { aspectRatio: 3/2 },
+        "3:1": { aspectRatio: 3/1 },
+        "4:1": { aspectRatio: 4/1 },
+        "5:2": { aspectRatio: 5/2 },
+        "16:3": { aspectRatio: 16/3 }
+    };
 
-      if (aspectRatio === "auto") {
+    if (aspectRatio === "auto") {
         return baseConstraints;
-      }
-
-      if (resolutions[aspectRatio]) {
-        baseConstraints.video.width = { ideal: resolutions[aspectRatio].width };
-        baseConstraints.video.height = {
-          ideal: resolutions[aspectRatio].height,
-        };
-        baseConstraints.video.aspectRatio =
-          parseFloat(aspectRatio.split(":")[0]) /
-          parseFloat(aspectRatio.split(":")[1]);
-      }
-
-      return baseConstraints;
     }
+
+    if (aspectRatios[aspectRatio]) {
+        baseConstraints.video.aspectRatio = aspectRatios[aspectRatio].aspectRatio;
+        // No forzar width/height exactos, solo la relación de aspecto
+        baseConstraints.video.width = { ideal: 1920 };
+        baseConstraints.video.height = { 
+            ideal: 1920 / aspectRatios[aspectRatio].aspectRatio 
+        };
+    }
+
+    return baseConstraints;
+}
 
     function stopCamera(cam) {
         if (cam.stream) {
@@ -384,35 +395,44 @@
             cam.stream = null;
         }
     }
+function startCamera(cam) {
+    stopCamera(cam);
+    cam.errorDisplay.text("");
+    const aspectRatio = $("#aspect-ratio").val();
+    const constraints = getConstraints(aspectRatio);
 
-    function startCamera(cam) {
-        stopCamera(cam);
-        cam.errorDisplay.text("");
-        const aspectRatio = $("#aspect-ratio").val();
-        const constraints = getConstraints(aspectRatio);
+    navigator.mediaDevices.getUserMedia(constraints)
+        .then(mediaStream => {
+            cam.stream = mediaStream;
+            cam.view.srcObject = mediaStream;
+            $(cam.view).show();
+            cam.captureBtn.prop("disabled", false);
 
-        navigator.mediaDevices.getUserMedia(constraints)
-            .then(mediaStream => {
-                cam.stream = mediaStream;
-                cam.view.srcObject = mediaStream;
-                $(cam.view).show();
-                cam.captureBtn.prop("disabled", false);
-
-                cam.view.onloadedmetadata = () => {
-                    cam.canvas.width = cam.view.videoWidth;
-                    cam.canvas.height = cam.view.videoHeight;
-                    console.log(`Cámara lista: ${cam.view.videoWidth}x${cam.view.videoHeight}`);
-                };
-            })
-            .catch(error => {
-                console.error("Error de cámara:", error);
-                let errorMessage = `Error al acceder a la cámara: ${error.name}. Verifique los permisos.`;
-                if (error.name === "NotFoundError") {
-                    errorMessage = "No se encontró una cámara compatible.";
-                }
-                cam.errorDisplay.text(errorMessage);
-            });
-    }
+            cam.view.onloadedmetadata = () => {
+                // Ajustar canvas a la resolución REAL del video
+                cam.canvas.width = cam.view.videoWidth;
+                cam.canvas.height = cam.view.videoHeight;
+                
+                console.log(`Resolución real: ${cam.view.videoWidth}x${cam.view.videoHeight}`);
+                console.log(`Relación de aspecto real: ${cam.view.videoWidth/cam.view.videoHeight}`);
+                
+                // Ajustar contenedor para coincidir con relación de aspecto real
+                const container = cam.container[0];
+                const aspectRatioReal = cam.view.videoWidth / cam.view.videoHeight;
+                container.style.aspectRatio = `${aspectRatioReal}`;
+            };
+        })
+        .catch(error => {
+            console.error("Error de cámara:", error);
+            let errorMessage = `Error al acceder a la cámara: ${error.name}. Verifique los permisos.`;
+            if (error.name === "NotFoundError") {
+                errorMessage = "No se encontró una cámara compatible.";
+            } else if (error.name === "OverconstrainedError") {
+                errorMessage = "La relación de aspecto solicitada no es compatible con tu cámara. Usa 'Auto'.";
+            }
+            cam.errorDisplay.text(errorMessage);
+        });
+}
 
     function captureImage(cam) {
         if (!cam.stream) return;
