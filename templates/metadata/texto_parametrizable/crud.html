@@ -1,0 +1,525 @@
+{% extends 'base/base_adminlte.html' %}
+
+{% block extra_head %}
+<style>
+    .table-actions {
+        white-space: nowrap;
+        width: 120px;
+    }
+    .preview-text {
+        max-height: 200px;
+        overflow-y: auto;
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        font-family: monospace;
+        white-space: pre-wrap;
+    }
+    
+    /* Estilos para modales personalizados */
+    .modal-custom {
+        display: none;
+        position: fixed;
+        z-index: 1050;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: rgba(0,0,0,0.5);
+    }
+    
+    .modal-custom-content {
+        position: relative;
+        background-color: #fff;
+        margin: 5% auto;
+        border-radius: 0.3rem;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        width: 90%;
+        max-width: 800px;
+        animation: modalFadeIn 0.3s;
+    }
+    
+    .modal-custom-sm {
+        max-width: 500px;
+    }
+    
+    .modal-custom-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+    }
+    
+    .modal-custom-title {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 500;
+    }
+    
+    .modal-custom-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        font-weight: bold;
+        cursor: pointer;
+        opacity: 0.7;
+    }
+    
+    .modal-custom-close:hover {
+        opacity: 1;
+    }
+    
+    .modal-custom-body {
+        padding: 1rem;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    
+    .modal-custom-footer {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 1rem;
+        border-top: 1px solid #dee2e6;
+        gap: 0.5rem;
+    }
+    
+    @keyframes modalFadeIn {
+        from { opacity: 0; transform: translateY(-50px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .alert-custom {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1060;
+        min-width: 300px;
+        animation: alertSlideIn 0.3s;
+    }
+    
+    @keyframes alertSlideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Textos Parametrizables</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-primary" id="btnNuevoTexto">
+                            <i class="fas fa-plus"></i> Nuevo Texto
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="tablaTextos">
+                            <thead>
+                                <tr>
+                                    <th>Esquema de Metadatos</th>
+                                    <th>Plantilla de Texto</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for texto in textos %}
+                                <tr data-id="{{ texto.id }}">
+                                    <td>{{ texto.schema.name }}</td>
+                                    <td>
+                                        <div class="preview-text" title="{{ texto.plantilla_texto }}">
+                                            {{ texto.plantilla_texto|truncatechars:100 }}
+                                        </div>
+                                    </td>
+                                    <td class="table-actions">
+                                        <button class="btn btn-sm btn-warning btn-editar" data-id="{{ texto.id }}" title="Editar">
+                                            <i class="fas fa-edit"></i> Editar
+                                        </button>
+                                        <button class="btn btn-sm btn-info btn-ver" data-id="{{ texto.id }}" title="Ver">
+                                            <i class="fas fa-eye"></i> Ver
+                                        </button>
+                                        <button class="btn btn-sm btn-danger btn-eliminar" data-id="{{ texto.id }}" title="Eliminar">
+                                            <i class="fas fa-trash"></i> Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">No hay textos parametrizables registrados.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para crear/editar -->
+<div class="modal-custom" id="modalTexto">
+    <div class="modal-custom-content">
+        <div class="modal-custom-header">
+            <h5 class="modal-custom-title" id="modalTitulo">Nuevo Texto Parametrizable</h5>
+            <button type="button" class="modal-custom-close" id="closeModalTexto">&times;</button>
+        </div>
+        <form id="formTexto">
+            <div class="modal-custom-body">
+                <div class="form-group">
+                    <label for="schema">Esquema de Metadatos *</label>
+                    <select class="form-control" id="schema" name="schema" required>
+                        <option value="">Seleccione un esquema...</option>
+                        {% for esquema in esquemas %}
+                        <option value="{{ esquema.id }}">{{ esquema.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="invalid-feedback" id="error-schema"></div>
+                </div>
+                <div class="form-group">
+                    <label for="plantilla_texto">Plantilla de Texto *</label>
+                    <textarea class="form-control" id="plantilla_texto" name="plantilla_texto" rows="10" placeholder="Ingrese la plantilla de texto..." required></textarea>
+                    <div class="invalid-feedback" id="error-plantilla_texto"></div>
+                </div>
+            </div>
+            <div class="modal-custom-footer">
+                <button type="button" class="btn btn-secondary" id="cancelModalTexto">Cancelar</button>
+                <button type="submit" class="btn btn-primary" id="btnGuardar">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal para ver detalles -->
+<div class="modal-custom" id="modalVer">
+    <div class="modal-custom-content">
+        <div class="modal-custom-header">
+            <h5 class="modal-custom-title">Detalles del Texto Parametrizable</h5>
+            <button type="button" class="modal-custom-close" id="closeModalVer">&times;</button>
+        </div>
+        <div class="modal-custom-body">
+            <div class="form-group">
+                <label><strong>Esquema de Metadatos:</strong></label>
+                <p id="ver-schema" class="form-control-plaintext"></p>
+            </div>
+            <div class="form-group">
+                <label><strong>Plantilla de Texto:</strong></label>
+                <div class="preview-text" id="ver-plantilla"></div>
+            </div>
+        </div>
+        <div class="modal-custom-footer">
+            <button type="button" class="btn btn-secondary" id="closeModalVerFooter">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal-custom" id="modalConfirmar">
+    <div class="modal-custom-content modal-custom-sm">
+        <div class="modal-custom-header">
+            <h5 class="modal-custom-title">Confirmar Eliminación</h5>
+            <button type="button" class="modal-custom-close" id="closeModalConfirmar">&times;</button>
+        </div>
+        <div class="modal-custom-body">
+            <p>¿Está seguro de que desea eliminar este texto parametrizable?</p>
+            <p><strong id="confirmar-texto"></strong></p>
+        </div>
+        <div class="modal-custom-footer">
+            <button type="button" class="btn btn-secondary" id="cancelModalConfirmar">Cancelar</button>
+            <button type="button" class="btn btn-danger" id="btnConfirmarEliminar">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+
+
+
+<script>
+    class ModalManager {
+        constructor() {
+            this.modals = {};
+            this.initModals();
+        }
+
+        initModals() {
+            // Inicializar todos los modales
+            document.querySelectorAll('.modal-custom').forEach(modal => {
+                this.modals[modal.id] = modal;
+                this.setupModalEvents(modal);
+            });
+        }
+
+        setupModalEvents(modal) {
+            // Cerrar modal al hacer clic en la X
+            const closeBtn = modal.querySelector('.modal-custom-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => this.hide(modal.id));
+            }
+
+            // Cerrar modal al hacer clic fuera del contenido
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.hide(modal.id);
+                }
+            });
+
+            // Cerrar modal con ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && this.isVisible(modal.id)) {
+                    this.hide(modal.id);
+                }
+            });
+        }
+
+        show(modalId) {
+            const modal = this.modals[modalId];
+            if (modal) {
+                modal.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        hide(modalId) {
+            const modal = this.modals[modalId];
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        isVisible(modalId) {
+            const modal = this.modals[modalId];
+            return modal && modal.style.display === 'block';
+        }
+    }
+
+    class TextoParametrizableCRUD {
+        constructor() {
+            this.modalManager = new ModalManager();
+            this.textoIdActual = null;
+            //this.csrfToken = document.querySelector('[name=csrftoken]').value;
+            this.initEvents();
+        }
+
+        initEvents() {
+            // Botón nuevo texto
+            document.getElementById('btnNuevoTexto').addEventListener('click', () => this.mostrarModalCrear());
+
+            // Formulario guardar
+            document.getElementById('formTexto').addEventListener('submit', (e) => this.guardarTexto(e));
+
+            // Botones de acción en la tabla
+            document.addEventListener('click', (e) => {
+                if (e.target.closest('.btn-editar')) {
+                    const button = e.target.closest('.btn-editar');
+                    this.editarTexto(button.dataset.id);
+                } else if (e.target.closest('.btn-ver')) {
+                    const button = e.target.closest('.btn-ver');
+                    this.verTexto(button.dataset.id);
+                } else if (e.target.closest('.btn-eliminar')) {
+                    const button = e.target.closest('.btn-eliminar');
+                    this.mostrarConfirmacionEliminar(button.dataset.id);
+                }
+            });
+
+            // Botones de cerrar modales
+            document.getElementById('cancelModalTexto').addEventListener('click', () => this.cerrarModalTexto());
+            document.getElementById('closeModalVerFooter').addEventListener('click', () => this.modalManager.hide('modalVer'));
+            document.getElementById('cancelModalConfirmar').addEventListener('click', () => this.modalManager.hide('modalConfirmar'));
+
+            // Confirmar eliminación
+            document.getElementById('btnConfirmarEliminar').addEventListener('click', () => this.eliminarTexto());
+        }
+
+        mostrarModalCrear() {
+            this.textoIdActual = null;
+            document.getElementById('modalTitulo').textContent = 'Nuevo Texto Parametrizable';
+            this.limpiarFormulario();
+            this.cargarEsquemas();
+            this.modalManager.show('modalTexto');
+        }
+
+        cerrarModalTexto() {
+            this.modalManager.hide('modalTexto');
+            this.limpiarFormulario();
+        }
+
+        limpiarFormulario() {
+            document.getElementById('formTexto').reset();
+            this.limpiarErrores();
+        }
+
+        limpiarErrores() {
+            document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+            document.querySelectorAll('.form-control').forEach(el => el.classList.remove('is-invalid'));
+        }
+
+        cargarEsquemas() {
+            // Aquí debes implementar la carga de esquemas desde tu API
+            // Por ahora lo dejamos vacío para que lo adaptes a tu implementación
+            console.log('Cargar esquemas - implementar según tu API');
+        }
+
+        async guardarTexto(e) {
+            e.preventDefault();
+            
+            const formData = {
+                schema: document.getElementById('schema').value,
+                plantilla_texto: document.getElementById('plantilla_texto').value
+            };
+
+            const url = this.textoIdActual 
+                ? `/gestor/textos-parametrizables/update/${this.textoIdActual}/` 
+                : '/gestor/textos-parametrizables/create/';
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.modalManager.hide('modalTexto');
+                    this.mostrarMensaje('success', data.message);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    this.mostrarErrores(data.errors);
+                }
+            } catch (error) {
+                this.mostrarMensaje('error', 'Error al procesar la solicitud');
+            }
+        }
+
+        mostrarErrores(errors) {
+            this.limpiarErrores();
+            
+            for (const field in errors) {
+                const input = document.getElementById(field);
+                const errorElement = document.getElementById(`error-${field}`);
+                if (input && errorElement) {
+                    input.classList.add('is-invalid');
+                    errorElement.textContent = errors[field][0];
+                }
+            }
+        }
+
+        async editarTexto(id) {
+            this.textoIdActual = id;
+            
+            try {
+                const response = await fetch(`/gestor/textos-parametrizables/detail/${id}/`);
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('schema').value = data.data.schema;
+                    document.getElementById('plantilla_texto').value = data.data.plantilla_texto;
+                    document.getElementById('modalTitulo').textContent = 'Editar Texto Parametrizable';
+                    this.cargarEsquemas();
+                    this.modalManager.show('modalTexto');
+                }
+            } catch (error) {
+                this.mostrarMensaje('error', 'Error al cargar los datos');
+            }
+        }
+
+        async verTexto(id) {
+            try {
+                const response = await fetch(`/gestor/textos-parametrizables/detail/${id}/`);
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('ver-schema').textContent = data.data.schema_name;
+                    document.getElementById('ver-plantilla').textContent = data.data.plantilla_texto;
+                    this.modalManager.show('modalVer');
+                }
+            } catch (error) {
+                this.mostrarMensaje('error', 'Error al cargar los detalles');
+            }
+        }
+
+        mostrarConfirmacionEliminar(id) {
+            this.textoIdActual = id;
+            const fila = document.querySelector(`tr[data-id="${id}"]`);
+            const schemaName = fila.querySelector('td:first-child').textContent;
+            
+            document.getElementById('confirmar-texto').textContent = `Esquema: ${schemaName}`;
+            this.modalManager.show('modalConfirmar');
+        }
+
+        async eliminarTexto() {
+            try {
+                const response = await fetch(`/gestor/textos-parametrizables/delete/${this.textoIdActual}/`, {
+                    method: 'DELETE',
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.modalManager.hide('modalConfirmar');
+                    this.mostrarMensaje('success', data.message);
+                    document.querySelector(`tr[data-id="${this.textoIdActual}"]`).remove();
+                    this.textoIdActual = null;
+                    
+                    // Si no quedan filas, mostrar mensaje
+                    if (!document.querySelector('#tablaTextos tbody tr:not([data-id])')) {
+                        const tbody = document.querySelector('#tablaTextos tbody');
+                        tbody.innerHTML = '<tr><td colspan="3" class="text-center">No hay textos parametrizables registrados.</td></tr>';
+                    }
+                }
+            } catch (error) {
+                this.mostrarMensaje('error', 'Error al eliminar el texto');
+            }
+        }
+
+        mostrarMensaje(tipo, mensaje) {
+            const alertClass = tipo === 'success' ? 'alert-success' : 'alert-danger';
+            const alertId = 'alert-' + Date.now();
+            
+            const alert = document.createElement('div');
+            alert.id = alertId;
+            alert.className = `alert ${alertClass} alert-dismissible alert-custom`;
+            alert.innerHTML = `
+                ${mensaje}
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            `;
+
+            document.body.appendChild(alert);
+
+            // Auto-eliminar después de 5 segundos
+            setTimeout(() => {
+                const alertElement = document.getElementById(alertId);
+                if (alertElement) {
+                    alertElement.remove();
+                }
+            }, 5000);
+
+            // Cerrar manualmente
+            alert.querySelector('.close').addEventListener('click', () => {
+                alert.remove();
+            });
+        }
+    }
+
+    // Inicializar la aplicación cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', () => {
+        new TextoParametrizableCRUD();
+    });
+</script>
+{% endblock %}

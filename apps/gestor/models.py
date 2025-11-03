@@ -1,15 +1,38 @@
 from django.db import models
 from ..metadata.models import MetadataSchema
 from PyPDF2 import PdfReader
+import re
 
 # Create your models here.
+class TextoParametrizable(models.Model):
+    """
+    Guarda la plantilla de texto que se usará para documentos ligados 
+    a un MetadataSchema específico.
+    """
+    schema = models.OneToOneField(
+        MetadataSchema, 
+        on_delete=models.CASCADE, 
+        verbose_name='Esquema de Metadatos'
+    )
+    plantilla_texto = models.TextField(
+        verbose_name='Plantilla de Texto'
+    )
+    
+    class Meta:
+        verbose_name = "Texto Parametrizable"
+        verbose_name_plural = "Textos Parametrizables"
+        
+    def __str__(self):
+        return f"Plantilla para {self.schema.name}"
+
+
 class Document(models.Model):
     code_name = models.CharField(max_length=200, null=True, blank=True, verbose_name='Nombre - identificador')
     file = models.FileField(upload_to="documents/", verbose_name='Documento')
     file2 = models.FileField(upload_to="documents/", verbose_name='Documento 2', null=True, blank=True)
     metadata_schema = models.ForeignKey(MetadataSchema, blank=True, null=True,on_delete=models.PROTECT, verbose_name='Esquema de Metadatos')
     metadata_values = models.JSONField(default=dict, blank=True, null=True)  # Aquí se guardan los valores de los metadatos
-    indexado = models.BooleanField(default=False, blank=True, null=True)  # Aquí se guardan los valores de los metadatos
+    indexado = models.BooleanField(default=False, blank=True, null=True) 
 
     def __str__(self):
         return f"Documento: {self.file}"
@@ -50,6 +73,46 @@ class Document(models.Model):
         
         except Exception as e:
             raise ValueError(f"No se pudo leer el PDF: {e}")
+    def generar_texto_final(self):
+        """
+        Genera el texto final sustituyendo las claves de la plantilla
+        con los valores reales de metadata_values.
+        """
+        if not self.metadata_schema:
+            return "Error: Documento sin esquema de metadatos asociado."
+            
+        try:
+            # 1. Obtener la plantilla de texto para el esquema
+            texto_parametrizable = TextoParametrizable.objects.get(schema=self.metadata_schema)
+            plantilla = texto_parametrizable.plantilla_texto
+        except TextoParametrizable.DoesNotExist:
+            return f"Advertencia: No existe una plantilla de texto para el esquema '{self.metadata_schema.name}'."
+
+        # 2. Definir la función de reemplazo
+        # El patrón busca cualquier texto que esté entre corchetes, ej: [CLAVE]
+        # El grupo de captura (1) será el texto dentro de los corchetes (la clave del metadato)
+        patron_sustitucion = r"\[([^\]]+)\]"
+        
+        # Función que se ejecutará por cada coincidencia encontrada por re.sub
+        def sustituir_clave(match):
+            clave = match.group(1) # Obtiene la clave, ej: 'BAUTIZADO'
+            
+            # Buscar el valor en el diccionario de metadatos
+            valor = self.metadata_values.get(clave)
+            
+            # Formatear el valor
+            if valor is None:
+                # Si el valor es null/None o no existe la clave, se reemplaza por una cadena vacía o un marcador
+                return "" # O podrías usar f"[[CLAVE NO ENCONTRADA: {clave}]]" para depurar
+            else:
+                # Se convierte a string, asegurando que números o fechas se manejen
+                return str(valor)
+
+        # 3. Ejecutar la sustitución
+        texto_final = re.sub(patron_sustitucion, sustituir_clave, plantilla)
+        
+        # 4. Retornar el resultado
+        return texto_final
         
 class DocumentSequence(models.Model):
     libro = models.CharField(max_length=200, verbose_name="Tipo de libro a digitalizar", default="BAUTIZO", null=False, blank=False)

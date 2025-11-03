@@ -1,7 +1,7 @@
     
 from django.utils.translation import gettext_lazy as _
 from django import forms
-from .models import Document
+from .models import Document, TextoParametrizable
 from ..metadata.models import MetadataSchema, MetadataField
 import json
 from datetime import datetime
@@ -171,3 +171,14 @@ class DynamicFileMetadataForm(forms.Form):
                         
                         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
                     )
+
+class TextoParametrizableForm(forms.ModelForm):
+    """
+    Formulario para la creación y edición de TextoParametrizable.
+    """
+    class Meta:
+        model = TextoParametrizable
+        fields = ['schema', 'plantilla_texto']
+        widgets = {
+            'plantilla_texto': forms.Textarea(attrs={'rows': 10}),
+        }

@@ -5,6 +5,7 @@ from .document_detail import DocumentView
 from .firma_electronica import signDocument
 from .uploadDocumentImage import capture_document_view, get_metadata_fields
 from .seq_value import getSeqValue, setSeqValue
+from .texto_parametrizable import texto_parametrizable_list, texto_parametrizable_create, texto_parametrizable_update, texto_parametrizable_delete, texto_parametrizable_detail
 urlpatterns = [
     #CRUD Documents
     path('documents/', DocumentListView.as_view(), name='document_list'),
@@ -35,5 +36,12 @@ urlpatterns = [
 
     #Meta datos
     path('listaTomos/', lista_tomos, name='lista_tomo'),
+
+    #Texto parametrizable
+    path('textos-parametrizables/', texto_parametrizable_list, name='texto_list'),
+    path('textos-parametrizables/create/', texto_parametrizable_create, name='texto_parametrizable_create'),
+    path('textos-parametrizables/update/<int:pk>/', texto_parametrizable_update, name='texto_parametrizable_update'),
+    path('textos-parametrizables/delete/<int:pk>/', texto_parametrizable_delete, name='texto_parametrizable_delete'),
+    path('textos-parametrizables/detail/<int:pk>/', texto_parametrizable_detail, name='texto_parametrizable_detail'),
 ]
 
