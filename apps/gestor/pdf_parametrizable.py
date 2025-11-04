@@ -118,7 +118,6 @@ class DynamicPDFGenerator:
                 
         except Exception as e:
             print(f"Error al agregar elemento {element_type}: {e}")
-    
     def _add_image_element(self, element):
         """Agrega una imagen al PDF"""
         try:
@@ -129,32 +128,41 @@ class DynamicPDFGenerator:
                 print(f"Archivo de imagen no encontrado: {image_field}")
                 return
                 
-            # Obtener dimensiones y posición
+            # --- MODIFICADO: Aplicar escalas (como antes) ---
             x = element.get('x', 0) * self.scale_x
             y_fabric = element.get('y', 0) * self.scale_y
             width = element.get('width', 100) * self.scale_x
             height = element.get('height', 100) * self.scale_y
             rotation = element.get('rotation', 0)
             
-            # Ajustar coordenadas Y (ReportLab usa coordenadas desde abajo)
             y = self.pdf_height - y_fabric - height
             
             with image_file.open('rb') as f:
+                
+                temp_file_path = None # Definir la variable fuera del with
+                
+                # --- INICIO DE CORRECCIÓN: Manejo de archivo temporal ---
                 # Crear archivo temporal
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_file:
                     temp_file.write(f.read())
                     temp_file.flush()
+                    # Guardamos la ruta
+                    temp_file_path = temp_file.name
+                    # Cerramos el archivo para que PIL pueda acceder a él
+                    temp_file.close()
+                # --- FIN DE CORRECCIÓN ---
                     
+                if temp_file_path: # Asegurarse de que la ruta se obtuvo
                     try:
-                        # Usar PIL para procesar la imagen
-                        pil_image = Image.open(temp_file.name)
+                        # Usar PIL para procesar la imagen desde la ruta (el archivo ya está cerrado)
+                        pil_image = Image.open(temp_file_path)
                         
                         # Rotar si es necesario
                         if rotation:
                             pil_image = pil_image.rotate(-rotation, expand=True, resample=Image.BICUBIC)
                         
-                        # Convertir a RGB si es necesario
-                        if pil_image.mode in ('RGBA', 'P'):
+                        # Convertir a RGB (esta sigue siendo una buena práctica)
+                        if pil_image.mode != 'RGB':
                             pil_image = pil_image.convert('RGB')
                         
                         # Guardar imagen procesada
@@ -168,15 +176,15 @@ class DynamicPDFGenerator:
                     except Exception as img_error:
                         print(f"Error procesando imagen: {img_error}")
                         # Intentar cargar la imagen directamente
-                        self.c.drawImage(temp_file.name, x, y, width, height)
+                        self.c.drawImage(temp_file_path, x, y, width, height)
                     
                     finally:
                         # Limpiar archivo temporal
-                        os.unlink(temp_file.name)
+                        os.unlink(temp_file_path)
             
         except Exception as e:
+            # Este es el log que viste
             print(f"Error crítico al agregar imagen: {e}")
-    
     def _add_text_element(self, element):
         """Agrega texto estático al PDF"""
         try:

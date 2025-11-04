@@ -251,7 +251,7 @@ function addPage() {
                 window.URL.revokeObjectURL(url);
             });
         }
-        function buildTemplateConfig() {
+function buildTemplateConfig() {
             const config = {
                 page_size: [595.27, 841.89], // A4
                 pages: []
@@ -267,24 +267,55 @@ function addPage() {
                     const obj = element.object;
                     const elementConfig = {
                         type: element.type,
-                        x: obj.left || 0,
-                        y: obj.top || 0,
                         rotation: obj.angle || 0
                     };
                     
                     // Para imágenes
                     if (element.type === 'image') {
+                        // --- INICIO DE CORRECCIÓN ---
+                        // Usar getBoundingRect() para obtener las dimensiones
+                        // y posición visuales *después* de la rotación.
+                        const bounds = obj.getBoundingRect();
+                        
+                        elementConfig.x = bounds.left || 0;
+                        elementConfig.y = bounds.top || 0;
+                        elementConfig.image_field = element.image_field;
+                        elementConfig.width = bounds.width || 100;
+                        elementConfig.height = bounds.height || 100;
+                        // --- FIN DE CORRECCIÓN ---
+                        
+                        /* --- CÓDIGO ANTIGUO (INCORRECTO PARA ROTACIÓN) ---
+                        elementConfig.x = obj.left || 0,
+                        elementConfig.y = obj.top || 0,
                         elementConfig.image_field = element.image_field;
                         elementConfig.width = (obj.width * obj.scaleX) || 100;
                         elementConfig.height = (obj.height * obj.scaleY) || 100;
+                        --- FIN CÓDIGO ANTIGUO --- */
                     }
                     
                     // Para texto
                     if (element.type === 'text' || element.type === 'dynamic_text') {
+                        // --- INICIO DE CORRECCIÓN ---
+                        // Usar getBoundingRect() también para el texto
+                        const bounds = obj.getBoundingRect();
+
+                        elementConfig.x = bounds.left || 0;
+                        elementConfig.y = bounds.top || 0;
+                        elementConfig.text = obj.text || '';
+                        elementConfig.font_size = obj.fontSize || 12;
+                        elementConfig.font_family = obj.fontFamily || 'Helvetica';
+                        // Usar el ancho de la bounding box para el max_width
+                        elementConfig.max_width = bounds.width || 500; 
+                        // --- FIN DE CORRECCIÓN ---
+
+                        /* --- CÓDIGO ANTIGUO ---
+                        elementConfig.x = obj.left || 0;
+                        elementConfig.y = obj.top || 0;
                         elementConfig.text = obj.text || '';
                         elementConfig.font_size = obj.fontSize || 12;
                         elementConfig.font_family = obj.fontFamily || 'Helvetica';
                         elementConfig.max_width = obj.width || 500;
+                        --- FIN CÓDIGO ANTIGUO --- */
                     }
                     
                     console.log(`Elemento ${element.type}:`, elementConfig);
