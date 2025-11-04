@@ -6,6 +6,8 @@ from .firma_electronica import signDocument
 from .uploadDocumentImage import capture_document_view, get_metadata_fields
 from .seq_value import getSeqValue, setSeqValue
 from .texto_parametrizable import texto_parametrizable_list, texto_parametrizable_create, texto_parametrizable_update, texto_parametrizable_delete, texto_parametrizable_detail
+from .pdf_parametrizable import GeneratePDFView, PDFBuilderView, SaveTemplateView
+
 urlpatterns = [
     #CRUD Documents
     path('documents/', DocumentListView.as_view(), name='document_list'),
@@ -43,5 +45,10 @@ urlpatterns = [
     path('textos-parametrizables/update/<int:pk>/', texto_parametrizable_update, name='texto_parametrizable_update'),
     path('textos-parametrizables/delete/<int:pk>/', texto_parametrizable_delete, name='texto_parametrizable_delete'),
     path('textos-parametrizables/detail/<int:pk>/', texto_parametrizable_detail, name='texto_parametrizable_detail'),
+
+    #Pdf parametrizable
+    path('pdf-builder/<int:document_id>/', PDFBuilderView.as_view(), name='pdf_builder'),
+    path('generate-pdf/<int:document_id>', GeneratePDFView.as_view(), name='generate_pdf'),
+    path('save-template/<int:document_id>/', SaveTemplateView.as_view(), name='save_template'),
 ]
 

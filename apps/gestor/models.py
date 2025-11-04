@@ -120,3 +120,40 @@ class DocumentSequence(models.Model):
 
     def __str__(self):
         return f"Secuencia actual: {self.seq_value}"
+    
+
+### PDF'S PARAMETRIZABLES
+class PDFTemplate(models.Model):
+    name = models.CharField(max_length=200, verbose_name='Nombre de plantilla')
+    background = models.FileField(upload_to="pdf_templates/", null=True, blank=True, verbose_name='Fondo PDF')
+    default_width = models.FloatField(default=595.27)  # A4 ancho en puntos
+    default_height = models.FloatField(default=841.89)  # A4 alto en puntos
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.name
+
+class PDFElement(models.Model):
+    ELEMENT_TYPES = [
+        ('image', 'Imagen'),
+        ('text', 'Texto'),
+        ('dynamic_text', 'Texto Dinámico'),
+    ]
+    
+    template = models.ForeignKey(PDFTemplate, on_delete=models.CASCADE, related_name='elements')
+    element_type = models.CharField(max_length=20, choices=ELEMENT_TYPES)
+    x_position = models.FloatField(verbose_name='Posición X (pt)')
+    y_position = models.FloatField(verbose_name='Posición Y (pt)')
+    width = models.FloatField(null=True, blank=True)
+    height = models.FloatField(null=True, blank=True)
+    rotation = models.FloatField(default=0, verbose_name='Rotación (grados)')
+    content = models.TextField(blank=True, null=True)  # Para texto estático
+    page = models.IntegerField(default=1)
+    font_size = models.IntegerField(default=12, null=True, blank=True)
+    font_family = models.CharField(max_length=50, default='Helvetica', blank=True)
+    
+    class Meta:
+        ordering = ['page', 'id']
+    
+    def __str__(self):
+        return f"{self.element_type} - Página {self.page}"
