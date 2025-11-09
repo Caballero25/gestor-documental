@@ -180,7 +180,7 @@
             const text = new fabric.IText('Texto editable', {
                 left: 100,
                 top: 100,
-                //fontFamily: '//',
+                fontFamily: 'Times New Roman',
                 fontSize: 12,
                 fill: 'black'
             });
@@ -199,7 +199,7 @@
             const text = new fabric.IText(dynamicText, {
                 left: 100,
                 top: 200,
-                ////fontFamily: 'Arial',
+                fontFamily: 'Times New Roman',
                 fontSize: 12,
                 fill: 'black',
                 width: 400
@@ -303,19 +303,10 @@ function buildTemplateConfig() {
                         elementConfig.y = bounds.top || 0;
                         elementConfig.text = obj.text || '';
                         elementConfig.font_size = obj.fontSize || 12;
-                        elementConfig.font_family = obj.fontFamily || 'Helvetica';
+                        elementConfig.font_family = obj.fontFamily || 'Times New Roman';
                         // Usar el ancho de la bounding box para el max_width
                         elementConfig.max_width = bounds.width || 500; 
                         // --- FIN DE CORRECCIÓN ---
-
-                        /* --- CÓDIGO ANTIGUO ---
-                        elementConfig.x = obj.left || 0;
-                        elementConfig.y = obj.top || 0;
-                        elementConfig.text = obj.text || '';
-                        elementConfig.font_size = obj.fontSize || 12;
-                        elementConfig.font_family = obj.fontFamily || 'Helvetica';
-                        elementConfig.max_width = obj.width || 500;
-                        --- FIN CÓDIGO ANTIGUO --- */
                     }
                     
                     console.log(`Elemento ${element.type}:`, elementConfig);
