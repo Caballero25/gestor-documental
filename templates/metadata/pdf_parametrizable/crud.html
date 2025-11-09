@@ -52,6 +52,9 @@
                 <button class="btn btn-danger" onclick="generatePDF()">
                     <i class="bi bi-file-pdf me-1"></i>Generar PDF
                 </button>
+                <button id="download-pdf-btn" class="btn btn-success" style="display: none;" onclick="downloadGeneratedPDF()">
+                    <i class="bi bi-download me-1"></i>Descargar PDF
+                </button>
                 <button class="btn btn-outline-secondary" onclick="saveTemplate()">
                     <i class="bi bi-save me-1"></i>Guardar Plantilla
                 </button>
@@ -69,6 +72,7 @@
         let canvas = new fabric.Canvas('pdf-canvas');
         let currentPage = 1;
         let pages;
+        let generatedPdfBlob = null;
         
         const dynamicTextContent = "{{ document.generar_texto_final|escapejs }}";
 
@@ -428,7 +432,21 @@
 
         function generatePDF() {
             const templateConfig = buildTemplateConfig();
-            
+
+            // 1. Ocultar el botón de descarga y limpiar el blob anterior
+            document.getElementById('download-pdf-btn').style.display = 'none';
+            generatedPdfBlob = null; 
+
+            // 2. Mostrar alerta de "Generando"
+            Swal.fire({
+                title: 'Generando PDF...',
+                text: 'Por favor espere.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
             fetch(`{% url 'generate_pdf' document.id %}`, {
                 method: 'POST',
                 headers: {
@@ -437,17 +455,61 @@
                 },
                 body: JSON.stringify(templateConfig)
             })
-            .then(response => response.blob())
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    return response.json().then(errData => {
+                        throw new Error(errData.error || 'Error desconocido en el servidor');
+                    });
+                }
+            })
             .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = 'documento_generado.pdf';
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
+                // 3. ÉXITO: Guardar blob, mostrar el botón y una alerta simple
+                generatedPdfBlob = blob; // Guardar el blob globalmente
+
+                // --- CAMBIO CLAVE: Mostrar el botón de descarga ---
+                document.getElementById('download-pdf-btn').style.display = 'block';
+
+                Swal.fire({
+                    title: '¡PDF Listo!',
+                    text: 'Tu documento ha sido generado. Ya puedes descargarlo.',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                });
+            })
+            .catch(err => {
+                // 4. ERROR: Asegurarse de que el botón siga oculto y mostrar error
+                console.error('Error en fetch:', err);
+                document.getElementById('download-pdf-btn').style.display = 'none';
+                Swal.fire(
+                    'Error al Generar',
+                    err.message || 'No se pudo conectar con el servidor.',
+                    'error'
+                );
             });
+        }
+        /**
+         * Inicia la descarga del PDF que está guardado en la variable global
+         */
+        function downloadGeneratedPDF() {
+            if (!generatedPdfBlob) {
+                Swal.fire('Error', 'No se encontró ningún PDF para descargar. Genéralo primero.', 'error');
+                return;
+            }
+
+            const url = window.URL.createObjectURL(generatedPdfBlob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'documento_generado.pdf';
+
+            document.body.appendChild(a);
+            a.click();
+
+            // Limpieza
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
         }
         function buildTemplateConfig() {
             const config = {
