@@ -262,10 +262,9 @@ class DocumentListView(PermissionRequiredMixin, ListView):
         # Aplicar filtro de tomo primero
         if tomo_filtro:
             tomo_key = KeyTextTransform('TOMO', 'metadata_values')
+            queryset = queryset.annotate(tomo=KeyTextTransform('TOMO', 'metadata_values'))
             if tomo_filtro == 'SIN TOMO':
-                queryset = queryset.exclude(tomo_key__isnull=False).union(
-                    queryset.filter(tomo_key__exact='')
-                )
+                queryset = queryset.filter(Q(tomo__isnull=True) | Q(tomo__exact=''))
             else:
                 queryset = queryset.annotate(tomo=tomo_key).filter(tomo__iexact=tomo_filtro)
 
