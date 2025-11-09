@@ -1,11 +1,12 @@
 {% extends 'base/base_adminlte.html' %}
+{% load static %}
 
 {% block extra_head %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
     <style>
         .container { display: flex; height: 100vh; }
         .toolbar { width: 250px; background: #f5f5f5; padding: 20px; }
-        .canvas-container { flex: 1; padding: 20px; }
+        .canvas-container { flex: 1; padding: 20px; display: flex; justify-content: center; align-items: flex-start; }
         #pdf-canvas { border: 1px solid #ccc; background: white; }
         .tool-btn { display: block; width: 100%; margin: 10px 0; padding: 10px; }
     </style>
@@ -71,10 +72,34 @@
         let currentPage = 1;
         let pages = {1: []};
         
-        // Configuración inicial del canvas
-        canvas.setBackgroundColor('white', canvas.renderAll.bind(canvas));
 
-        // parche para convertir 'alphabetical' -> 'alphabetic' y evitar el warning
+        function setBackgroundFit(url) {
+        const canvasW = canvas.getWidth();
+        const canvasH = canvas.getHeight();
+
+        fabric.Image.fromURL(url, function(img) {
+            img.set({
+            originX: 'left',
+            originY: 'top',
+            left: 0,
+            top: 0,
+            selectable: false,
+            evented: false
+            });
+
+            img.scaleX = canvasW / img.width;
+            img.scaleY = canvasH / img.height;
+
+            canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+        }, { crossOrigin: 'anonymous' });
+        }
+
+        setBackgroundFit("{% static 'img/bg_pdf.png' %}");
+
+        window.addEventListener('resize', () => {
+        setBackgroundFit("{% static 'img/bg_pdf.png' %}");
+        });
+
         (function () {
         const proto = CanvasRenderingContext2D.prototype;
         const desc = Object.getOwnPropertyDescriptor(proto, 'textBaseline');

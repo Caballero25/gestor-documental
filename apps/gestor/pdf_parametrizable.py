@@ -1,11 +1,8 @@
-# services/pdf_generator.py
+from django.contrib.staticfiles import finders
 import io
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.lib import fonts
 from PIL import Image
 import tempfile
 import os
@@ -71,6 +68,9 @@ class DynamicPDFGenerator:
         try:
             page_size = (self.pdf_width, self.pdf_height)
             self.c = canvas.Canvas(self.buffer, pagesize=page_size)
+            background_path = finders.find('img/bg_pdf.png')
+            if not background_path:
+                print("ADVERTENCIA: No se encontró la imagen de fondo en 'static/img/bg_pdf.png'")
             
             # Procesar páginas
             pages_config = self.template_config.get('pages', [])
@@ -78,6 +78,16 @@ class DynamicPDFGenerator:
             for page_num, page_config in enumerate(pages_config, 1):
                 if page_num > 1:
                     self.c.showPage()
+                if background_path:
+                    self.c.drawImage(
+                        background_path,
+                        x=0, 
+                        y=0,
+                        width=self.pdf_width,
+                        height=self.pdf_height,
+                        preserveAspectRatio=False, 
+                        mask='auto'
+                    )
                 
                 # Agregar fondo si existe
                 self._add_background(page_config)
