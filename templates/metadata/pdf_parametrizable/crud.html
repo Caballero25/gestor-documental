@@ -52,11 +52,9 @@
                 <button class="btn btn-danger" onclick="generatePDF()">
                     <i class="bi bi-file-pdf me-1"></i>Generar PDF
                 </button>
-                <!--
                 <button class="btn btn-outline-secondary" onclick="saveTemplate()">
                     <i class="bi bi-save me-1"></i>Guardar Plantilla
                 </button>
-                -->
             </div>
         </div>
     </div>
@@ -70,8 +68,12 @@
     <script>
         let canvas = new fabric.Canvas('pdf-canvas');
         let currentPage = 1;
-        let pages = {1: []};
+        let pages;
         
+        const dynamicTextContent = "{{ document.generar_texto_final|escapejs }}";
+
+        const file1Url = {% if document.file %}'{{ document.file.url }}'{% else %}null{% endif %};
+        const file2Url = {% if document.file2 %}'{{ document.file2.url }}'{% else %}null{% endif %};
 
         function setBackgroundFit(url) {
         const canvasW = canvas.getWidth();
@@ -256,6 +258,128 @@
             alert(`Página ${newPageNum} agregada`);
             
         }
+
+        function saveTemplate() {
+            const templateConfig = buildTemplateConfig();
+            
+            if (confirm('¿Desea guardar/sobrescribir esta plantilla para todos los documentos de este tipo?')) {
+                fetch(`{% url 'save_template' document.id %}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(templateConfig)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('¡Plantilla guardada exitosamente!');
+                    } else {
+                        alert('Error al guardar: ' + (data.error || 'Error desconocido'));
+                    }
+                })
+                .catch(err => {
+                    console.error('Error en fetch:', err);
+                    alert('Error de conexión al guardar plantilla.');
+                });
+            }
+        }
+
+/**
+         * Reconstruye el canvas a partir de una plantilla guardada
+         */
+        function loadTemplate(templateConfig) {
+            try {
+                pages = {}; // Reiniciar 'pages'
+                let imageLoadPromises = []; // Para manejar la carga asíncrona
+
+                templateConfig.pages.forEach(page => {
+                    const pageNum = page.page_number;
+                    pages[pageNum] = []; // Crear el array para la página
+                    
+                    page.elements.forEach(element => {
+                        const commonOptions = {
+                            left: element.x,
+                            top: element.y,
+                            angle: element.rotation || 0,
+                            // Opciones comunes de control
+                            padding: 10,
+                            cornerSize: 6,
+                            hasRotatingPoint: true
+                        };
+
+                        if (element.type === 'image') {
+                            let imageUrl;
+                            
+                            // Usar las variables JS seguras definidas arriba
+                            if (element.image_field === 'file') imageUrl = file1Url;
+                            if (element.image_field === 'file2') imageUrl = file2Url;
+                            
+                            if (imageUrl) { // Si la URL no es null...
+                                const promise = new Promise((resolve) => {
+                                    fabric.Image.fromURL(imageUrl, function(img) {
+                                        img.set({
+                                            ...commonOptions,
+                                            // Ajustar escala para que coincida con el tamaño guardado
+                                            scaleX: element.width / img.width,
+                                            scaleY: element.height / img.height
+                                        });
+                                        pages[pageNum].push({ type: 'image', image_field: element.image_field, object: img });
+                                        resolve();
+                                    });
+                                });
+                                imageLoadPromises.push(promise);
+                            }
+                        } else if (element.type === 'text' || element.type === 'dynamic_text') {
+                            // Los textos son síncronos
+                            
+                            // IMPORTANTE: Si es texto dinámico, usamos el contenido de ESTE documento
+                            let textContent = (element.type === 'dynamic_text') 
+                                                ? dynamicTextContent 
+                                                : element.lines.join('\n');
+                            
+                            const textObj = new fabric.IText(textContent, {
+                                ...commonOptions,
+                                fontFamily: element.font_family,
+                                fontSize: element.font_size,
+                                fill: 'black',
+                                width: element.width // Usamos el ancho guardado
+                            });
+                            
+                            pages[pageNum].push({ type: element.type, object: textObj });
+                        }
+                    });
+                });
+
+                // Esperar a que todas las imágenes carguen antes de renderizar
+                Promise.all(imageLoadPromises).then(() => {
+                    console.log("Plantilla cargada, imágenes procesadas.");
+                    
+                    currentPage = 1; // Aseguramos que la página actual es 1
+                    
+                    canvas.clear(); // Limpiamos el canvas
+                    setBackgroundFit("{% static 'img/bg_pdf.png' %}"); // Reaplicamos el fondo
+                    
+                    // Dibujamos los objetos de la página 1
+                    if (pages[currentPage]) { 
+                        pages[currentPage].forEach(element => {
+                            canvas.add(element.object);
+                        });
+                    }
+                    canvas.renderAll(); // ¡Renderizamos!
+
+                    updatePageSwitcher(); // Mostrar botones de página
+                });
+
+            } catch (e) {
+                console.error("Error crítico al cargar plantilla:", e);
+                // Si falla, volver al estado inicial
+                pages = {1: []};
+                updatePageSwitcher();
+            }
+        }
+
         function generatePDF() {
             const templateConfig = buildTemplateConfig();
             
@@ -346,6 +470,26 @@
             }
             return cookieValue;
         }
-        updatePageSwitcher();
+        (function() {
+            // El backend nos pasa la plantilla como un string JSON
+            const savedTemplateString = '{{ plantilla_json|default:"null"|escapejs }}';
+            
+            try {
+                const savedTemplate = JSON.parse(savedTemplateString);
+                
+                if (savedTemplate) {
+                    console.log("Plantilla encontrada, cargando...");
+                    loadTemplate(savedTemplate);
+                } else {
+                    console.log("No hay plantilla, iniciando en blanco.");
+                    pages = {1: []};
+                    updatePageSwitcher();
+                }
+            } catch (e) {
+                console.error("Error al parsear plantilla JSON:", e);
+                pages = {1: []};
+                updatePageSwitcher();
+            }
+        })();
     </script>
 {% endblock %}

@@ -17,6 +17,12 @@ class TextoParametrizable(models.Model):
     plantilla_texto = models.TextField(
         verbose_name='Plantilla de Texto'
     )
+
+    plantilla_pdf = models.JSONField(
+        null=True, 
+        blank=True, 
+        verbose_name="Plantilla PDF Parametrizable"
+    )
     
     class Meta:
         verbose_name = "Texto Parametrizable"
@@ -125,7 +131,6 @@ class DocumentSequence(models.Model):
 ### PDF'S PARAMETRIZABLES
 class PDFTemplate(models.Model):
     name = models.CharField(max_length=200, verbose_name='Nombre de plantilla')
-    background = models.FileField(upload_to="pdf_templates/", null=True, blank=True, verbose_name='Fondo PDF')
     default_width = models.FloatField(default=595.27)  # A4 ancho en puntos
     default_height = models.FloatField(default=841.89)  # A4 alto en puntos
     created_at = models.DateTimeField(auto_now_add=True)

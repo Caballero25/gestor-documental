@@ -1,11 +1,17 @@
 from django.contrib.staticfiles import finders
-import io
+from django.http import JsonResponse, HttpResponse
+from django.views import View
+from django.views.generic import TemplateView
+from django.shortcuts import get_object_or_404
+from .models import Document, TextoParametrizable
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
 from PIL import Image
 import tempfile
 import os
+import io
+import json
 
 class DynamicPDFGenerator:
     def __init__(self, document, template_config=None):
@@ -251,12 +257,8 @@ class DynamicPDFGenerator:
                 
         except Exception as e:
             print(f"Error agregando texto dinámico: {e}")
-        
-import json
-from django.http import JsonResponse, HttpResponse
-from django.views import View
-from django.views.generic import TemplateView
-from .models import Document
+
+### VIEWS
 
 class PDFBuilderView(TemplateView):
     template_name = 'metadata/pdf_parametrizable/crud.html'
@@ -264,7 +266,18 @@ class PDFBuilderView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         document_id = self.kwargs.get('document_id')
+        document = get_object_or_404(Document, id=document_id)
         context['document'] = Document.objects.get(id=document_id)
+        plantilla_json = None
+        if document.metadata_schema:
+            try:
+                texto_para = TextoParametrizable.objects.get(schema=document.metadata_schema)
+                if texto_para.plantilla_pdf:
+                    plantilla_json = json.dumps(texto_para.plantilla_pdf)
+            except TextoParametrizable.DoesNotExist:
+                pass
+        
+        context['plantilla_json'] = plantilla_json
         return context
 
 class GeneratePDFView(View):
@@ -308,13 +321,26 @@ class GeneratePDFView(View):
 class SaveTemplateView(View):
     def post(self, request, document_id):
         try:
-            data = json.loads(request.body)
-            template_config = data.get('template_config')
+            # 1. Obtener el documento y su esquema
+            document = get_object_or_404(Document, id=document_id)
+            if not document.metadata_schema:
+                return JsonResponse({'error': 'El documento no tiene un esquema de metadatos.'}, status=400)
             
-            # Aquí podrías guardar la plantilla en la base de datos
-            # para uso futuro
+            # 2. Encontrar o crear el objeto TextoParametrizable asociado
+            # Usamos get_or_create para manejar el caso de que aún no exista
+            texto_para, created = TextoParametrizable.objects.get_or_create(
+                schema=document.metadata_schema,
+                defaults={'plantilla_texto': ''} # Añade un default si se crea
+            )
             
-            return JsonResponse({'success': True, 'message': 'Plantilla guardada'})
+            # 3. Parsear y guardar la plantilla
+            template_config = json.loads(request.body)
+            texto_para.plantilla_pdf = template_config
+            texto_para.save()
             
+            return JsonResponse({'success': True, 'message': 'Plantilla guardada exitosamente.'})
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'JSON inválido.'}, status=400)
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
+            return JsonResponse({'error': str(e)}, status=500)
