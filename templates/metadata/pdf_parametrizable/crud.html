@@ -44,7 +44,7 @@
         </div>
 
         <div class="border-top pt-3 mt-3">
-            <div id="page-switcher" class="d-flex flex-wrap gap-1"></div>
+            <div id="page-switcher" class="d-flex flex-wrap gap-1 col-12"></div>
         </div>
 
         <div class="border-top pt-3 mt-3">
@@ -124,7 +124,7 @@
         function updatePageSwitcher() {
             const switcher = document.getElementById('page-switcher');
             // Limpiar botones existentes, excepto el título
-            switcher.innerHTML = '<strong>Páginas:</strong><br>';
+            switcher.innerHTML = '<strong class="col-6">Páginas:</strong><br>';
             
             Object.keys(pages).sort((a, b) => a - b).forEach(pageNum => {
                 const btn = document.createElement('button');
@@ -132,6 +132,7 @@
                 btn.style.width = 'auto';
                 btn.style.margin = '2px';
                 btn.style.padding = '5px 8px';
+                btn.className = "col-4"
                 
                 // Resaltar la página actual
                 if (pageNum == currentPage) {
@@ -157,6 +158,8 @@
             // 1. Limpiar el canvas (esto solo quita las referencias visuales)
             // Los objetos siguen existiendo en nuestro array `pages`
             canvas.clear(); 
+            //Volver a aplicar la imagen de fondo
+            setBackgroundFit("{% static 'img/bg_pdf.png' %}");
             
             // 2. Establecer la nueva página actual
             currentPage = pageNum;
