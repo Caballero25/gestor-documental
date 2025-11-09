@@ -188,24 +188,23 @@ class DynamicPDFGenerator:
     def _add_text_element(self, element):
         """Agrega texto estático al PDF"""
         try:
-            text = element.get('text', '')
+            lines = element.get('lines', [])
+
             x = element.get('x', 0) * self.scale_x
             y_fabric = element.get('y', 0) * self.scale_y
             font_size = element.get('font_size', 12) * self.scale_y
-            font_family_input = element.get('font_family', 'Helvetica')
-            max_width = element.get('max_width', 500) * self.scale_x
+            font_family_input = element.get('font_family', 'Times New Roman')
             
-            # Ajustar coordenada Y
+
             y = self.pdf_height - y_fabric - font_size
             
-            # Obtener fuente compatible
             font_family = self._get_reportlab_font(font_family_input)
-            
             self.c.setFont(font_family, font_size)
-            lines = self._wrap_text(text, max_width, font_family, font_size)
+
+            leading = font_size * 1.2 
+
             for i, line in enumerate(lines):
-                # La primera línea (i=0) se dibuja en 'y', las siguientes debajo
-                line_y = y - (i * (font_size + 2)) # +2 para un pequeño interlineado
+                line_y = y - (i * leading)
                 if line_y < 0:  # Si se sale de la página
                     break
                 self.c.drawString(x, line_y, line)
@@ -216,58 +215,32 @@ class DynamicPDFGenerator:
     def _add_dynamic_text_element(self, element):
         """Agrega texto dinámico al PDF"""
         try:
-            dynamic_text = self.document.generar_texto_final()
+            lines = element.get('lines', [])
+
             x = element.get('x', 0) * self.scale_x
             y_fabric = element.get('y', 0) * self.scale_y
             font_size = element.get('font_size', 12) * self.scale_y
-            font_family_input = element.get('font_family', 'Helvetica')
-            max_width = element.get('max_width', 500) * self.scale_x
+            font_family_input = element.get('font_family', 'Times New Roman')
             
             # Ajustar coordenada Y
             y = self.pdf_height - y_fabric - font_size
+            
+            # Interlineado proporcional
+            leading = font_size * 1.2 
             
             # Obtener fuente compatible
             font_family = self._get_reportlab_font(font_family_input)
             
             self.c.setFont(font_family, font_size)
-            
-            # Manejar texto largo
-            lines = self._wrap_text(dynamic_text, max_width, font_family, font_size)
+
             for i, line in enumerate(lines):
-                line_y = y - (i * (font_size + 2))
-                if line_y < 0:  # Si se sale de la página
+                line_y = y - (i * leading)
+                if line_y < 0: 
                     break
                 self.c.drawString(x, line_y, line)
                 
         except Exception as e:
             print(f"Error agregando texto dinámico: {e}")
-    
-    def _wrap_text(self, text, max_width, font_name, font_size):
-        """Divide el texto en líneas que caben en el ancho máximo"""
-        try:
-            words = text.split()
-            lines = []
-            current_line = []
-            
-            for word in words:
-                test_line = ' '.join(current_line + [word])
-                width = self.c.stringWidth(test_line, font_name, font_size)
-                
-                if width <= max_width:
-                    current_line.append(word)
-                else:
-                    if current_line:
-                        lines.append(' '.join(current_line))
-                    current_line = [word]
-            
-            if current_line:
-                lines.append(' '.join(current_line))
-            
-            return lines
-            
-        except Exception as e:
-            print(f"Error en wrap_text: {e}")
-            return [text]  # Devolver texto original como fallback
         
 import json
 from django.http import JsonResponse, HttpResponse
