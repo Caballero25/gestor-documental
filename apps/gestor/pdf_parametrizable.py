@@ -77,6 +77,8 @@ class DynamicPDFGenerator:
         try:
             page_size = (self.pdf_width, self.pdf_height)
             self.c = canvas.Canvas(self.buffer, pagesize=page_size)
+            pdf_title = f"acta_{self.document.metadata_schema.name}" or f"acta_{self.document.id}"
+            self.c.setTitle(pdf_title)
             background_path = finders.find('img/bg_pdf.png')
             if not background_path:
                 print("ADVERTENCIA: No se encontró la imagen de fondo en 'static/img/bg_pdf.png'")
