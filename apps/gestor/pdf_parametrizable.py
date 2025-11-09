@@ -3,11 +3,14 @@ from django.http import JsonResponse, HttpResponse
 from django.views import View
 from django.views.generic import TemplateView
 from django.shortcuts import get_object_or_404
+from django.core.files.base import ContentFile
 from .models import Document, TextoParametrizable
+from .firma import signDoc  # Importa tu función de firma
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
 from PIL import Image
+from datetime import datetime
 import tempfile
 import os
 import io
@@ -258,7 +261,6 @@ class DynamicPDFGenerator:
         except Exception as e:
             print(f"Error agregando texto dinámico: {e}")
 
-### VIEWS
 
 class PDFBuilderView(TemplateView):
     template_name = 'metadata/pdf_parametrizable/crud.html'
@@ -280,33 +282,90 @@ class PDFBuilderView(TemplateView):
         context['plantilla_json'] = plantilla_json
         return context
 
+
 class GeneratePDFView(View):
     def post(self, request, document_id):
+        
+        # Rutas para archivos temporales que debemos limpiar
+        temp_unsigned_path = None
+        temp_signed_path = None
+
         try:
             print("=== INICIANDO GENERACIÓN PDF ===")
-            document = Document.objects.get(id=document_id)
+            document = get_object_or_404(Document, id=document_id)
+            
+            data = json.loads(request.body)
+            template_config = data.get('template_config')
+            cert_password = data.get('certificate_password')
+            
             print(f"Documento: {document}")
-            
-            # Log del body recibido
-            body_str = request.body.decode('utf-8')
-            print(f"Body recibido: {body_str[:500]}...")  # Primeros 500 chars
-            
-            template_config = json.loads(request.body)
-            print(f"Configuración parseada: {json.dumps(template_config, indent=2)[:500]}...")
+            print(f"¿Solicita firma?: {'Sí' if cert_password else 'No'}")
             
             generator = DynamicPDFGenerator(document, template_config)
             pdf_buffer = generator.generate_pdf()
+            pdf_buffer.seek(0)
             
+            # 1. Eliminar el PDF físico anterior, si existe
+            if document.document_pdf:
+                print(f"Eliminando PDF anterior: {document.document_pdf.name}")
+                if os.path.isfile(document.document_pdf.path):
+                    os.remove(document.document_pdf.path)
+                document.document_pdf.delete(save=False) # Borrar referencia del modelo
+
+            # 2. Definir el nombre de archivo ESTÁTICO
+            pdf_filename = f"doc_{document.id}_parametrizable.pdf"
+            
+            # 3. Lógica de Firma y Guardado
+            if cert_password:
+                # --- QUIERE FIRMAR ---
+                print("Iniciando proceso de firma...")
+                
+                if not request.user.certificate or not request.user.certificate.path:
+                    raise ValueError('No tiene un certificado digital cargado en su perfil.')
+                
+                cert_path = request.user.certificate.path
+                if not os.path.exists(cert_path):
+                    raise ValueError(f'Archivo de certificado no encontrado en la ruta: {cert_path}')
+                
+                # 3.1. Guardar el PDF (sin firmar) en un ARCHIVO TEMPORAL
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_f:
+                    temp_f.write(pdf_buffer.read())
+                    temp_unsigned_path = temp_f.name # Guardar ruta para firmar y limpiar
+                print(f"PDF (temporal sin firmar) guardado en: {temp_unsigned_path}")
+                
+                # 3.2. Llamar a la función de firma
+                temp_signed_path = signDoc(temp_unsigned_path, cert_password, cert_path)
+                print(f"PDF (temporal firmado) generado en: {temp_signed_path}")
+                
+                # 3.3. Leer el PDF firmado para guardarlo
+                with open(temp_signed_path, 'rb') as f_signed:
+                    final_content = f_signed.read()
+                
+                print("PDF firmado leído.")
+
+            else:
+                # --- NO QUIERE FIRMAR ---
+                print("Guardando PDF sin firmar...")
+                final_content = pdf_buffer.read() # Obtener contenido del buffer
+
+            # 4. GUARDAR EN EL MODELO (UNA SOLA VEZ)
+            # Ya sea firmado o no, 'final_content' tiene el PDF correcto
+            document.document_pdf.save(pdf_filename, ContentFile(final_content), save=True)
+            print(f"PDF guardado exitosamente en: {document.document_pdf.path}")
+
+            # 5. Enviar el PDF (firmado o no) de vuelta al frontend
+            pdf_buffer = io.BytesIO(final_content) # Usar el contenido final
+            pdf_buffer.seek(0)
             response = HttpResponse(pdf_buffer, content_type='application/pdf')
             response['Content-Disposition'] = 'attachment; filename="documento_generado.pdf"'
             
-            print("=== PDF GENERADO EXITOSAMENTE ===")
+            print("=== PDF GENERADO Y GUARDADO EXITOSAMENTE ===")
             return response
             
-        except Document.DoesNotExist:
-            error_msg = f"Documento con id {document_id} no existe"
-            print(error_msg)
-            return JsonResponse({'error': error_msg}, status=404)
+        except (Document.DoesNotExist, ValueError) as e:
+            error_msg = str(e)
+            print(f"Error de negocio: {error_msg}")
+            return JsonResponse({'error': error_msg}, status=400)
             
         except json.JSONDecodeError as e:
             error_msg = f"Error decodificando JSON: {str(e)}"
@@ -314,9 +373,18 @@ class GeneratePDFView(View):
             return JsonResponse({'error': error_msg}, status=400)
             
         except Exception as e:
-            error_msg = f"Error generando PDF: {str(e)}"
+            error_msg = f"Error inesperado generando PDF: {str(e)}"
             print(error_msg)
             return JsonResponse({'error': error_msg}, status=400)
+
+        finally:
+            # Limpieza de TODOS los archivos temporales
+            if temp_signed_path and os.path.isfile(temp_signed_path):
+                os.remove(temp_signed_path)
+                print(f"Archivo temporal de firma eliminado: {temp_signed_path}")
+            if temp_unsigned_path and os.path.isfile(temp_unsigned_path):
+                os.remove(temp_unsigned_path)
+                print(f"Archivo temporal sin firmar eliminado: {temp_unsigned_path}")
 
 class SaveTemplateView(View):
     def post(self, request, document_id):
@@ -326,8 +394,6 @@ class SaveTemplateView(View):
             if not document.metadata_schema:
                 return JsonResponse({'error': 'El documento no tiene un esquema de metadatos.'}, status=400)
             
-            # 2. Encontrar o crear el objeto TextoParametrizable asociado
-            # Usamos get_or_create para manejar el caso de que aún no exista
             texto_para, created = TextoParametrizable.objects.get_or_create(
                 schema=document.metadata_schema,
                 defaults={'plantilla_texto': ''} # Añade un default si se crea

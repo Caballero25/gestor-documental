@@ -9,6 +9,17 @@
         .canvas-container { flex: 1; padding: 20px; display: flex; justify-content: center; align-items: flex-start; }
         #pdf-canvas { border: 1px solid #ccc; background: white; }
         .tool-btn { display: block; width: 100%; margin: 10px 0; padding: 10px; }
+        .password-container {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .password-container label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #495057;
+        }
     </style>
 {% endblock %}
 
@@ -45,6 +56,15 @@
 
         <div class="border-top pt-3 mt-3" style="max-width: 300px;">
             <div id="page-switcher" class="d-flex flex-wrap gap-1 col-12"></div>
+        </div>
+        <div class="border-top pt-3 mt-3">
+            <div class="password-container">
+                <label for="cert-password" class="form-label">
+                    <i class="bi bi-shield-lock me-1"></i>Contraseña de Firma Digital
+                </label>
+                <input type="password" id="cert-password" class="form-control form-control-sm" placeholder="(Opcional)">
+                <small class="form-text text-muted">Llene solo si desea firmar el PDF.</small>
+            </div>
         </div>
 
         <div class="border-top pt-3 mt-3">
@@ -431,16 +451,24 @@
         }
 
         function generatePDF() {
+            // 1. Obtener la configuración y la contraseña
             const templateConfig = buildTemplateConfig();
+            const certPassword = document.getElementById('cert-password').value;
 
-            // 1. Ocultar el botón de descarga y limpiar el blob anterior
+            // 2. Crear el payload completo
+            const payload = {
+                template_config: templateConfig,
+                certificate_password: certPassword || null // Enviar null si está vacío
+            };
+            
+            // 3. Ocultar botón de descarga y limpiar blob
             document.getElementById('download-pdf-btn').style.display = 'none';
             generatedPdfBlob = null; 
 
-            // 2. Mostrar alerta de "Generando"
+            // 4. Mostrar alerta de "Generando"
             Swal.fire({
                 title: 'Generando PDF...',
-                text: 'Por favor espere.',
+                text: 'Por favor espere. Este proceso puede tardar si se incluye la firma.',
                 allowOutsideClick: false,
                 didOpen: () => {
                     Swal.showLoading();
@@ -453,22 +481,21 @@
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                body: JSON.stringify(templateConfig)
+                body: JSON.stringify(payload) // Enviar el payload completo
             })
             .then(response => {
                 if (response.ok) {
                     return response.blob();
                 } else {
+                    // Si falla, el backend enviará un JSON con el error
                     return response.json().then(errData => {
                         throw new Error(errData.error || 'Error desconocido en el servidor');
                     });
                 }
             })
             .then(blob => {
-                // 3. ÉXITO: Guardar blob, mostrar el botón y una alerta simple
-                generatedPdfBlob = blob; // Guardar el blob globalmente
-
-                // --- CAMBIO CLAVE: Mostrar el botón de descarga ---
+                // 5. ÉXITO: Guardar blob, mostrar botón y alerta
+                generatedPdfBlob = blob; 
                 document.getElementById('download-pdf-btn').style.display = 'block';
 
                 Swal.fire({
@@ -479,7 +506,7 @@
                 });
             })
             .catch(err => {
-                // 4. ERROR: Asegurarse de que el botón siga oculto y mostrar error
+                // 6. ERROR: Manejar errores (de red o de la firma)
                 console.error('Error en fetch:', err);
                 document.getElementById('download-pdf-btn').style.display = 'none';
                 Swal.fire(

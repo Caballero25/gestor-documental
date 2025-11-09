@@ -36,6 +36,7 @@ class Document(models.Model):
     code_name = models.CharField(max_length=200, null=True, blank=True, verbose_name='Nombre - identificador')
     file = models.FileField(upload_to="documents/", verbose_name='Documento')
     file2 = models.FileField(upload_to="documents/", verbose_name='Documento 2', null=True, blank=True)
+    document_pdf = models.FileField(upload_to="pdfs/", verbose_name='Acta PDF', null=True, blank=True)
     metadata_schema = models.ForeignKey(MetadataSchema, blank=True, null=True,on_delete=models.PROTECT, verbose_name='Esquema de Metadatos')
     metadata_values = models.JSONField(default=dict, blank=True, null=True)  # Aquí se guardan los valores de los metadatos
     indexado = models.BooleanField(default=False, blank=True, null=True) 
