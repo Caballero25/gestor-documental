@@ -52,6 +52,9 @@
             <button class="btn btn-outline-warning btn-sm" onclick="addPage()">
                 <i class="bi bi-plus-square me-1"></i>Agregar Página
             </button>
+            <button class="btn btn-outline-danger btn-sm" onclick="deleteSelectedObject()">
+                        <i class="bi bi-trash me-1"></i>Eliminar Objeto
+            </button>
         </div>
 
         <div class="border-top pt-3 mt-3" style="max-width: 300px;">
@@ -620,6 +623,26 @@ function addImage(imageField, fieldName) {
                 }
             }
             return cookieValue;
+        }
+        function deleteSelectedObject() {
+            const activeObject = canvas.getActiveObject();
+            
+            if (!activeObject) {
+                // Si no hay nada seleccionado, muestra una alerta
+                Swal.fire('Atención', 'Seleccione un elemento para eliminar', 'warning');
+                return;
+            }
+
+            // 1. Elimina el objeto del canvas de Fabric.js
+            canvas.remove(activeObject);
+            
+            pages[currentPage] = pages[currentPage].filter(
+                element => element.object !== activeObject
+            );
+            
+            // Opcional: Deseleccionar (por si acaso)
+            canvas.discardActiveObject();
+            canvas.renderAll();
         }
         (function() {
             // El backend nos pasa la plantilla como un string JSON
