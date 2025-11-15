@@ -208,13 +208,29 @@
         }
 
         
-        function addImage(imageField, fieldName) {
-            //const imageUrl = `/media/${imageField}/`;
+function addImage(imageField, fieldName) {
             
             fabric.Image.fromURL(imageField, function(img) {
+                
+                const canvasWidth = canvas.getWidth();
+                const canvasHeight = canvas.getHeight();
+                let scaleFactor = 1.0; 
+
+                const maxWidth = canvasWidth * 0.25;
+                if (img.width > maxWidth) {
+                    scaleFactor = maxWidth / img.width;
+                }
+
+                img.scale(scaleFactor);
+
+                const scaledWidth = img.getScaledWidth();
+                const scaledHeight = img.getScaledHeight();
+                const leftPos = (canvasWidth - scaledWidth) / 2;
+                const topPos = (canvasHeight - scaledHeight) / 2;
+
                 img.set({
-                    left: 100,
-                    top: 100,
+                    left: leftPos,
+                    top: topPos,
                     angle: 0,
                     padding: 10,
                     cornerSize: 6,
