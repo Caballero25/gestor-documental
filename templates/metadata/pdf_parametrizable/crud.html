@@ -179,31 +179,29 @@
         /**
          * Renderiza los botones del paginador (Página 1, Página 2, etc.)
          */
-        function updatePageSwitcher() {
-            const switcher = document.getElementById('page-switcher');
-            // Limpiar botones existentes, excepto el título
-            switcher.innerHTML = '<strong class=""></strong><br>';
+function updatePageSwitcher() {
+        // Apunta al div correcto dentro de la nueva barra
+        const switcher = document.getElementById('page-switcher');
+        
+        // Limpiar botones existentes
+        switcher.innerHTML = '';
+        
+        Object.keys(pages).sort((a, b) => a - b).forEach(pageNum => {
+            const btn = document.createElement('button');
+            btn.innerText = `Pág ${pageNum}`;
             
-            Object.keys(pages).sort((a, b) => a - b).forEach(pageNum => {
-                const btn = document.createElement('button');
-                btn.innerText = `Pág ${pageNum}`;
-                btn.style.width = 'auto';
-                btn.style.margin = '2px';
-                btn.style.padding = '5px 8px';
-                btn.className = "col-4"
-                
-                // Resaltar la página actual
-                if (pageNum == currentPage) {
-                    btn.style.border = '2px solid #007bff';
-                    btn.style.fontWeight = 'bold';
-                } else {
-                    btn.style.border = '1px solid #ccc';
-                }
-                
-                btn.onclick = () => switchPage(parseInt(pageNum));
-                switcher.appendChild(btn);
-            });
-        }
+            // Asignar las nuevas clases CSS para los botones
+            btn.className = "page-btn";
+            
+            // Resaltar la página actual
+            if (pageNum == currentPage) {
+                btn.classList.add('active'); // Clase 'active' para el estilo
+            }
+            
+            btn.onclick = () => switchPage(parseInt(pageNum));
+            switcher.appendChild(btn);
+        });
+    }
 
         /**
          * Cambia la vista del canvas a una página diferente
