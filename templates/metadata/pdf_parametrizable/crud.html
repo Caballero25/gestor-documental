@@ -4,7 +4,6 @@
 {% block extra_head %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
     <style>
-        .container { display: flex; height: 100vh; }
         .toolbar { width: 250px; background: #f5f5f5; padding: 20px; }
         .canvas-container { flex: 1; padding: 20px; display: flex; justify-content: center; align-items: flex-start; }
         #pdf-canvas { border: 1px solid #ccc; background: white; }
@@ -20,77 +19,107 @@
             font-weight: 600;
             color: #495057;
         }
+        #page-switcher-bar {
+            position: sticky; /* Se mantiene visible si la página hace scroll */
+            top: 0;
+            z-index: 1020; /* Encima de otros elementos */
+        }
+
+        #page-switcher .page-btn {
+            padding: 5px 10px;
+            font-size: 0.875rem;
+            border: 1px solid #dee2e6;
+            background-color: #fff;
+            color: #495057;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        #page-switcher .page-btn:hover {
+            background-color: #e9ecef;
+            border-color: #adb5bd;
+        }
+
+        #page-switcher .page-btn.active {
+            font-weight: bold;
+            color: #fff;
+            background-color: #0d6efd; /* Azul de Bootstrap */
+            border-color: #0d6efd;
+        }
     </style>
 {% endblock %}
 
 {% block content %}
-    <div class="container">
-<div class="card shadow-sm">
-    <div class="card-header bg-light">
-        <h4 class="card-title mb-0"><i class="bi bi-tools me-2"></i>Herramientas</h4>
-    </div>
-    <div class="card-body">
-        <div class="d-grid gap-2 mb-3">
-            <button class="btn btn-outline-primary btn-sm" onclick="addImage('{{ document.file.url }}', 'file')">
-                <i class="bi bi-image me-1"></i>Agregar Imagen 1
-            </button>
-            
-            {% if document.file2 %}
-            <button class="btn btn-outline-primary btn-sm" onclick="addImage('{{ document.file2.url }}', 'file2')">
-                <i class="bi bi-image me-1"></i>Agregar Imagen 2
-            </button>
-            {% endif %}
-            
-            <button class="btn btn-outline-success btn-sm" onclick="addText()">
-                <i class="bi bi-text-paragraph me-1"></i>Agregar Texto
-            </button>
-            
-            <button class="btn btn-outline-info btn-sm" onclick="addDynamicText()">
-                <i class="bi bi-input-cursor-text me-1"></i>Texto Dinámico
-            </button>
-            
-            <button class="btn btn-outline-warning btn-sm" onclick="addPage()">
-                <i class="bi bi-plus-square me-1"></i>Agregar Página
-            </button>
-            <button class="btn btn-outline-danger btn-sm" onclick="deleteSelectedObject()">
-                        <i class="bi bi-trash me-1"></i>Eliminar Objeto
-            </button>
-        </div>
-
-        <div class="border-top pt-3 mt-3" style="max-width: 300px;">
-            <div id="page-switcher" class="d-flex flex-wrap gap-1 col-12"></div>
-        </div>
-        <div class="border-top pt-3 mt-3">
-            <div class="password-container">
-                <label for="cert-password" class="form-label">
-                    <i class="bi bi-shield-lock me-1"></i>Contraseña de Firma Digital
-                </label>
-                <input type="password" id="cert-password" class="form-control form-control-sm" placeholder="(Opcional)">
-                <small class="form-text text-muted">Llene solo si desea firmar el PDF.</small>
-            </div>
-        </div>
-
-        <div class="border-top pt-3 mt-3">
-            <div class="d-grid gap-2">
-                <button class="btn btn-danger" onclick="generatePDF()">
-                    <i class="bi bi-file-pdf me-1"></i>Generar PDF
-                </button>
-                <button id="download-pdf-btn" class="btn btn-success" style="display: none;" onclick="downloadGeneratedPDF()">
-                    <i class="bi bi-download me-1"></i>Descargar PDF
-                </button>
-                <button class="btn btn-outline-secondary" onclick="saveTemplate()">
-                    <i class="bi bi-save me-1"></i>Guardar Plantilla
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+    <div class="container-fluid d-flex flex-column vh-100">
         
-        <div class="canvas-container">
-            <canvas id="pdf-canvas" width="800" height="1000"></canvas>
+        <div id="page-switcher-bar" class="bg-light border-bottom shadow-sm">
+            <div id="page-switcher" class="d-flex flex-wrap justify-content-center align-items-center p-2 gap-2">
+                </div>
         </div>
-    </div>
 
+        <div class="d-flex flex-grow-1" style="overflow-y: hidden;">
+            
+            <div class="toolbar-container bg-light border-end">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-light border-0">
+                        <h4 class="card-title mb-0"><i class="bi bi-tools me-2"></i>Herramientas</h4>
+                    </div>
+                    <div class="card-body overflow-auto">
+                        <div class="d-grid gap-2 mb-3">
+                            <button class="btn btn-outline-primary btn-sm" onclick="addImage('{{ document.file.url }}', 'file')">
+                                <i class="bi bi-image me-1"></i>Agregar Imagen 1
+                            </button>
+                            {% if document.file2 %}
+                            <button class="btn btn-outline-primary btn-sm" onclick="addImage('{{ document.file2.url }}', 'file2')">
+                                <i class="bi bi-image me-1"></i>Agregar Imagen 2
+                            </button>
+                            {% endif %}
+                            <button class="btn btn-outline-success btn-sm" onclick="addText()">
+                                <i class="bi bi-text-paragraph me-1"></i>Agregar Texto
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" onclick="addDynamicText()">
+                                <i class="bi bi-input-cursor-text me-1"></i>Texto Dinámico
+                            </button>
+                            <button class="btn btn-outline-warning btn-sm" onclick="addPage()">
+                                <i class="bi bi-plus-square me-1"></i>Agregar Página
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteSelectedObject()">
+                                <i class="bi bi-trash me-1"></i>Eliminar Objeto
+                            </button>
+                        </div>
+                        
+                        <div class="border-top pt-3 mt-3">
+                            <div class="password-container">
+                                <label for="cert-password" class="form-label">
+                                    <i class="bi bi-shield-lock me-1"></i>Contraseña de Firma Digital
+                                </label>
+                                <input type="password" id="cert-password" class="form-control form-control-sm" placeholder="(Opcional)">
+                                <small class="form-text text-muted">Llene solo si desea firmar el PDF.</small>
+                            </div>
+                        </div>
+
+                        <div class="border-top pt-3 mt-3">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-danger" onclick="generatePDF()">
+                                    <i class="bi bi-file-pdf me-1"></i>Generar PDF
+                                </button>
+                                <button id="download-pdf-btn" class="btn btn-success" style="display: none;" onclick="downloadGeneratedPDF()">
+                                    <i class="bi bi-download me-1"></i>Descargar PDF
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="saveTemplate()">
+                                    <i class="bi bi-save me-1"></i>Guardar Plantilla
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> <div class="canvas-container flex-grow-1 p-3" style="overflow: auto; background-color: #f8f9fa;">
+                <canvas id="pdf-canvas" width="800" height="1000"></canvas>
+            </div>
+
+        </div> 
+    </div>
     <script>
         let canvas = new fabric.Canvas('pdf-canvas');
         let currentPage = 1;
@@ -153,7 +182,7 @@
         function updatePageSwitcher() {
             const switcher = document.getElementById('page-switcher');
             // Limpiar botones existentes, excepto el título
-            switcher.innerHTML = '<strong class="col-6">Páginas:</strong><br>';
+            switcher.innerHTML = '<strong class=""></strong><br>';
             
             Object.keys(pages).sort((a, b) => a - b).forEach(pageNum => {
                 const btn = document.createElement('button');
