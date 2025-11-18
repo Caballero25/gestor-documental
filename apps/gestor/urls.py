@@ -1,6 +1,6 @@
 from django.urls import path, re_path
 from .views import firstSteptUploadView, secondSteptUploadView, editDocumentView, editDocumentIndexacionView, DocumentListView, documentDeleteView, lista_tomos
-from .email_service import sendDocumentLink, searchDocuments, sendEmailDocuments, downloadDocument
+from .email_service import sendDocumentLink, searchDocuments, sendEmailDocuments, downloadDocument, downloadPdf, sendEmailPdf
 from .document_detail import DocumentView
 from .firma_electronica import signDocument
 from .uploadDocumentImage import capture_document_view, get_metadata_fields
@@ -23,6 +23,8 @@ urlpatterns = [
     path('document/search/', searchDocuments, name="document_search"),
     path('send/email/', sendEmailDocuments, name="send_email_documents"),
     path('download/document/<str:token>', downloadDocument, name="download_documents"),
+    path('send/email/cc/', sendEmailPdf, name="send_email_with_cc"),
+    path('download/pdf/<str:token>', downloadPdf, name="download_document_pdf"),
     path('ver/<int:pk>/', DocumentView.as_view(), name='document_viewer'),
 
     #Firma Electrónica
