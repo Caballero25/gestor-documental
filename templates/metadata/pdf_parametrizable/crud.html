@@ -110,6 +110,13 @@
                                 <button id="download-pdf-btn" class="btn btn-success" style="display: none;" onclick="downloadGeneratedPDF()">
                                     <i class="bi bi-download me-1"></i>Descargar PDF
                                 </button>
+                                <button type="button" 
+                                        id="btnOpenEmailModal" 
+                                        class="btn btn-outline-primary mt-2" 
+                                        style="display: none;" 
+                                        onclick="openEmailModal('{{ document.id }}')">
+                                    <i class="bi bi-envelope-at"></i> Enviar por Correo
+                                </button>
                                 <button class="btn btn-outline-secondary" onclick="saveTemplate()">
                                     <i class="bi bi-save me-1"></i>Guardar Plantilla
                                 </button>
@@ -122,6 +129,55 @@
             </div>
 
         </div> 
+    </div>
+    <div class="modal fade" id="emailModal" tabindex="-1" aria-labelledby="emailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="emailModalLabel">Enviar Documento por Correo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="emailForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="document_id" id="modalDocumentId">
+
+                    <h6 class="text-primary border-bottom pb-2 mb-3">Datos del Destinatario</h6>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="main_email" class="form-label fw-bold">Destinatario (Para) <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="main_email" name="main_email" placeholder="ejemplo@empresa.com" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="asunto" class="form-label fw-bold">Asunto <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="asunto" name="asunto" placeholder="Documento importante..." required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Copias (CC) <span class="text-muted fw-light">(Opcional)</span></label>
+                        <div id="ccContainer">
+                            </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="addCcField()">
+                            <i class="bi bi-clipboard2-plus"></i> Agregar destinatario CC
+                        </button>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="cuerpo" class="form-label fw-bold">Mensaje <span class="text-muted fw-light">(Opcional)</span></label>
+                        <textarea class="form-control" id="cuerpo" name="cuerpo" rows="4" placeholder="Escribe un mensaje para acompañar el documento..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="sendEmailForm()">
+                    <i class="bi bi-envelope-at"></i> Enviar Correo
+                </button>
+            </div>
+            </div>
+        </div>
     </div>
     <script>
         let canvas = new fabric.Canvas('pdf-canvas');
@@ -565,6 +621,7 @@ function addImage(imageField, fieldName) {
                 // 5. ÉXITO: Guardar blob, mostrar botón y alerta
                 generatedPdfBlob = blob; 
                 document.getElementById('download-pdf-btn').style.display = 'block';
+                document.getElementById('btnOpenEmailModal').style.display = 'inline-block';
 
                 Swal.fire({
                     title: '¡PDF Listo!',
@@ -715,5 +772,92 @@ function addImage(imageField, fieldName) {
                 updatePageSwitcher();
             }
         })();
+
+
+        /**ENVIO DE CORREO ELECTRONICO*/
+        const SEND_EMAIL_URL = "{% url 'send_email_with_cc' %}";
+
+        // 1. Función para abrir el modal y setear el ID del documento
+        function openEmailModal(docId) {
+            document.getElementById('modalDocumentId').value = docId;
+            // Limpiar formulario previo
+            document.getElementById('emailForm').reset();
+            document.getElementById('ccContainer').innerHTML = ''; 
+            // Mostrar modal (Bootstrap 5)
+            var myModal = new bootstrap.Modal(document.getElementById('emailModal'));
+            myModal.show();
+        }
+
+        // 2. Función para agregar campos CC dinámicamente
+        function addCcField() {
+            const container = document.getElementById('ccContainer');
+            const div = document.createElement('div');
+            div.className = 'input-group mb-2';
+            div.innerHTML = `
+                <span class="input-group-text"><i class="bi bi-clipboard2-plus"></i></span>
+                <input type="email" name="cc_emails[]" class="form-control" placeholder="correo.copia@ejemplo.com">
+                <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">
+                    <i class="bi bi-trash"></i>
+                </button>
+            `;
+            container.appendChild(div);
+        }
+
+        // 3. Función principal de envío
+        function sendEmailForm() {
+            const form = document.getElementById('emailForm');
+            
+            // Validación básica HTML5 desde JS
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const formData = new FormData(form);
+
+            // SweetAlert: Cargando
+            Swal.fire({
+                title: 'Enviando correo...',
+                html: 'Por favor espera mientras contactamos al servidor SMTP.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            fetch(SEND_EMAIL_URL, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                // SweetAlert: Éxito
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Enviado!',
+                    text: `El documento fue enviado a ${data.main_email}`,
+                    confirmButtonColor: '#3085d6'
+                });
+                // Cerrar el modal
+                const modalEl = document.getElementById('emailModal');
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                modalInstance.hide();
+            })
+            .catch(error => {
+                // SweetAlert: Error
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message || 'Ocurrió un problema inesperado.',
+                    footer: 'Verifica los correos ingresados e inténtalo de nuevo.'
+                });
+            });
+        }
     </script>
 {% endblock %}
