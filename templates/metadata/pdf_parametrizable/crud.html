@@ -75,6 +75,9 @@
                                 <i class="bi bi-image me-1"></i>Agregar Imagen 2
                             </button>
                             {% endif %}
+                            <button class="btn btn-outline-dark btn-sm" onclick="addTitle()">
+                                <i class="bi bi-type-h1 me-1"></i>Agregar Título
+                            </button>
                             <button class="btn btn-outline-success btn-sm" onclick="addText()">
                                 <i class="bi bi-text-paragraph me-1"></i>Agregar Texto
                             </button>
@@ -275,6 +278,24 @@ function addImage(imageField, fieldName) {
                 });
             });
         }
+
+        function addTitle() {
+            const text = new fabric.IText('TÍTULO', {
+                left: 100,
+                top: 50,
+                fontFamily: 'Times New Roman',
+                fontSize: 14, 
+                fontWeight: 'bold',
+                fill: 'black'
+            });
+            
+            canvas.add(text);
+            // Usamos el mismo tipo 'text', el backend manejará el estilo
+            pages[currentPage].push({
+                type: 'text',
+                object: text
+            });
+        }
         
         function addText() {
             const text = new fabric.IText('Texto editable', {
@@ -459,6 +480,7 @@ function addImage(imageField, fieldName) {
                                 ...commonOptions,
                                 fontFamily: element.font_family,
                                 fontSize: element.font_size,
+                                fontWeight: element.font_weight || 'normal',
                                 fill: 'black',
                                 width: element.width // Usamos el ancho guardado
                             });
@@ -625,6 +647,7 @@ function addImage(imageField, fieldName) {
                         
                         elementConfig.font_size = obj.fontSize || 12;
                         elementConfig.font_family = obj.fontFamily || 'Times New Roman';
+                        elementConfig.font_weight = obj.fontWeight || 'normal';
                     }
                     
                     console.log(`Elemento ${element.type}:`, elementConfig);

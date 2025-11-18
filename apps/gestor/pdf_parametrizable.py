@@ -62,16 +62,6 @@ class DynamicPDFGenerator:
             'Georgia': 'Times-Roman',  # Similar a Times
         }
     
-    def _get_reportlab_font(self, font_name):
-        """Obtiene el nombre de fuente compatible con ReportLab"""
-        if font_name in self.available_fonts:
-            return font_name
-        elif font_name in self.font_mapping:
-            return self.font_mapping[font_name]
-        else:
-            # Por defecto usar Helvetica
-            return 'Helvetica'
-    
     def generate_pdf(self):
         """Genera el PDF dinámico basado en la configuración"""
         try:
@@ -206,6 +196,31 @@ class DynamicPDFGenerator:
         except Exception as e:
             # Este es el log que viste
             print(f"Error crítico al agregar imagen: {e}")
+
+    def _get_reportlab_font(self, font_name, is_bold=False):
+        """Obtiene el nombre de fuente compatible con ReportLab, manejando negritas"""
+        
+        # 1. Normalizar nombre base
+        base_font = 'Helvetica' # Default fallback
+        
+        if font_name in self.available_fonts:
+            base_font = font_name
+        elif font_name in self.font_mapping:
+            base_font = self.font_mapping[font_name]
+            
+        # 2. Si no es negrita, devolver la base
+        if not is_bold:
+            return base_font
+            
+        # 3. Mapeo de variantes Bold comunes
+        bold_mapping = {
+            'Helvetica': 'Helvetica-Bold',
+            'Times-Roman': 'Times-Bold',
+            'Courier': 'Courier-Bold',
+        }
+        
+        # Devolver versión bold si existe, si no, devolver la base
+        return bold_mapping.get(base_font, base_font)
     def _add_text_element(self, element):
         """Agrega texto estático al PDF"""
         try:
@@ -215,11 +230,14 @@ class DynamicPDFGenerator:
             y_fabric = element.get('y', 0) * self.scale_y
             font_size = element.get('font_size', 12) * self.scale_y
             font_family_input = element.get('font_family', 'Times New Roman')
+
+            font_weight = element.get('font_weight', 'normal')
+            is_bold = (font_weight == 'bold')
             
 
             y = self.pdf_height - y_fabric - font_size
             
-            font_family = self._get_reportlab_font(font_family_input)
+            font_family = self._get_reportlab_font(font_family_input, is_bold)
             self.c.setFont(font_family, font_size)
 
             leading = font_size * 1.2 
