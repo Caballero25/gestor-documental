@@ -1,7 +1,7 @@
 
 from django.views.generic import ListView
-from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models import Q
 from django.db.models import F, Func
@@ -17,6 +17,7 @@ import base64
 from mimetypes import guess_type
 import re
 
+@login_required
 def firstSteptUploadView(request, id=None):
     context = {}
     if id:
@@ -49,6 +50,7 @@ def firstSteptUploadView(request, id=None):
     context['form'] = form
     return render(request, 'gestor/first_stept_create.html', context) 
 
+@login_required
 def secondSteptUploadView(request, id):
     record = get_object_or_404(Document, id=id)
     context = {}
@@ -78,6 +80,7 @@ def secondSteptUploadView(request, id):
     return render(request, 'gestor/second_stept_create.html', context) 
 
 
+@login_required
 def editDocumentView(request, id, anio=None):
     document = get_object_or_404(Document, id=id)
     schema = document.metadata_schema
@@ -143,6 +146,7 @@ def editDocumentView(request, id, anio=None):
         'anio': anio
     })
 
+@login_required
 def editDocumentIndexacionView(request, id):
     document = get_object_or_404(Document, id=id)
     schema = document.metadata_schema
@@ -196,7 +200,7 @@ def editDocumentIndexacionView(request, id):
                 messages.success(request, "Documento actualizado correctamente")
                 return redirect('edit_document_view', id=doc.id)
 
-@permission_required("delete_user")
+@login_required
 def documentDeleteView(request, id):
     record = Document.objects.get(id=id) 
     context = {}
@@ -247,10 +251,9 @@ class DocumentListView(PermissionRequiredMixin, ListView):
         context['breadcrumb_previous_link'] = "home-url"
         return context
 """
-class DocumentListView(PermissionRequiredMixin, ListView):
+class DocumentListView(LoginRequiredMixin, ListView):
     model = Document
     template_name = 'gestor/document_list.html'
-    permission_required = 'view_user'
     paginate_by = 10  
 
     def get_queryset(self):
@@ -300,6 +303,7 @@ class DocumentListView(PermissionRequiredMixin, ListView):
         return context
     
 
+@login_required
 def lista_tomos(request):
     tomos = Document.objects \
         .annotate(tomo=KeyTextTransform('TOMO', 'metadata_values')) \

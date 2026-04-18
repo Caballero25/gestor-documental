@@ -2,16 +2,15 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from http import HTTPStatus
-from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.views.generic import ListView
 from django.contrib.auth.models import Group
 from ..forms import GroupForm
-class GroupListView(PermissionRequiredMixin, ListView):
+class GroupListView(LoginRequiredMixin, ListView):
     model = Group
     template_name = 'auth/group/group_list.html'
-    permission_required = 'view_group'
     paginate_by = 10  
 
     def get_queryset(self):
@@ -36,7 +35,7 @@ class GroupListView(PermissionRequiredMixin, ListView):
         context['breadcrumb_previous_link'] = "home-url"
         return context
 
-@permission_required("add_group")
+@login_required
 def groupCreateView(request):
     context = {}
     context['title'] = 'Crear Grupo'
@@ -53,7 +52,7 @@ def groupCreateView(request):
     context['form'] = form
     return render(request, 'auth/group/group_create.html', context) 
 
-@permission_required("change_group")
+@login_required
 def groupUpdateView(request, id):
     record = get_object_or_404(Group, id=id)
     context = {}
@@ -73,7 +72,7 @@ def groupUpdateView(request, id):
     return render(request, 'auth/group/group_edit.html', context)
 
 
-@permission_required("delete_group")
+@login_required
 def groupDeleteView(request, id):
     record = Group.objects.get(id=id) 
     context = {}

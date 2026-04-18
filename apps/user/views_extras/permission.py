@@ -2,16 +2,15 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from http import HTTPStatus
-from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.views.generic import ListView
 from django.contrib.auth.models import Permission
 from ..forms import PermissionForm
-class PermissionListView(PermissionRequiredMixin, ListView):
+class PermissionListView(LoginRequiredMixin, ListView):
     model = Permission
     template_name = 'auth/permission/permission_list.html'
-    permission_required = 'view_permission'
     paginate_by = 10  
 
     def get_queryset(self):
@@ -36,7 +35,7 @@ class PermissionListView(PermissionRequiredMixin, ListView):
         context['breadcrumb_previous_link'] = "home-url"
         return context
 
-@permission_required("add_permission")
+@login_required
 def permissionCreateView(request):
     context = {}
     context['title'] = 'Crear Permiso'
@@ -53,7 +52,7 @@ def permissionCreateView(request):
     context['form'] = form
     return render(request, 'auth/permission/permission_create.html', context) 
 
-@permission_required("change_permission")
+@login_required
 def permissionUpdateView(request, id):
     record = get_object_or_404(Permission, id=id)
     context = {}
@@ -73,7 +72,7 @@ def permissionUpdateView(request, id):
     return render(request, 'auth/permission/permission_edit.html', context)
 
 
-@permission_required("delete_permission")
+@login_required
 def permissionDeleteView(request, id):
     record = Permission.objects.get(id=id) 
     context = {}

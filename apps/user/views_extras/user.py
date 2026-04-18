@@ -2,17 +2,15 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from http import HTTPStatus
-from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.views.generic import ListView
 from ..models import User
 from ..forms import UserForm, CreateUserForm
-class UserListView(PermissionRequiredMixin, ListView):
+class UserListView(LoginRequiredMixin, ListView):
     model = User
     template_name = 'auth/user/user_list.html'
-    permission_required = 'view_user'
     paginate_by = 10  
 
     def get_queryset(self):
@@ -37,7 +35,7 @@ class UserListView(PermissionRequiredMixin, ListView):
         context['breadcrumb_previous_link'] = "home-url"
         return context
 
-@permission_required("add_user")
+@login_required
 def userCreateView(request):
     context = {}
     context['title'] = 'Crear Usuario'
@@ -54,7 +52,7 @@ def userCreateView(request):
     context['form'] = form
     return render(request, 'auth/user/user_create.html', context) 
 
-@permission_required("change_user")
+@login_required
 def userUpdateView(request, id):
     record = get_object_or_404(User, id=id)
     context = {}
@@ -74,7 +72,7 @@ def userUpdateView(request, id):
     return render(request, 'auth/user/user_edit.html', context)
 
 
-@permission_required("delete_user")
+@login_required
 def userDeleteView(request, id):
     record = User.objects.get(id=id) 
     context = {}

@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -7,6 +8,7 @@ import json
 from .models import TextoParametrizable, MetadataSchema
 from .forms import TextoParametrizableForm
 
+@login_required
 def texto_parametrizable_list(request):
     """
     Vista para listar todos los textos parametrizables
@@ -16,6 +18,7 @@ def texto_parametrizable_list(request):
 
     return render(request, 'metadata/texto_parametrizable/crud.html', {'textos': textos, 'esquemas': list(esquemas)})
 
+@login_required
 @csrf_exempt
 @require_http_methods(["POST"])
 def texto_parametrizable_create(request):
@@ -49,6 +52,7 @@ def texto_parametrizable_create(request):
             'message': f'Error del servidor: {str(e)}'
         })
 
+@login_required
 @csrf_exempt
 @require_http_methods(["POST"])
 def texto_parametrizable_update(request, pk):
@@ -83,6 +87,7 @@ def texto_parametrizable_update(request, pk):
             'message': f'Error del servidor: {str(e)}'
         })
 
+@login_required
 @csrf_exempt
 @require_http_methods(["DELETE"])
 def texto_parametrizable_delete(request, pk):
@@ -104,6 +109,7 @@ def texto_parametrizable_delete(request, pk):
             'message': f'Error del servidor: {str(e)}'
         })
 
+@login_required
 def texto_parametrizable_detail(request, pk):
     """
     Vista para obtener los detalles de un texto parametrizable (AJAX)

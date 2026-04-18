@@ -71,12 +71,18 @@ class DynamicMetadataForm(forms.Form):
                         widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control datepicker-left'})
                     )
                 elif field.field_type == 'select':
-                    data_str = field.options
-                    data_str = data_str.replace('\\"', '"')
-                    # Convertir la cadena JSON en una lista de Python
-                    data_list = json.loads(data_str)
-                    # Crear las opciones del campo select
-                    choices = [(option, option) for option in data_list]
+                    choices = []
+                    if field.options:
+                        try:
+                            # Intentar cargar como JSON
+                            data_str = field.options.replace('\\"', '"')
+                            data_list = json.loads(data_str)
+                            if isinstance(data_list, list):
+                                choices = [(option, option) for option in data_list]
+                        except (json.JSONDecodeError, TypeError):
+                            # Si falla, intentar separar por comas como respaldo
+                            choices = [(opt.strip(), opt.strip()) for opt in field.options.split(',') if opt.strip()]
+
                     self.fields[field.name] = forms.ChoiceField(
                         label=field.name, 
                         choices=choices, 

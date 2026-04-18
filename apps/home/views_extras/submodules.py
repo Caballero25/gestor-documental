@@ -2,15 +2,14 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from http import HTTPStatus
-from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView
 from ..models import SubModule
 from ..forms import SubModuleForm
-class SubModuleListView(PermissionRequiredMixin, ListView):
+class SubModuleListView(LoginRequiredMixin, ListView):
     model = SubModule
     template_name = 'parametrization/submodules/submodule_list.html'
-    permission_required = 'view_submodule'
     paginate_by = 10  
 
     def get_queryset(self):
@@ -35,7 +34,7 @@ class SubModuleListView(PermissionRequiredMixin, ListView):
         context['breadcrumb_previous_link'] = "home-url"
         return context
 
-@permission_required("add_submodule")
+@login_required
 def subModuleCreateView(request):
     context = {}
     context['title'] = 'Crear Submódulo'
@@ -51,7 +50,7 @@ def subModuleCreateView(request):
     context['form'] = form
     return render(request, 'parametrization/submodules/submodule_create.html', context) 
 
-@permission_required("change_submodule")
+@login_required
 def subModuleUpdateView(request, id):
     record = get_object_or_404(SubModule, id=id)
     context = {}
@@ -70,7 +69,7 @@ def subModuleUpdateView(request, id):
     return render(request, 'parametrization/submodules/submodule_edit.html', context)
 
 
-@permission_required("delete_submodule")
+@login_required
 def subModuleDeleteView(request, id):
     record = SubModule.objects.get(id=id) 
     context = {}

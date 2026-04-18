@@ -13,6 +13,7 @@ from email.mime.text import MIMEText
 from .models import Document
 import os
 
+@login_required
 def sendDocumentLink(request):
     context = {}
     context['title'] = 'Enviar Documentos - Correo Electrónico'
@@ -35,6 +36,7 @@ def searchDocuments(request):
         data = []
     return JsonResponse({"documents": data})
 
+@login_required
 def sendEmailDocuments(request):
     if request.method == 'POST':
         signer = TimestampSigner()
@@ -104,6 +106,7 @@ def downloadDocument(request, token):
         return render(request, 'gestor/invalid_link.html', context)
     
 #DESDE PDF PARAMETRIZABLE
+@login_required
 @csrf_exempt
 def sendEmailPdf(request):
     if request.method == 'POST':

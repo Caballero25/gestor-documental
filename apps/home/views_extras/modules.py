@@ -2,15 +2,14 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from http import HTTPStatus
-from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView
 from ..models import Module
 from ..forms import ModuleForm
-class ModuleListView(PermissionRequiredMixin, ListView):
+class ModuleListView(LoginRequiredMixin, ListView):
     model = Module
     template_name = 'parametrization/modules/module_list.html'
-    permission_required = 'view_module'
     paginate_by = 10  
 
     def get_queryset(self):
@@ -35,7 +34,7 @@ class ModuleListView(PermissionRequiredMixin, ListView):
         context['breadcrumb_previous_link'] = "home-url"
         return context
 
-@permission_required("add_module")
+@login_required
 def moduleCreateView(request):
     context = {}
     context['title'] = 'Crear Módulo'
@@ -51,7 +50,7 @@ def moduleCreateView(request):
     context['form'] = form
     return render(request, 'parametrization/modules/module_create.html', context) 
 
-@permission_required("change_module")
+@login_required
 def moduleUpdateView(request, id):
     record = get_object_or_404(Module, id=id)
     context = {}
@@ -70,7 +69,7 @@ def moduleUpdateView(request, id):
     return render(request, 'parametrization/modules/module_edit.html', context)
 
 
-@permission_required("delete_module")
+@login_required
 def moduleDeleteView(request, id):
     record = Module.objects.get(id=id) 
     context = {}

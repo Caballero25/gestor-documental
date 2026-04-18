@@ -2,18 +2,17 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from http import HTTPStatus
-from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.views.generic import ListView
 from .models import MetadataSchema, MetadataField
 from .forms import MetadataSchemaForm, MetadataFieldForm, MetadataFieldEditForm
 
 #   SCHEMA
-class MetaDataSchemaListView(PermissionRequiredMixin, ListView):
+class MetaDataSchemaListView(LoginRequiredMixin, ListView):
     model = MetadataSchema
     template_name = 'metadata/schema/schema_list.html'
-    permission_required = 'view_metadataschema'
     paginate_by = 10  
 
     def get_queryset(self):
@@ -38,7 +37,7 @@ class MetaDataSchemaListView(PermissionRequiredMixin, ListView):
         context['breadcrumb_previous_link'] = "home-url"
         return context
 
-@permission_required("add_metadataschema")
+@login_required
 def metaDataSchemaCreateView(request):
     context = {}
     context['title'] = 'Crear Esquema de Metadatos'
@@ -55,7 +54,7 @@ def metaDataSchemaCreateView(request):
     context['form'] = form
     return render(request, 'metadata/schema/schema_create.html', context) 
 
-@permission_required("change_metadataschema")
+@login_required
 def metaDataSchemaUpdateView(request, id):
     record = get_object_or_404(MetadataSchema, id=id)
     context = {}
@@ -75,7 +74,7 @@ def metaDataSchemaUpdateView(request, id):
     return render(request, 'metadata/schema/schema_edit.html', context)
 
 
-@permission_required("delete_metadataschema")
+@login_required
 def metaDataSchemaDeleteView(request, id):
     record = MetadataSchema.objects.get(id=id) 
     context = {}
@@ -94,10 +93,9 @@ def metaDataSchemaDeleteView(request, id):
 
 
 #   FIELD
-class MetaDataFieldListView(PermissionRequiredMixin, ListView):
+class MetaDataFieldListView(LoginRequiredMixin, ListView):
     model = MetadataField
     template_name = 'metadata/field/field_list.html'
-    permission_required = 'view_metadatafield'
     paginate_by = 10  
 
     def get_queryset(self):
@@ -122,7 +120,7 @@ class MetaDataFieldListView(PermissionRequiredMixin, ListView):
         context['breadcrumb_previous_link'] = "home-url"
         return context
 
-@permission_required("add_metadatafield")
+@login_required
 def metaDataFieldCreateView(request):
     context = {}
     context['title'] = 'Crear Campo'
@@ -139,7 +137,7 @@ def metaDataFieldCreateView(request):
     context['form'] = form
     return render(request, 'metadata/field/field_create.html', context) 
 
-@permission_required("change_metadatafield")
+@login_required
 def metaDataFieldUpdateView(request, id):
     record = get_object_or_404(MetadataField, id=id)
     context = {}
@@ -159,7 +157,7 @@ def metaDataFieldUpdateView(request, id):
     return render(request, 'metadata/field/field_edit.html', context)
 
 
-@permission_required("delete_metadatafield")
+@login_required
 def metaDataFieldDeleteView(request, id):
     record = MetadataField.objects.get(id=id) 
     context = {}

@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .models import Document, DocumentSequence
 from ..metadata.models import MetadataSchema, MetadataField
@@ -10,6 +11,7 @@ from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 
 
+@login_required
 @csrf_exempt
 def capture_document_view(request):
     metadata_schemas = MetadataSchema.objects.all()
@@ -69,6 +71,7 @@ def capture_document_view(request):
         'secuenciales': secuenciales
     })
 
+@login_required
 def get_metadata_fields(request):
     schema_id = request.GET.get('schema_id')
     if not schema_id:

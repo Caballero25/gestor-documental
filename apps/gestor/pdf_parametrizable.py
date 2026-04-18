@@ -2,6 +2,7 @@ from django.contrib.staticfiles import finders
 from django.http import JsonResponse, HttpResponse
 from django.views import View
 from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
 from django.core.files.base import ContentFile
 from .models import Document, TextoParametrizable
@@ -282,7 +283,7 @@ class DynamicPDFGenerator:
             print(f"Error agregando texto dinámico: {e}")
 
 
-class PDFBuilderView(TemplateView):
+class PDFBuilderView(LoginRequiredMixin, TemplateView):
     template_name = 'metadata/pdf_parametrizable/crud.html'
     
     def get_context_data(self, **kwargs):
@@ -303,7 +304,7 @@ class PDFBuilderView(TemplateView):
         return context
 
 
-class GeneratePDFView(View):
+class GeneratePDFView(LoginRequiredMixin, View):
     def post(self, request, document_id):
         
         # Rutas para archivos temporales que debemos limpiar
@@ -406,7 +407,7 @@ class GeneratePDFView(View):
                 os.remove(temp_unsigned_path)
                 print(f"Archivo temporal sin firmar eliminado: {temp_unsigned_path}")
 
-class SaveTemplateView(View):
+class SaveTemplateView(LoginRequiredMixin, View):
     def post(self, request, document_id):
         try:
             # 1. Obtener el documento y su esquema

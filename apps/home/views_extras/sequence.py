@@ -2,12 +2,12 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from http import HTTPStatus
-from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView
 from apps.gestor.models import DocumentSequence
 from ..forms import DocumentSequenceForm
-class SequenceListView(ListView):
+class SequenceListView(LoginRequiredMixin, ListView):
     model = DocumentSequence
     template_name = 'parametrization/secuenciales/secuencial_list.html'
     paginate_by = 10  
@@ -34,6 +34,7 @@ class SequenceListView(ListView):
         context['breadcrumb_previous_link'] = "home-url"
         return context
 
+@login_required
 def sequenceCreateView(request):
     context = {}
     context['title'] = 'Crear secuencia'
@@ -49,6 +50,7 @@ def sequenceCreateView(request):
     context['form'] = form
     return render(request, 'parametrization/secuenciales/secuencial_create.html', context) 
 
+@login_required
 def sequenceUpdateView(request, id):
     record = get_object_or_404(DocumentSequence, id=id)
     context = {}
@@ -66,6 +68,7 @@ def sequenceUpdateView(request, id):
     context['form'] = form
     return render(request, 'parametrization/secuenciales/secuencial_edit.html', context)
 
+@login_required
 def sequenceDeleteView(request, id):
     record = DocumentSequence.objects.get(id=id) 
     context = {}

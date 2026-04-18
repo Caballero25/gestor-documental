@@ -1,10 +1,12 @@
 from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
 from .models import DocumentSequence
 from django.views.decorators.csrf import csrf_exempt
 import json
 
 
 # Obtener el valor actual de la secuencia
+@login_required
 def getSeqValue(request):
     try:
         id = request.GET.get("id")
@@ -19,6 +21,7 @@ def getSeqValue(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 # Establecer un nuevo valor para la secuencia (solo POST)
+@login_required
 @csrf_exempt
 def setSeqValue(request):
     if request.method == 'POST':
