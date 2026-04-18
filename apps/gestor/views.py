@@ -86,6 +86,10 @@ def editDocumentView(request, id, anio=None):
     schema = document.metadata_schema
     
     if request.method == 'POST':
+        if not request.user.has_perm('gestor.change_document'):
+            messages.error(request, "No tienes permiso para editar documentos.")
+            return redirect('edit_document_view', id=id)
+
         document_form = DocumentForm(request.POST, request.FILES, instance=document)
         metadata_form = DynamicFileMetadataForm(request.POST, schema=schema, initial=document.metadata_values or {})
         
@@ -152,6 +156,10 @@ def editDocumentIndexacionView(request, id):
     schema = document.metadata_schema
     
     if request.method == 'POST':
+        if not request.user.has_perm('gestor.change_document'):
+            messages.error(request, "No tienes permiso para indexar o editar documentos.")
+            return redirect('edit_document_view', id=id)
+
         document_form = DocumentForm(request.POST, request.FILES, instance=document)
         metadata_form = DynamicFileMetadataForm(request.POST, schema=schema, initial=document.metadata_values or {})
         
@@ -210,6 +218,8 @@ def documentDeleteView(request, id):
     context['breadcrumb_previous_link'] = "document_list"
     context['success_redirection'] = "document_list"
     if request.method == 'POST':
+        if not request.user.has_perm('gestor.delete_document'):
+            return JsonResponse({"error": "No tienes permiso para eliminar documentos."}, status=HTTPStatus.FORBIDDEN)
         try:
             record.delete()
             return JsonResponse({"status": True}, status=HTTPStatus.NO_CONTENT)

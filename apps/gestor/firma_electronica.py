@@ -26,6 +26,8 @@ def signDocument(request, pk):
         return JsonResponse({'message': 'No tienes un certificado digital configurado'}, status=400)
 
     if request.method == 'POST':
+        if not request.user.has_perm('gestor.sign_document'):
+            return JsonResponse({'message': 'No tienes permiso para firmar documentos'}, status=403)
         try:
             pdfX, pdfY = document.get_pdf_size()
         except:
