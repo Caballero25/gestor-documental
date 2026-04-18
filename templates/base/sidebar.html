@@ -31,6 +31,8 @@
           data-accordion="false"
         >
           {% for module in modulos_sistema %}
+          {% with submodules=module.submodule_set.all|filter_visible_by_perm:request.user %}
+          {% if submodules %}
           <li class="nav-item">
             <a href="#" class="nav-link nav-topmenu">
               <i class="nav-icon {{module.icon}}"></i>
@@ -40,7 +42,7 @@
               </p>
             </a>
             <ul class="nav nav-treeview">
-              {% for submodule in module.submodule_set.all|filter_visible %}
+              {% for submodule in submodules %}
                 <li class="nav-item">
                   <a href="{% url submodule.url_name %}" class="nav-link nav-sublink">
                     <i class="nav-icon bi bi-circle"></i>
@@ -50,6 +52,8 @@
               {% endfor %}
             </ul>
           </li>
+          {% endif %}
+          {% endwith %}
           {% endfor %}
         </ul>
         <!--end::Sidebar Menu-->
