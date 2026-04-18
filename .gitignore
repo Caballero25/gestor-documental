@@ -1,6 +1,9 @@
 #Gestor Documental - Propiedad Intelectual de SaitDigital
 # --- Migraciones ---
+# Permitimos archivos .py en migrations para sincronización entre entornos
+apps/*/migrations/__init__.py
 apps/*/migrations/*.py
+!apps/*/migrations/*.py
 apps/*/migrations/*.pyc
 # --- Python ---
 __pycache__/
