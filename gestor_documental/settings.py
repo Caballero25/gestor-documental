@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
-from decouple import config
+from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,9 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-niye@_---ik%9pd-#iq7v30%0civb!9!nja3@91#luyg4lo9ke'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ["38.242.154.147", "173.249.56.104"]
+ALLOWED_HOSTS = config('ALLOWED_HOST', cast=Csv())
 
 
 # Application definition
