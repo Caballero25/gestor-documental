@@ -27,6 +27,10 @@ class TextoParametrizable(models.Model):
     class Meta:
         verbose_name = "Texto Parametrizable"
         verbose_name_plural = "Textos Parametrizables"
+        permissions = [
+            ("manage_pdf_templates", "Puede gestionar plantillas PDF"),
+            ("manage_textos_parametrizables", "Puede gestionar textos parametrizables"),
+        ]
         
     def __str__(self):
         return f"Plantilla para {self.schema.name}"
@@ -40,6 +44,13 @@ class Document(models.Model):
     metadata_schema = models.ForeignKey(MetadataSchema, blank=True, null=True,on_delete=models.PROTECT, verbose_name='Esquema de Metadatos')
     metadata_values = models.JSONField(default=dict, blank=True, null=True)  # Aquí se guardan los valores de los metadatos
     indexado = models.BooleanField(default=False, blank=True, null=True) 
+
+    class Meta:
+        permissions = [
+            ("index_document", "Puede indexar documentos"),
+            ("send_document", "Puede enviar documentos por correo"),
+            ("sign_document", "Puede firmar documentos"),
+        ]
 
     def __str__(self):
         return f"Documento: {self.file}"
@@ -124,6 +135,11 @@ class Document(models.Model):
 class DocumentSequence(models.Model):
     libro = models.CharField(max_length=200, verbose_name="Tipo de libro a digitalizar", default="BAUTIZO", null=False, blank=False)
     seq_value = models.BigIntegerField(default=1)
+
+    class Meta:
+        permissions = [
+            ("manage_sequences", "Puede gestionar secuencias de documentos"),
+        ]
 
     def __str__(self):
         return f"Secuencia actual: {self.seq_value}"

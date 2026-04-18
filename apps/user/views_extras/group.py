@@ -2,15 +2,16 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from http import HTTPStatus
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.views.generic import ListView
 from django.contrib.auth.models import Group
 from ..forms import GroupForm
-class GroupListView(LoginRequiredMixin, ListView):
+class GroupListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     model = Group
     template_name = 'auth/group/group_list.html'
+    permission_required = 'auth.view_group'
     paginate_by = 10  
 
     def get_queryset(self):

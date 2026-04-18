@@ -2,14 +2,15 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from http import HTTPStatus
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView
 from apps.gestor.models import DocumentSequence
 from ..forms import DocumentSequenceForm
-class SequenceListView(LoginRequiredMixin, ListView):
+class SequenceListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     model = DocumentSequence
     template_name = 'parametrization/secuenciales/secuencial_list.html'
+    permission_required = 'gestor.manage_sequences'
     paginate_by = 10  
 
     def get_queryset(self):

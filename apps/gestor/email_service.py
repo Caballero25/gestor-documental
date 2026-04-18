@@ -3,7 +3,7 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Q
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.http import JsonResponse, HttpResponse, FileResponse
 from django.urls import reverse
 import json
@@ -13,7 +13,7 @@ from email.mime.text import MIMEText
 from .models import Document
 import os
 
-@login_required
+@permission_required("gestor.send_document")
 def sendDocumentLink(request):
     context = {}
     context['title'] = 'Enviar Documentos - Correo Electrónico'

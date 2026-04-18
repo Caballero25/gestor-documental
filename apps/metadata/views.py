@@ -2,7 +2,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from http import HTTPStatus
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.views.generic import ListView
@@ -10,9 +10,10 @@ from .models import MetadataSchema, MetadataField
 from .forms import MetadataSchemaForm, MetadataFieldForm, MetadataFieldEditForm
 
 #   SCHEMA
-class MetaDataSchemaListView(LoginRequiredMixin, ListView):
+class MetaDataSchemaListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     model = MetadataSchema
     template_name = 'metadata/schema/schema_list.html'
+    permission_required = 'metadata.view_metadataschema'
     paginate_by = 10  
 
     def get_queryset(self):
@@ -93,9 +94,10 @@ def metaDataSchemaDeleteView(request, id):
 
 
 #   FIELD
-class MetaDataFieldListView(LoginRequiredMixin, ListView):
+class MetaDataFieldListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     model = MetadataField
     template_name = 'metadata/field/field_list.html'
+    permission_required = 'metadata.view_metadatafield'
     paginate_by = 10  
 
     def get_queryset(self):

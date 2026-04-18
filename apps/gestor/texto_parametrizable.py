@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -8,7 +8,7 @@ import json
 from .models import TextoParametrizable, MetadataSchema
 from .forms import TextoParametrizableForm
 
-@login_required
+@permission_required("gestor.manage_textos_parametrizables")
 def texto_parametrizable_list(request):
     """
     Vista para listar todos los textos parametrizables

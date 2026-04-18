@@ -1,7 +1,7 @@
 
 from django.views.generic import ListView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models import Q
 from django.db.models import F, Func
@@ -17,7 +17,7 @@ import base64
 from mimetypes import guess_type
 import re
 
-@login_required
+@permission_required("gestor.add_document")
 def firstSteptUploadView(request, id=None):
     context = {}
     if id:
@@ -251,9 +251,10 @@ class DocumentListView(PermissionRequiredMixin, ListView):
         context['breadcrumb_previous_link'] = "home-url"
         return context
 """
-class DocumentListView(LoginRequiredMixin, ListView):
+class DocumentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     model = Document
     template_name = 'gestor/document_list.html'
+    permission_required = 'gestor.view_document'
     paginate_by = 10  
 
     def get_queryset(self):

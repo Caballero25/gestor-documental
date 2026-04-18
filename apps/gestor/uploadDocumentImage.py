@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.http import JsonResponse
 from .models import Document, DocumentSequence
 from ..metadata.models import MetadataSchema, MetadataField
@@ -11,7 +11,7 @@ from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 
 
-@login_required
+@permission_required("gestor.add_document")
 @csrf_exempt
 def capture_document_view(request):
     metadata_schemas = MetadataSchema.objects.all()
