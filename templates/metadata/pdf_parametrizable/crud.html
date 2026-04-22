@@ -903,7 +903,7 @@ function addImage(imageField, fieldName) {
 
         function addCertificateTitle() {
             const schemaName = "{{ document.metadata_schema.name|escapejs }}";
-            const titleText = schemaName ? `Certificado de ${schemaName}` : "Certificado";
+            const titleText = schemaName ? `CERTIFICADO DE ${schemaName.toUpperCase()}` : "CERTIFICADO";
             
             const title = new fabric.IText(titleText, {
                 left: canvas.getWidth() / 2,
