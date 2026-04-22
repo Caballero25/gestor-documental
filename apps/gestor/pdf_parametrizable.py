@@ -10,12 +10,16 @@ from .firma import signDoc  # Importa tu función de firma
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.pdfmetrics import registerFontFamily
 from PIL import Image
 from datetime import datetime
 import tempfile
 import os
 import io
 import json
+from django.conf import settings
 
 class DynamicPDFGenerator:
     def __init__(self, document, template_config=None):
@@ -54,13 +58,38 @@ class DynamicPDFGenerator:
             'Courier-BoldOblique': 'Courier-BoldOblique',
         }
         
-        # Mapeo de fuentes comunes a fuentes de ReportLab
+        # Registrar fuentes TTF de Google
+        fonts_dir = os.path.join(settings.BASE_DIR, 'static', 'fonts')
+        
+        ttf_fonts = [
+            ('Carlito', 'Carlito-Regular.ttf', 'Carlito-Bold.ttf', 'Carlito-Italic.ttf', 'Carlito-BoldItalic.ttf'),
+            ('Tinos', 'Tinos-Regular.ttf', 'Tinos-Bold.ttf', 'Tinos-Italic.ttf', 'Tinos-BoldItalic.ttf'),
+            ('Cousine', 'Cousine-Regular.ttf', 'Cousine-Bold.ttf', 'Cousine-Italic.ttf', 'Cousine-BoldItalic.ttf')
+        ]
+        
+        for family, reg, bold, italic, bold_italic in ttf_fonts:
+            try:
+                pdfmetrics.registerFont(TTFont(family, os.path.join(fonts_dir, reg)))
+                pdfmetrics.registerFont(TTFont(f"{family}-Bold", os.path.join(fonts_dir, bold)))
+                pdfmetrics.registerFont(TTFont(f"{family}-Italic", os.path.join(fonts_dir, italic)))
+                pdfmetrics.registerFont(TTFont(f"{family}-BoldItalic", os.path.join(fonts_dir, bold_italic)))
+                registerFontFamily(family, normal=family, bold=f"{family}-Bold", italic=f"{family}-Italic", boldItalic=f"{family}-BoldItalic")
+                
+                self.available_fonts[family] = family
+                self.available_fonts[f"{family}-Bold"] = f"{family}-Bold"
+                self.available_fonts[f"{family}-Italic"] = f"{family}-Italic"
+                self.available_fonts[f"{family}-BoldItalic"] = f"{family}-BoldItalic"
+            except Exception as e:
+                print(f"Error registrando fuente {family}: {e}")
+
+        # Mapeo de fuentes comunes a fuentes registradas/ReportLab
         self.font_mapping = {
-            'Arial': 'Helvetica',
-            'Times New Roman': 'Times-Roman',
-            'Courier New': 'Courier',
-            'Verdana': 'Helvetica',  # Similar a Helvetica
-            'Georgia': 'Times-Roman',  # Similar a Times
+            'Arial': 'Helvetica', # Fallback si no está Arimo
+            'Calibri': 'Carlito',
+            'Times New Roman': 'Tinos',
+            'Courier New': 'Cousine',
+            'Verdana': 'Helvetica',
+            'Georgia': 'Times-Roman',
         }
     
     def generate_pdf(self):
@@ -102,10 +131,6 @@ class DynamicPDFGenerator:
             self.c.save()
             self.buffer.seek(0)
             return self.buffer
-            
-        except Exception as e:
-            print(f"Error en generate_pdf: {e}")
-            raise
             
         except Exception as e:
             print(f"Error en generate_pdf: {e}")
@@ -198,8 +223,8 @@ class DynamicPDFGenerator:
             # Este es el log que viste
             print(f"Error crítico al agregar imagen: {e}")
 
-    def _get_reportlab_font(self, font_name, is_bold=False):
-        """Obtiene el nombre de fuente compatible con ReportLab, manejando negritas"""
+    def _get_reportlab_font(self, font_name, is_bold=False, is_italic=False):
+        """Obtiene el nombre de fuente compatible con ReportLab, manejando negritas y cursivas"""
         
         # 1. Normalizar nombre base
         base_font = 'Helvetica' # Default fallback
@@ -209,19 +234,37 @@ class DynamicPDFGenerator:
         elif font_name in self.font_mapping:
             base_font = self.font_mapping[font_name]
             
-        # 2. Si no es negrita, devolver la base
-        if not is_bold:
+        # 2. Si es una fuente TTF con familia registrada (las que no tienen el guión en su nombre base)
+        if base_font in ['Carlito', 'Tinos', 'Cousine']:
+            suffix = ""
+            if is_bold and is_italic:
+                suffix = "-BoldItalic"
+            elif is_bold:
+                suffix = "-Bold"
+            elif is_italic:
+                suffix = "-Italic"
+            
+            target_font = f"{base_font}{suffix}"
+            if target_font in self.available_fonts:
+                return target_font
             return base_font
             
-        # 3. Mapeo de variantes Bold comunes
-        bold_mapping = {
-            'Helvetica': 'Helvetica-Bold',
-            'Times-Roman': 'Times-Bold',
-            'Courier': 'Courier-Bold',
-        }
-        
-        # Devolver versión bold si existe, si no, devolver la base
-        return bold_mapping.get(base_font, base_font)
+        # 3. Mapeo de variantes para fuentes built-in
+        suffix = ""
+        if base_font == 'Times-Roman':
+            if is_bold and is_italic: return 'Times-BoldItalic'
+            if is_bold: return 'Times-Bold'
+            if is_italic: return 'Times-Italic'
+        elif base_font == 'Helvetica':
+            if is_bold and is_italic: return 'Helvetica-BoldOblique'
+            if is_bold: return 'Helvetica-Bold'
+            if is_italic: return 'Helvetica-Oblique'
+        elif base_font == 'Courier':
+            if is_bold and is_italic: return 'Courier-BoldOblique'
+            if is_bold: return 'Courier-Bold'
+            if is_italic: return 'Courier-Oblique'
+            
+        return base_font
     def _add_text_element(self, element):
         """Agrega texto estático al PDF"""
         try:
@@ -230,15 +273,17 @@ class DynamicPDFGenerator:
             x = element.get('x', 0) * self.scale_x
             y_fabric = element.get('y', 0) * self.scale_y
             font_size = element.get('font_size', 12) * self.scale_y
-            font_family_input = element.get('font_family', 'Times New Roman')
+            font_family_input = element.get('font_family', 'Calibri')
+            text_align = element.get('text_align', 'left')
 
             font_weight = element.get('font_weight', 'normal')
+            font_style = element.get('font_style', 'normal')
             is_bold = (font_weight == 'bold')
+            is_italic = (font_style == 'italic')
             
-
             y = self.pdf_height - y_fabric - font_size
             
-            font_family = self._get_reportlab_font(font_family_input, is_bold)
+            font_family = self._get_reportlab_font(font_family_input, is_bold, is_italic)
             self.c.setFont(font_family, font_size)
 
             leading = font_size * 1.2 
@@ -247,7 +292,12 @@ class DynamicPDFGenerator:
                 line_y = y - (i * leading)
                 if line_y < 0:  # Si se sale de la página
                     break
-                self.c.drawString(x, line_y, line)
+                if text_align == 'center':
+                    self.c.drawCentredString(x + (element.get('width', 0) * self.scale_x / 2), line_y, line)
+                elif text_align == 'right':
+                    self.c.drawRightString(x + (element.get('width', 0) * self.scale_x), line_y, line)
+                else:
+                    self.c.drawString(x, line_y, line)
             
         except Exception as e:
             print(f"Error agregando texto: {e}")
@@ -260,7 +310,13 @@ class DynamicPDFGenerator:
             x = element.get('x', 0) * self.scale_x
             y_fabric = element.get('y', 0) * self.scale_y
             font_size = element.get('font_size', 12) * self.scale_y
-            font_family_input = element.get('font_family', 'Times New Roman')
+            font_family_input = element.get('font_family', 'Calibri')
+            text_align = element.get('text_align', 'left')
+            
+            font_weight = element.get('font_weight', 'normal')
+            font_style = element.get('font_style', 'normal')
+            is_bold = (font_weight == 'bold')
+            is_italic = (font_style == 'italic')
             
             # Ajustar coordenada Y
             y = self.pdf_height - y_fabric - font_size
@@ -269,7 +325,7 @@ class DynamicPDFGenerator:
             leading = font_size * 1.2 
             
             # Obtener fuente compatible
-            font_family = self._get_reportlab_font(font_family_input)
+            font_family = self._get_reportlab_font(font_family_input, is_bold, is_italic)
             
             self.c.setFont(font_family, font_size)
 
@@ -277,7 +333,12 @@ class DynamicPDFGenerator:
                 line_y = y - (i * leading)
                 if line_y < 0: 
                     break
-                self.c.drawString(x, line_y, line)
+                if text_align == 'center':
+                    self.c.drawCentredString(x + (element.get('width', 0) * self.scale_x / 2), line_y, line)
+                elif text_align == 'right':
+                    self.c.drawRightString(x + (element.get('width', 0) * self.scale_x), line_y, line)
+                else:
+                    self.c.drawString(x, line_y, line)
                 
         except Exception as e:
             print(f"Error agregando texto dinámico: {e}")

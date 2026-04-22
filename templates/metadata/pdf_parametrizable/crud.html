@@ -4,9 +4,24 @@
 {% block extra_head %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
     <style>
+        @font-face { font-family: 'Calibri'; src: url('{% static "fonts/Carlito-Regular.ttf" %}') format('truetype'); font-weight: normal; font-style: normal; }
+        @font-face { font-family: 'Calibri'; src: url('{% static "fonts/Carlito-Bold.ttf" %}') format('truetype'); font-weight: bold; font-style: normal; }
+        @font-face { font-family: 'Calibri'; src: url('{% static "fonts/Carlito-Italic.ttf" %}') format('truetype'); font-weight: normal; font-style: italic; }
+        @font-face { font-family: 'Calibri'; src: url('{% static "fonts/Carlito-BoldItalic.ttf" %}') format('truetype'); font-weight: bold; font-style: italic; }
+
+        @font-face { font-family: 'Times New Roman'; src: url('{% static "fonts/Tinos-Regular.ttf" %}') format('truetype'); font-weight: normal; font-style: normal; }
+        @font-face { font-family: 'Times New Roman'; src: url('{% static "fonts/Tinos-Bold.ttf" %}') format('truetype'); font-weight: bold; font-style: normal; }
+        @font-face { font-family: 'Times New Roman'; src: url('{% static "fonts/Tinos-Italic.ttf" %}') format('truetype'); font-weight: normal; font-style: italic; }
+        @font-face { font-family: 'Times New Roman'; src: url('{% static "fonts/Tinos-BoldItalic.ttf" %}') format('truetype'); font-weight: bold; font-style: italic; }
+
+        @font-face { font-family: 'Courier New'; src: url('{% static "fonts/Cousine-Regular.ttf" %}') format('truetype'); font-weight: normal; font-style: normal; }
+        @font-face { font-family: 'Courier New'; src: url('{% static "fonts/Cousine-Bold.ttf" %}') format('truetype'); font-weight: bold; font-style: normal; }
+        @font-face { font-family: 'Courier New'; src: url('{% static "fonts/Cousine-Italic.ttf" %}') format('truetype'); font-weight: normal; font-style: italic; }
+        @font-face { font-family: 'Courier New'; src: url('{% static "fonts/Cousine-BoldItalic.ttf" %}') format('truetype'); font-weight: bold; font-style: italic; }
+
         .toolbar { width: 250px; background: #f5f5f5; padding: 20px; }
-        .canvas-container { flex: 1; padding: 20px; display: flex; justify-content: center; align-items: flex-start; }
-        #pdf-canvas { border: 1px solid #ccc; background: white; }
+        .canvas-container { flex: 1; padding: 20px; display: flex; justify-content: center; align-items: flex-start; flex-direction: column; }
+        #pdf-canvas { border: 1px solid #ccc; background: white; margin: 0 auto; }
         .tool-btn { display: block; width: 100%; margin: 10px 0; padding: 10px; }
         .password-container {
             padding: 10px;
@@ -124,7 +139,23 @@
                         </div>
                     </div>
                 </div>
-            </div> <div class="canvas-container flex-grow-1 p-3" style="overflow: auto; background-color: #f8f9fa;">
+            </div> 
+            <div class="canvas-container flex-grow-1 p-3" style="overflow: auto; background-color: #f8f9fa;">
+                <div id="format-toolbar" class="d-flex align-items-center bg-white p-2 border rounded shadow-sm mb-2" style="display: none !important; width: 800px; margin: 0 auto;">
+                    <select id="font-family-select" class="form-select form-select-sm me-2" style="width: auto;">
+                        <option value="Calibri">Calibri</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Courier New">Courier New</option>
+                    </select>
+                    <input type="number" id="font-size-input" class="form-control form-control-sm me-2" style="width: 70px;" title="Tamaño">
+                    <button id="bold-btn" class="btn btn-sm btn-outline-secondary me-1 fw-bold" title="Negrita">B</button>
+                    <button id="italic-btn" class="btn btn-sm btn-outline-secondary fst-italic me-3" title="Cursiva">I</button>
+                    
+                    <button id="align-left-btn" class="btn btn-sm btn-outline-secondary me-1" title="Alinear Izquierda"><i class="bi bi-text-left"></i></button>
+                    <button id="align-center-btn" class="btn btn-sm btn-outline-secondary me-1" title="Centrar"><i class="bi bi-text-center"></i></button>
+                    <button id="align-right-btn" class="btn btn-sm btn-outline-secondary" title="Alinear Derecha"><i class="bi bi-text-right"></i></button>
+                </div>
                 <canvas id="pdf-canvas" width="800" height="1000"></canvas>
             </div>
 
@@ -235,6 +266,92 @@
         });
         })();
 
+        // --- MANEJO DE LA BARRA DE FORMATO ---
+        const formatToolbar = document.getElementById('format-toolbar');
+        const fontFamilySelect = document.getElementById('font-family-select');
+        const fontSizeInput = document.getElementById('font-size-input');
+        const boldBtn = document.getElementById('bold-btn');
+        const italicBtn = document.getElementById('italic-btn');
+        const alignLeftBtn = document.getElementById('align-left-btn');
+        const alignCenterBtn = document.getElementById('align-center-btn');
+        const alignRightBtn = document.getElementById('align-right-btn');
+
+        canvas.on('selection:created', updateToolbar);
+        canvas.on('selection:updated', updateToolbar);
+        canvas.on('selection:cleared', hideToolbar);
+
+        function updateToolbar(e) {
+            const obj = e.selected?.[0] || canvas.getActiveObject();
+            if (obj && (obj.type === 'i-text' || obj.type === 'text' || obj.type === 'dynamic_text')) {
+                formatToolbar.style.setProperty('display', 'flex', 'important');
+                
+                fontFamilySelect.value = obj.fontFamily || 'Calibri';
+                fontSizeInput.value = obj.fontSize || 12;
+                
+                if (obj.fontWeight === 'bold') boldBtn.classList.add('active');
+                else boldBtn.classList.remove('active');
+                
+                if (obj.fontStyle === 'italic') italicBtn.classList.add('active');
+                else italicBtn.classList.remove('active');
+                
+                [alignLeftBtn, alignCenterBtn, alignRightBtn].forEach(btn => btn.classList.remove('active'));
+                if (obj.textAlign === 'center') alignCenterBtn.classList.add('active');
+                else if (obj.textAlign === 'right') alignRightBtn.classList.add('active');
+                else alignLeftBtn.classList.add('active');
+            } else {
+                hideToolbar();
+            }
+        }
+
+        function hideToolbar() {
+            formatToolbar.style.setProperty('display', 'none', 'important');
+        }
+
+        fontFamilySelect.addEventListener('change', function() {
+            const obj = canvas.getActiveObject();
+            if (obj) { obj.set('fontFamily', this.value); canvas.renderAll(); }
+        });
+
+        fontSizeInput.addEventListener('input', function() {
+            const obj = canvas.getActiveObject();
+            const val = parseInt(this.value);
+            if (obj && !isNaN(val) && val > 0) { obj.set('fontSize', val); canvas.renderAll(); }
+        });
+
+        boldBtn.addEventListener('click', function() {
+            const obj = canvas.getActiveObject();
+            if (obj) {
+                const isBold = obj.fontWeight === 'bold';
+                obj.set('fontWeight', isBold ? 'normal' : 'bold');
+                this.classList.toggle('active', !isBold);
+                canvas.renderAll();
+            }
+        });
+
+        italicBtn.addEventListener('click', function() {
+            const obj = canvas.getActiveObject();
+            if (obj) {
+                const isItalic = obj.fontStyle === 'italic';
+                obj.set('fontStyle', isItalic ? 'normal' : 'italic');
+                this.classList.toggle('active', !isItalic);
+                canvas.renderAll();
+            }
+        });
+        
+        alignLeftBtn.addEventListener('click', () => setAlign('left', alignLeftBtn));
+        alignCenterBtn.addEventListener('click', () => setAlign('center', alignCenterBtn));
+        alignRightBtn.addEventListener('click', () => setAlign('right', alignRightBtn));
+
+        function setAlign(align, btn) {
+            const obj = canvas.getActiveObject();
+            if (obj) {
+                obj.set('textAlign', align);
+                [alignLeftBtn, alignCenterBtn, alignRightBtn].forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                canvas.renderAll();
+            }
+        }
+
         /**
          * Renderiza los botones del paginador (Página 1, Página 2, etc.)
          */
@@ -339,10 +456,11 @@ function addImage(imageField, fieldName) {
             const text = new fabric.IText('TÍTULO', {
                 left: 100,
                 top: 50,
-                fontFamily: 'Times New Roman',
-                fontSize: 14, 
+                fontFamily: 'Calibri',
+                fontSize: 20, 
                 fontWeight: 'bold',
-                fill: 'black'
+                fill: 'black',
+                textAlign: 'center'
             });
             
             canvas.add(text);
@@ -351,13 +469,14 @@ function addImage(imageField, fieldName) {
                 type: 'text',
                 object: text
             });
+            canvas.setActiveObject(text);
         }
         
         function addText() {
             const text = new fabric.IText('Texto editable', {
                 left: 100,
                 top: 100,
-                fontFamily: 'Times New Roman',
+                fontFamily: 'Calibri',
                 fontSize: 12,
                 fill: 'black'
             });
@@ -368,6 +487,7 @@ function addImage(imageField, fieldName) {
                 type: 'text',
                 object: text
             });
+            canvas.setActiveObject(text);
         }
         
         function addDynamicText() {
@@ -376,7 +496,7 @@ function addImage(imageField, fieldName) {
             const text = new fabric.IText(dynamicText, {
                 left: 100,
                 top: 200,
-                fontFamily: 'Times New Roman',
+                fontFamily: 'Calibri',
                 fontSize: 12,
                 fill: 'black',
                 width: 400
@@ -387,6 +507,7 @@ function addImage(imageField, fieldName) {
                 type: 'dynamic_text',
                 object: text
             });
+            canvas.setActiveObject(text);
         }
         
         function addPage() {
@@ -537,6 +658,8 @@ function addImage(imageField, fieldName) {
                                 fontFamily: element.font_family,
                                 fontSize: element.font_size,
                                 fontWeight: element.font_weight || 'normal',
+                                fontStyle: element.font_style || 'normal',
+                                textAlign: element.text_align || 'left',
                                 fill: 'black',
                                 width: element.width // Usamos el ancho guardado
                             });
@@ -703,8 +826,10 @@ function addImage(imageField, fieldName) {
                         elementConfig.lines = obj.textLines || (obj.text ? [obj.text] : []);
                         
                         elementConfig.font_size = obj.fontSize || 12;
-                        elementConfig.font_family = obj.fontFamily || 'Times New Roman';
+                        elementConfig.font_family = obj.fontFamily || 'Calibri';
                         elementConfig.font_weight = obj.fontWeight || 'normal';
+                        elementConfig.font_style = obj.fontStyle || 'normal';
+                        elementConfig.text_align = obj.textAlign || 'left';
                     }
                     
                     console.log(`Elemento ${element.type}:`, elementConfig);
@@ -765,13 +890,35 @@ function addImage(imageField, fieldName) {
                     console.log("No hay plantilla, iniciando en blanco.");
                     pages = {1: []};
                     updatePageSwitcher();
+                    addCertificateTitle();
                 }
             } catch (e) {
                 console.error("Error al parsear plantilla JSON:", e);
                 pages = {1: []};
                 updatePageSwitcher();
+                addCertificateTitle();
             }
         })();
+
+        function addCertificateTitle() {
+            const schemaName = "{{ document.metadata_schema.name|escapejs }}";
+            const titleText = schemaName ? `Certificado de ${schemaName}` : "Certificado";
+            
+            const title = new fabric.IText(titleText, {
+                left: canvas.getWidth() / 2,
+                top: 180,
+                fontFamily: 'Calibri',
+                fontSize: 22,
+                fontWeight: 'bold',
+                fill: 'black',
+                originX: 'center',
+                textAlign: 'center'
+            });
+            
+            canvas.add(title);
+            pages[1].push({ type: 'text', object: title });
+            canvas.renderAll();
+        }
 
 
         /**ENVIO DE CORREO ELECTRONICO*/
