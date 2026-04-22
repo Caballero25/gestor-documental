@@ -31,7 +31,7 @@ class DynamicPDFGenerator:
         self._register_fonts()
         #Tamanio del documento
         self.canvas_width = 800  # Ancho del canvas de Fabric.js
-        self.canvas_height = 1000 # Alto del canvas de Fabric.js
+        self.canvas_height = 1131 # Alto del canvas de Fabric.js (proporcional a A4)
         
         page_size_default = A4
         self.pdf_width = self.template_config.get('page_size', page_size_default)[0]
