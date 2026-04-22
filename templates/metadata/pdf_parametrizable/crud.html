@@ -822,6 +822,7 @@ function addImage(imageField, fieldName) {
 
                         elementConfig.x = bounds.left || 0;
                         elementConfig.y = bounds.top || 0;
+                        elementConfig.width = bounds.width || 0;
 
                         elementConfig.lines = obj.textLines || (obj.text ? [obj.text] : []);
                         
