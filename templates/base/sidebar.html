@@ -31,7 +31,7 @@
           data-accordion="false"
         >
           {% for module in modulos_sistema %}
-          {% with submodules=module.submodule_set.all|filter_visible_by_perm:request.user %}
+          {% with submodules=module.submodule_set.all|filter_visible_by_perm:request.user|dictsort:"name" %}
           {% if submodules %}
           <li class="nav-item">
             <a href="#" class="nav-link nav-topmenu">
