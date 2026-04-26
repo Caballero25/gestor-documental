@@ -4,7 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models import Q
-from django.db.models import F, Func
+from django.db.models import F, Func, Count
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.http import JsonResponse
@@ -271,9 +271,14 @@ class DocumentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         queryset = super().get_queryset()
         query = self.request.GET.get('q')
         tomo_filtro = self.request.GET.get('tomo')
+        schema_filtro = self.request.GET.get('schema')
         page = self.request.GET.get('page')
 
-        # Aplicar filtro de tomo primero
+        # Aplicar filtro de esquema
+        if schema_filtro:
+            queryset = queryset.filter(metadata_schema_id=schema_filtro)
+
+        # Aplicar filtro de tomo
         if tomo_filtro:
             tomo_key = KeyTextTransform('TOMO', 'metadata_values')
             queryset = queryset.annotate(tomo=KeyTextTransform('TOMO', 'metadata_values'))
@@ -282,7 +287,7 @@ class DocumentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             else:
                 queryset = queryset.annotate(tomo=tomo_key).filter(tomo__iexact=tomo_filtro)
 
-        # Luego aplicar la búsqueda general sobre los resultados filtrados por tomo
+        # Luego aplicar la búsqueda general sobre los resultados filtrados
         if query:
             filters = (
                 Q(code_name__icontains=query) |
@@ -311,20 +316,54 @@ class DocumentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         context['breadcrumb_previous'] = "Inicio"
         context['breadcrumb_previous_link'] = "home-url"
         context['tomo_filtro'] = self.request.GET.get('tomo', '')
+        context['schema_filtro'] = self.request.GET.get('schema', '')
         return context
     
 
 @login_required
-def lista_tomos(request):
-    tomos = Document.objects \
+def lista_esquemas(request):
+    esquemas = MetadataSchema.objects.filter(
+        document__isnull=False
+    ).distinct().annotate(
+        doc_count=Count('document')
+    ).order_by('name')
+
+    sin_esquema_count = Document.objects.filter(metadata_schema__isnull=True).count()
+
+    context = {
+        'title': 'Documentos por Esquema',
+        'esquemas': esquemas,
+        'sin_esquema_count': sin_esquema_count,
+        'breadcrumb_previous': "Documentos",
+        'breadcrumb_previous_link': "document_list",
+    }
+    return render(request, 'gestor/lista_esquemas.html', context)
+
+
+@permission_required("gestor.view_document")
+def lista_tomos(request, schema_id=None):
+    queryset = Document.objects.all()
+    schema_name = "Todos"
+
+    if schema_id is not None:
+        if schema_id == 0:
+            queryset = queryset.filter(metadata_schema__isnull=True)
+            schema_name = "Sin Esquema"
+        else:
+            schema = get_object_or_404(MetadataSchema, id=schema_id)
+            schema_name = schema.name
+            queryset = queryset.filter(metadata_schema=schema)
+
+    tomos = queryset \
         .annotate(tomo=KeyTextTransform('TOMO', 'metadata_values')) \
         .values_list('tomo', flat=True) \
         .distinct()
 
     context = {
-        'title': 'Lista de Tomos',
+        'title': f'Tomos — {schema_name}',
         'tomos': tomos,
-        'breadcrumb_previous': "Documentos",
-        'breadcrumb_previous_link': "document_list"
+        'schema_id': schema_id,
+        'breadcrumb_previous': "Esquemas",
+        'breadcrumb_previous_link': "lista_esquemas",
     }
     return render(request, 'gestor/lista_tomos.html', context)

@@ -1,5 +1,5 @@
 from django.urls import path, re_path
-from .views import firstSteptUploadView, secondSteptUploadView, editDocumentView, editDocumentIndexacionView, DocumentListView, documentDeleteView, lista_tomos
+from .views import firstSteptUploadView, secondSteptUploadView, editDocumentView, editDocumentIndexacionView, DocumentListView, documentDeleteView, lista_tomos, lista_esquemas
 from .email_service import sendDocumentLink, searchDocuments, sendEmailDocuments, downloadDocument, downloadPdf, sendEmailPdf
 from .document_detail import DocumentView
 from .firma_electronica import signDocument
@@ -39,7 +39,9 @@ urlpatterns = [
     path('api/setSeqValue/', setSeqValue, name='set_seq_value'),
 
     #Meta datos
+    path('listaEsquemas/', lista_esquemas, name='lista_esquemas'),
     path('listaTomos/', lista_tomos, name='lista_tomo'),
+    path('listaTomos/<int:schema_id>/', lista_tomos, name='lista_tomo_schema'),
 
     #Texto parametrizable
     path('textos-parametrizables/', texto_parametrizable_list, name='texto_list'),

@@ -33,7 +33,7 @@
     transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
   }
 
-  /* Hace la tarjeta cuadrada usando aspect-ratio (BS5+ ok en navegadores modernos) */
+  /* Hace la tarjeta cuadrada usando aspect-ratio */
   .doc-card .card-body {
     aspect-ratio: 1 / 1;
     display: grid;
@@ -44,7 +44,7 @@
   /* Contenido interior */
   .doc-card .inner {
     display: grid;
-    grid-template-rows: auto auto;
+    grid-template-rows: auto auto auto;
     grid-row-gap: .5rem;
     justify-items: center;
   }
@@ -59,17 +59,23 @@
 
   /* Títulos */
   .doc-label{
-    /* mostrar texto completo */
-    white-space: normal;          /* permite salto de línea */
-    overflow: visible;            /* no recorta el contenido */
-    text-overflow: clip;          /* sin puntos suspensivos */
-    max-width: none;              /* sin límite artificial de ancho */
-    word-break: break-word;       /* evita desbordes en palabras largas */
-    overflow-wrap: anywhere;      /* ayuda a cortar strings continuos */
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    max-width: none;
+    word-break: break-word;
+    overflow-wrap: anywhere;
     text-align: center;
     line-height: 1.2;
     font-weight: 600;
     font-size: clamp(.9rem, 1vw + .8rem, 1.05rem);
+  }
+
+  /* Badge de conteo */
+  .doc-count {
+    font-size: .78rem;
+    font-weight: 500;
+    color: #6c757d;
   }
 
   /* Estilos base */
@@ -86,7 +92,7 @@
     opacity: 1;
   }
 
-  /* Variante "SIN TOMO" */
+  /* Variante "SIN ESQUEMA" */
   .card-warning-soft {
     background: linear-gradient(180deg, #fff7e6 0%, #fff1cc 100%);
     border-color: rgba(255,193,7,.35);
@@ -136,58 +142,54 @@
 
   <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
 
-    <!-- Card para "SIN TOMO" -->
+    {% if sin_esquema_count > 0 %}
+    <!-- Card para "SIN ESQUEMA" -->
     <div class="col">
-      <form method="get" action="{% url 'document_list' %}">
-        <input type="hidden" name="tomo" value="SIN TOMO" />
-        {% if schema_id %}<input type="hidden" name="schema" value="{{ schema_id }}" />{% endif %}
-        <button type="submit" class="doc-card" aria-label="Filtrar por SIN TOMO">
-          <div class="card card-warning-soft shine">
+      <a href="{% url 'lista_tomo_schema' 0 %}" class="doc-card text-decoration-none" aria-label="Ver tomos sin esquema">
+        <div class="card card-warning-soft shine">
+          <div class="card-body">
+            <div class="inner">
+              <!-- SVG Carpeta con hoja -->
+              <svg class="doc-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M6 12a4 4 0 0 1 4-4h8l3 3h17a4 4 0 0 1 4 4v3H6v-6Z" fill="#d1a300"/>
+                <path d="M6 18h36v18a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4V18Z" fill="#ffd24d"/>
+                <path d="M30 24h6v10H22v-6h8v-4Z" fill="#a67c00"/>
+              </svg>
+              <div class="doc-label">SIN ESQUEMA</div>
+              <div class="doc-count">{{ sin_esquema_count }} documento{{ sin_esquema_count|pluralize:"s" }}</div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+
+    {% for esquema in esquemas %}
+      <div class="col">
+        <a href="{% url 'lista_tomo_schema' esquema.id %}" class="doc-card text-decoration-none" aria-label="Ver tomos de {{ esquema.name }}">
+          <div class="card card-neutral shine">
             <div class="card-body">
               <div class="inner">
-                <!-- SVG Carpeta con hoja -->
+                <!-- SVG Carpeta genérica -->
                 <svg class="doc-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <path d="M6 12a4 4 0 0 1 4-4h8l3 3h17a4 4 0 0 1 4 4v3H6v-6Z" fill="#d1a300"/>
-                  <path d="M6 18h36v18a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4V18Z" fill="#ffd24d"/>
-                  <path d="M30 24h6v10H22v-6h8v-4Z" fill="#a67c00"/>
+                  <path d="M6 14a4 4 0 0 1 4-4h9l3 3h16a4 4 0 0 1 4 4v17a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4V14Z" fill="#94a3b8"/>
+                  <path d="M6 18h36v3H6z" fill="#cbd5e1"/>
                 </svg>
-                <div class="doc-label">SIN TOMO</div>
+                <div class="doc-label" title="{{ esquema.name }}">{{ esquema.name }}</div>
+                <div class="doc-count">{{ esquema.doc_count }} documento{{ esquema.doc_count|pluralize:"s" }}</div>
               </div>
             </div>
           </div>
-        </button>
-      </form>
-    </div>
-
-    {% for tomo in tomos %}
-      {% if tomo != None %}
-        <div class="col">
-          <form method="get" action="{% url 'document_list' %}">
-            <input type="hidden" name="tomo" value="{{ tomo }}" />
-            {% if schema_id %}<input type="hidden" name="schema" value="{{ schema_id }}" />{% endif %}
-            <button type="submit" class="doc-card" aria-label="Filtrar por tomo {{ tomo }}">
-              <div class="card card-neutral shine">
-                <div class="card-body">
-                  <div class="inner">
-                    <!-- SVG Carpeta genérica -->
-                    <svg class="doc-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                      <path d="M6 14a4 4 0 0 1 4-4h9l3 3h16a4 4 0 0 1 4 4v17a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4V14Z" fill="#94a3b8"/>
-                      <path d="M6 18h36v3H6z" fill="#cbd5e1"/>
-                    </svg>
-                    <div class="doc-label" title="{{ tomo }}">{{ tomo }}</div>
-                  </div>
-                </div>
-              </div>
-            </button>
-          </form>
-        </div>
-      {% endif %}
+        </a>
+      </div>
     {% empty %}
+      {% if sin_esquema_count == 0 %}
       <div class="col-12">
         <div class="alert alert-info text-center empty-state">
-          No hay tomos disponibles.
+          No hay esquemas de metadatos con documentos asociados.
         </div>
       </div>
+      {% endif %}
     {% endfor %}
   </div>
 </div>
