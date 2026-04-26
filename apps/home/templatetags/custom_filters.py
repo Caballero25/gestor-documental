@@ -23,3 +23,9 @@ def filter_visible_by_perm(submodules, user):
             allowed_submodules.append(submodule)
             
     return allowed_submodules
+
+@register.filter
+def get_item(dictionary, key):
+    if isinstance(dictionary, dict):
+        return dictionary.get(key)
+    return None
