@@ -550,6 +550,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button type="submit" class="btn btn-primary mt-2" id="submitFormButton">
                     Actualizar metadatos del documento <i class="bi bi-file-earmark-arrow-up"></i>
                 </button>
+                <a href="{% url 'pdf_builder' document.id %}" class="btn btn-secondary mt-2 ms-2">
+                    Armar PDF <i class="bi bi-file-earmark-pdf"></i>
+                </a>
                 </form>
 
         </div>
