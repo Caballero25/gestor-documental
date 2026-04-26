@@ -1,109 +1,406 @@
 {% extends 'base/base_adminlte.html' %}
 
 {% block extra_head %}
+<style>
+    /* Visor a pantalla completa (menos el navbar y padding) */
+    .viewer-container {
+        height: calc(100vh - 180px);
+        min-height: 500px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        position: relative;
+        overflow: hidden; /* Oculta lo que sobresale del visor */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 
+    /* Estilos para el canvas interactivo */
+    .document-canvas {
+        transform-origin: center center;
+        cursor: grab;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    .document-canvas:active {
+        cursor: grabbing;
+    }
+
+    /* Barra de herramientas flotante con Glassmorphism */
+    .viewer-toolbar {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 2rem;
+        padding: 0.5rem 1rem;
+        display: flex;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+        transition: opacity 0.3s ease;
+    }
+    
+    .viewer-container:hover .viewer-toolbar {
+        opacity: 1;
+    }
+
+    .toolbar-btn {
+        background: transparent;
+        border: none;
+        color: #495057;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+    .toolbar-btn:hover {
+        background: rgba(0, 0, 0, 0.08);
+        color: #0d6efd;
+    }
+    .toolbar-divider {
+        width: 1px;
+        background: rgba(0,0,0,0.1);
+        margin: 0 4px;
+    }
+
+    /* Pestañas personalizadas */
+    .nav-tabs .nav-link {
+        color: #495057;
+        font-weight: 500;
+        border: none;
+        border-bottom: 2px solid transparent;
+        padding: 0.75rem 1.5rem;
+    }
+    .nav-tabs .nav-link:hover {
+        border-color: transparent;
+        color: #0d6efd;
+    }
+    .nav-tabs .nav-link.active {
+        color: #0d6efd;
+        background: transparent;
+        border-color: transparent;
+        border-bottom: 2px solid #0d6efd;
+    }
+
+    /* Ocultar scrollbars en el contenedor padre si es necesario */
+    .tab-content {
+        height: 100%;
+    }
+    .tab-pane {
+        height: 100%;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="container pb-2 text-center d-flex justify-content-between col-12">
-        <strong style="font-size: 1.5rem; color: #1E3A5F;"><i class="bi bi-folder-plus" style="color: #4caf50;"></i> {{ document.code_name|default:"Sin Código" }}</strong> <a href="{{ document.file.url }}" class="btn btn-primary" download>Descargar archivo</a>
-        {% if document.file.name|lower|slice:'-4:' == '.pdf' %}
-        <a target="_blank" href="{% url 'firmarElectronicamente' document.id %}" type="button" class="btn btn-outline-success">Firmar</a>
-        {% endif %}
+<div class="container-fluid px-4 py-3">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="mb-0" style="color: #1E3A5F; font-weight: 600;">
+                <i class="bi bi-folder2-open me-2" style="color: #4caf50;"></i>
+                {{ document.code_name|default:"Sin Código" }}
+            </h4>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ document.file.url }}" class="btn btn-primary shadow-sm" download>
+                <i class="bi bi-download me-1"></i> Descargar
+            </a>
+            {% if document.file.name|lower|slice:'-4:' == '.pdf' %}
+            <a target="_blank" href="{% url 'firmarElectronicamente' document.id %}" class="btn btn-outline-success shadow-sm">
+                <i class="bi bi-pen me-1"></i> Firmar
+            </a>
+            {% endif %}
+        </div>
     </div>
+
+    <!-- Alertas -->
     {% if file_error %} 
-    <div class="alert alert-danger" role="alert">
-        {{file_error}}
+    <div class="alert alert-danger shadow-sm border-0" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ file_error }}
     </div>
     {% endif %}
-    {% if document.file.name|lower|slice:'-4:' == '.pdf' %}
-        <!-- Visualización de PDF -->
-        <embed src="data:application/pdf;base64,{{ file_base64 }}" 
-        type="application/pdf" 
-        width="100%" 
-        height="700px">
-        
-    {% elif document.file.name|lower|slice:'-4:' in '.jpg,.jpeg,.png,.gif' %}
-        <!-- Controles de rotación -->
-        <div class="text-center mb-3">
-            <button class="btn btn-secondary me-2" onclick="rotateImage(-90)">
-                <i class="bi bi-arrow-counterclockwise"></i> Rotar Izquierda
-            </button>
-            <button class="btn btn-secondary" onclick="rotateImage(90)">
-                <i class="bi bi-arrow-clockwise"></i> Rotar Derecha
-            </button>
-        </div>
-
-        <!-- Visualización de imagen rotada -->
-        <div id="image-container" class="text-center">
-            <img 
-                id="rotatable-image"
-                src="data:{{ mime_type }};base64,{{ file_base64 }}" 
-                alt="{{ document.code_name }}" 
-                class="img-fluid rounded"
-                style="max-width: 100%; height: auto; transform: rotate(270deg); transition: transform 0.3s ease;"
-            >
-        </div>
-
-        <!-- Script para manejar la rotación -->
-        <script>
-            let currentRotation = 90;
-            function rotateImage(degrees) {
-                currentRotation = (currentRotation + degrees) % 360;
-                document.getElementById("rotatable-image").style.transform = `rotate(${currentRotation}deg)`;
-            }
-        </script>
-
-    {% elif document.file.name|lower|slice:'-4:' in '.mp4,.ogg' %}
-        <!-- Visualización de video -->
-        <video width="100%" controls>
-            <source src="data:video/{{ document.file.name|lower|slice:'-3:' }};base64,{{ file_base64 }}" type="video/{{ document.file.name|lower|slice:'-3:' }}">
-            Tu navegador no soporta el elemento de video.
-        </video>
-    {% elif document.file.name|lower|slice:'-4:' in '.webm' %}
-        <!-- Visualización de video -->
-        <video width="100%" controls>
-            <source src="data:video/{{ document.file.name|lower|slice:'-4:' }};base64,{{ file_base64 }}" type="video/{{ document.file.name|lower|slice:'-4:' }}">
-            Tu navegador no soporta el elemento de video.
-        </video>
-    {% else %}
-        <!-- Descarga para otros formatos -->
-        <p>Este tipo de archivo no puede ser visualizado directamente.</p>
-        
-    {% endif %}
-    {% if document.file2.name|lower|slice:'-4:' in '.jpg,.jpeg,.png,.gif' %}
-    <div class="" style="height: 20px;"></div>
-        <!-- Controles de rotación -->
-        <div class="text-center mb-3">
-            <button class="btn btn-secondary me-2" onclick="rotateImage2(-90)">
-                <i class="bi bi-arrow-counterclockwise"></i> Rotar Izquierda
-            </button>
-            <button class="btn btn-secondary" onclick="rotateImage2(90)">
-                <i class="bi bi-arrow-clockwise"></i> Rotar Derecha
-            </button>
-        </div>
-
-        <!-- Visualización de imagen rotada -->
-        <div id="image-container" class="text-center mt-2">
-            <img 
-                id="rotatable-image2"
-                src="data:{{ mime_type }};base64,{{ file2_base64 }}" 
-                alt="{{ document.code_name }}" 
-                class="img-fluid rounded"
-                style="max-width: 100%; height: auto; transform: rotate(270deg); transition: transform 0.3s ease;"
-            >
-        </div>
-
-        <!-- Script para manejar la rotación -->
-        <script>
-            let currentRotation2 = 90;
-            function rotateImage2(degrees2) {
-                currentRotation2 = (currentRotation2 + degrees2) % 360;
-                document.getElementById("rotatable-image2").style.transform = `rotate(${currentRotation2}deg)`;
-            }
-        </script>
+    {% if file2_error %} 
+    <div class="alert alert-danger shadow-sm border-0" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ file2_error }}
+    </div>
     {% endif %}
 
+    <!-- Contenido Principal -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <!-- Pestañas (solo si hay 2 archivos) -->
+            {% if document.file2 %}
+            <ul class="nav nav-tabs px-3 pt-2 bg-light border-bottom-0" id="documentTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="doc1-tab" data-bs-toggle="tab" data-bs-target="#doc1-pane" type="button" role="tab" aria-controls="doc1-pane" aria-selected="true">
+                        <i class="bi bi-file-earmark-image me-1"></i> Documento 1
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="doc2-tab" data-bs-toggle="tab" data-bs-target="#doc2-pane" type="button" role="tab" aria-controls="doc2-pane" aria-selected="false">
+                        <i class="bi bi-file-earmark-image me-1"></i> Documento 2
+                    </button>
+                </li>
+            </ul>
+            {% endif %}
+
+            <div class="tab-content" id="documentTabsContent">
+                <!-- PANEL 1 -->
+                <div class="tab-pane fade show active" id="doc1-pane" role="tabpanel" aria-labelledby="doc1-tab" tabindex="0">
+                    <div class="viewer-container" id="viewer-container-1">
+                        {% if document.file.name|lower|slice:'-4:' == '.pdf' %}
+                            <embed src="data:application/pdf;base64,{{ file_base64 }}" type="application/pdf" width="100%" height="100%">
+                        
+                        {% elif document.file.name|lower|slice:'-4:' in '.jpg,.jpeg,.png,.gif' %}
+                            <canvas id="canvas-1" class="document-canvas"></canvas>
+                            <div class="viewer-toolbar">
+                                <button class="toolbar-btn" onclick="zoomIn(1)" title="Acercar"><i class="bi bi-zoom-in"></i></button>
+                                <button class="toolbar-btn" onclick="zoomOut(1)" title="Alejar"><i class="bi bi-zoom-out"></i></button>
+                                <button class="toolbar-btn" onclick="resetZoom(1)" title="Ajustar a pantalla"><i class="bi bi-aspect-ratio"></i></button>
+                                <div class="toolbar-divider"></div>
+                                <button class="toolbar-btn" onclick="rotateCanvas(1, -90)" title="Rotar Izquierda"><i class="bi bi-arrow-counterclockwise"></i></button>
+                                <button class="toolbar-btn" onclick="rotateCanvas(1, 90)" title="Rotar Derecha"><i class="bi bi-arrow-clockwise"></i></button>
+                            </div>
+                        
+                        {% elif document.file.name|lower|slice:'-4:' in '.mp4,.ogg,.webm' %}
+                            <video width="100%" height="100%" controls style="background: black;">
+                                <source src="data:video/{{ document.file.name|lower|slice:'-4:'|slice:'1:' }};base64,{{ file_base64 }}">
+                                Tu navegador no soporta el elemento de video.
+                            </video>
+                        {% else %}
+                            <div class="text-center text-muted">
+                                <i class="bi bi-file-earmark-x display-1"></i>
+                                <p class="mt-3">Este tipo de archivo no puede ser visualizado directamente.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- PANEL 2 -->
+                {% if document.file2 %}
+                <div class="tab-pane fade" id="doc2-pane" role="tabpanel" aria-labelledby="doc2-tab" tabindex="0">
+                    <div class="viewer-container" id="viewer-container-2">
+                        {% if document.file2.name|lower|slice:'-4:' == '.pdf' %}
+                            <embed src="data:application/pdf;base64,{{ file2_base64 }}" type="application/pdf" width="100%" height="100%">
+                        
+                        {% elif document.file2.name|lower|slice:'-4:' in '.jpg,.jpeg,.png,.gif' %}
+                            <canvas id="canvas-2" class="document-canvas"></canvas>
+                            <div class="viewer-toolbar">
+                                <button class="toolbar-btn" onclick="zoomIn(2)" title="Acercar"><i class="bi bi-zoom-in"></i></button>
+                                <button class="toolbar-btn" onclick="zoomOut(2)" title="Alejar"><i class="bi bi-zoom-out"></i></button>
+                                <button class="toolbar-btn" onclick="resetZoom(2)" title="Ajustar a pantalla"><i class="bi bi-aspect-ratio"></i></button>
+                                <div class="toolbar-divider"></div>
+                                <button class="toolbar-btn" onclick="rotateCanvas(2, -90)" title="Rotar Izquierda"><i class="bi bi-arrow-counterclockwise"></i></button>
+                                <button class="toolbar-btn" onclick="rotateCanvas(2, 90)" title="Rotar Derecha"><i class="bi bi-arrow-clockwise"></i></button>
+                            </div>
+                        
+                        {% elif document.file2.name|lower|slice:'-4:' in '.mp4,.ogg,.webm' %}
+                            <video width="100%" height="100%" controls style="background: black;">
+                                <source src="data:video/{{ document.file2.name|lower|slice:'-4:'|slice:'1:' }};base64,{{ file2_base64 }}">
+                                Tu navegador no soporta el elemento de video.
+                            </video>
+                        {% else %}
+                            <div class="text-center text-muted">
+                                <i class="bi bi-file-earmark-x display-1"></i>
+                                <p class="mt-3">Este tipo de archivo no puede ser visualizado directamente.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+// Manejo del estado del visor por cada ID (1 y 2)
+const viewers = {};
+
+// Configuración inicial de visores
+function initViewer(id, base64Data, mimeType) {
+    if (!base64Data) return;
+    
+    const canvas = document.getElementById(`canvas-${id}`);
+    const container = document.getElementById(`viewer-container-${id}`);
+    if (!canvas || !container) return;
+
+    viewers[id] = {
+        canvas: canvas,
+        container: container,
+        ctx: canvas.getContext('2d'),
+        img: new Image(),
+        rotation: 0,
+        scale: 1,
+        isDragging: false,
+        startX: 0,
+        startY: 0,
+        translateX: 0,
+        translateY: 0,
+        minScale: 0.1,
+        maxScale: 5
+    };
+
+    const v = viewers[id];
+
+    v.img.onload = () => {
+        // Redimensionar canvas basado en la orientación
+        updateCanvasDimensions(id);
+        draw(id);
+        
+        // Ajustar zoom inicial para que encaje
+        resetZoom(id);
+    };
+    
+    v.img.src = `data:${mimeType};base64,${base64Data}`;
+
+    // Eventos de ratón para drag & drop (paneo)
+    canvas.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return; // Solo clic izquierdo
+        v.isDragging = true;
+        v.startX = e.clientX - v.translateX;
+        v.startY = e.clientY - v.translateY;
+    });
+
+    window.addEventListener('mouseup', () => {
+        v.isDragging = false;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!v.isDragging) return;
+        v.translateX = e.clientX - v.startX;
+        v.translateY = e.clientY - v.startY;
+        applyTransform(id);
+    });
+
+    // Evento de scroll (rueda del ratón) para zoom
+    container.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = Math.sign(e.deltaY) * -0.1;
+        const newScale = Math.min(Math.max(v.minScale, v.scale + delta), v.maxScale);
+        
+        // Zoom hacia el centro
+        v.scale = newScale;
+        applyTransform(id);
+    }, { passive: false });
+}
+
+// Función para actualizar las dimensiones del canvas al rotar
+function updateCanvasDimensions(id) {
+    const v = viewers[id];
+    // Normalizar a 0, 90, 180, 270
+    const rot = ((v.rotation % 360) + 360) % 360;
+    
+    if (rot === 90 || rot === 270) {
+        v.canvas.width = v.img.height;
+        v.canvas.height = v.img.width;
+    } else {
+        v.canvas.width = v.img.width;
+        v.canvas.height = v.img.height;
+    }
+    
+    // Forzar redimensionamiento del canvas en el contenedor
+    v.canvas.style.maxWidth = '100%';
+    v.canvas.style.maxHeight = '100%';
+}
+
+// Función principal de dibujo (rotación)
+function draw(id) {
+    const v = viewers[id];
+    v.ctx.clearRect(0, 0, v.canvas.width, v.canvas.height);
+    
+    v.ctx.save();
+    
+    // Mover el origen al centro del canvas
+    v.ctx.translate(v.canvas.width / 2, v.canvas.height / 2);
+    
+    // Rotar
+    v.ctx.rotate(v.rotation * Math.PI / 180);
+    
+    // Dibujar la imagen centrada
+    v.ctx.drawImage(v.img, -v.img.width / 2, -v.img.height / 2);
+    
+    v.ctx.restore();
+}
+
+// Aplicar transformaciones CSS para Zoom y Paneo
+function applyTransform(id) {
+    const v = viewers[id];
+    v.canvas.style.transform = `translate(${v.translateX}px, ${v.translateY}px) scale(${v.scale})`;
+}
+
+// Controles externos
+function rotateCanvas(id, degrees) {
+    const v = viewers[id];
+    if (!v) return;
+    
+    v.rotation += degrees;
+    updateCanvasDimensions(id);
+    draw(id);
+    
+    // Al rotar, reiniciamos el paneo para que no se pierda la imagen
+    v.translateX = 0;
+    v.translateY = 0;
+    applyTransform(id);
+}
+
+function zoomIn(id) {
+    const v = viewers[id];
+    if (!v) return;
+    v.scale = Math.min(v.scale + 0.2, v.maxScale);
+    applyTransform(id);
+}
+
+function zoomOut(id) {
+    const v = viewers[id];
+    if (!v) return;
+    v.scale = Math.max(v.scale - 0.2, v.minScale);
+    applyTransform(id);
+}
+
+function resetZoom(id) {
+    const v = viewers[id];
+    if (!v) return;
+    
+    // Resetear transformaciones
+    v.scale = 1;
+    v.translateX = 0;
+    v.translateY = 0;
+    applyTransform(id);
+}
+
+// Inicializar visores cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    {% if file_base64 and document.file.name|lower|slice:'-4:' in '.jpg,.jpeg,.png,.gif' %}
+    initViewer(1, "{{ file_base64|escapejs }}", "{{ mime_type|escapejs }}");
+    {% endif %}
+
+    {% if file2_base64 and document.file2.name|lower|slice:'-4:' in '.jpg,.jpeg,.png,.gif' %}
+    initViewer(2, "{{ file2_base64|escapejs }}", "{{ mime_type2|escapejs }}");
+    
+    // Solución para pestañas de Bootstrap: El canvas necesita redibujarse 
+    // cuando la pestaña se hace visible para ajustar sus dimensiones reales
+    const doc2Tab = document.getElementById('doc2-tab');
+    if (doc2Tab) {
+        doc2Tab.addEventListener('shown.bs.tab', () => {
+            // Un pequeño timeout permite que el layout de la pestaña se asiente
+            setTimeout(() => {
+                resetZoom(2);
+            }, 50);
+        });
+    }
+    {% endif %}
+});
+</script>
 {% endblock %}

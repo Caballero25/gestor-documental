@@ -40,8 +40,8 @@ class DocumentView(DetailView):
                     
                     # Incluir tipo MIME si es necesario
                     import mimetypes
-                    mime_type, _ = mimetypes.guess_type(document.file2.name)
-                    context['mime_type'] = mime_type
+                    mime_type2, _ = mimetypes.guess_type(document.file2.name)
+                    context['mime_type2'] = mime_type2
             except Exception as e:
                 context['file2_error'] = str(e)
         
