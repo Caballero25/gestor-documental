@@ -155,6 +155,9 @@
                     <button id="align-left-btn" class="btn btn-sm btn-outline-secondary me-1" title="Alinear Izquierda"><i class="bi bi-text-left"></i></button>
                     <button id="align-center-btn" class="btn btn-sm btn-outline-secondary me-1" title="Centrar"><i class="bi bi-text-center"></i></button>
                     <button id="align-right-btn" class="btn btn-sm btn-outline-secondary" title="Alinear Derecha"><i class="bi bi-text-right"></i></button>
+                    
+                    <label class="ms-3 me-1 small text-muted mb-0" style="white-space:nowrap;">Espaciado:</label>
+                    <input type="number" id="char-spacing-input" class="form-control form-control-sm" style="width: 75px;" title="Espaciado entre letras" value="0" step="10">
                 </div>
                 <canvas id="pdf-canvas" width="800" height="1131"></canvas>
             </div>
@@ -287,6 +290,7 @@
                 
                 fontFamilySelect.value = obj.fontFamily || 'Calibri';
                 fontSizeInput.value = obj.fontSize || 12;
+                document.getElementById('char-spacing-input').value = obj.charSpacing || 0;
                 
                 if (obj.fontWeight === 'bold') boldBtn.classList.add('active');
                 else boldBtn.classList.remove('active');
@@ -316,6 +320,15 @@
             const obj = canvas.getActiveObject();
             const val = parseInt(this.value);
             if (obj && !isNaN(val) && val > 0) { obj.set('fontSize', val); canvas.renderAll(); }
+        });
+
+        document.getElementById('char-spacing-input').addEventListener('input', function() {
+            const obj = canvas.getActiveObject();
+            const val = parseInt(this.value);
+            if (obj && !isNaN(val)) {
+                obj.set('charSpacing', val);
+                canvas.renderAll();
+            }
         });
 
         boldBtn.addEventListener('click', function() {
@@ -661,7 +674,8 @@ function addImage(imageField, fieldName) {
                                 fontStyle: element.font_style || 'normal',
                                 textAlign: element.text_align || 'left',
                                 fill: 'black',
-                                width: element.width // Usamos el ancho guardado
+                                width: element.width, // Usamos el ancho guardado
+                                charSpacing: element.char_spacing || 0
                             });
                             
                             pages[pageNum].push({ type: element.type, object: textObj });
@@ -807,22 +821,22 @@ function addImage(imageField, fieldName) {
                     
                     // Para imágenes
                     if (element.type === 'image') {
-                        const bounds = obj.getBoundingRect();
+                        const pos = obj.getPointByOrigin('left', 'top');
                         
-                        elementConfig.x = bounds.left || 0;
-                        elementConfig.y = bounds.top || 0;
+                        elementConfig.x = pos.x;
+                        elementConfig.y = pos.y;
                         elementConfig.image_field = element.image_field;
-                        elementConfig.width = bounds.width || 100;
-                        elementConfig.height = bounds.height || 100;
+                        elementConfig.width = obj.getScaledWidth();
+                        elementConfig.height = obj.getScaledHeight();
                     }
                     
                     // Para texto
                     if (element.type === 'text' || element.type === 'dynamic_text') {
-                        const bounds = obj.getBoundingRect();
+                        const pos = obj.getPointByOrigin('left', 'top');
 
-                        elementConfig.x = bounds.left || 0;
-                        elementConfig.y = bounds.top || 0;
-                        elementConfig.width = bounds.width || 0;
+                        elementConfig.x = pos.x;
+                        elementConfig.y = pos.y;
+                        elementConfig.width = obj.getScaledWidth();
 
                         elementConfig.lines = obj.textLines || (obj.text ? [obj.text] : []);
                         
@@ -831,6 +845,7 @@ function addImage(imageField, fieldName) {
                         elementConfig.font_weight = obj.fontWeight || 'normal';
                         elementConfig.font_style = obj.fontStyle || 'normal';
                         elementConfig.text_align = obj.textAlign || 'left';
+                        elementConfig.char_spacing = obj.charSpacing || 0;
                     }
                     
                     console.log(`Elemento ${element.type}:`, elementConfig);

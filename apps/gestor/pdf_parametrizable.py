@@ -265,6 +265,13 @@ class DynamicPDFGenerator:
             if is_italic: return 'Courier-Oblique'
             
         return base_font
+    def _get_text_width(self, text, font_name, font_size, char_space_pts):
+        """Calcula el ancho del texto incluyendo el espaciado entre caracteres"""
+        base_width = pdfmetrics.stringWidth(text, font_name, font_size)
+        # Sumar el espaciado extra por cada carácter excepto el último
+        extra = char_space_pts * max(0, len(text) - 1)
+        return base_width + extra
+
     def _add_text_element(self, element):
         """Agrega texto estático al PDF"""
         try:
@@ -275,6 +282,7 @@ class DynamicPDFGenerator:
             font_size = element.get('font_size', 12) * self.scale_y
             font_family_input = element.get('font_family', 'Calibri')
             text_align = element.get('text_align', 'left')
+            char_spacing = element.get('char_spacing', 0)
 
             font_weight = element.get('font_weight', 'normal')
             font_style = element.get('font_style', 'normal')
@@ -284,20 +292,35 @@ class DynamicPDFGenerator:
             y = self.pdf_height - y_fabric - font_size
             
             font_family = self._get_reportlab_font(font_family_input, is_bold, is_italic)
-            self.c.setFont(font_family, font_size)
 
             leading = font_size * 1.2 
+            
+            char_space_pts = (char_spacing / 1000.0) * font_size
 
             for i, line in enumerate(lines):
                 line_y = y - (i * leading)
                 if line_y < 0:  # Si se sale de la página
                     break
+                
+                text_obj = self.c.beginText()
+                text_obj.setFont(font_family, font_size)
+                text_obj.setCharSpace(char_space_pts)
+                
                 if text_align == 'center':
-                    self.c.drawCentredString(x + (element.get('width', 0) * self.scale_x / 2), line_y, line)
+                    text_obj.setTextOrigin(
+                        x + (element.get('width', 0) * self.scale_x / 2) - self._get_text_width(line, font_family, font_size, char_space_pts) / 2,
+                        line_y
+                    )
                 elif text_align == 'right':
-                    self.c.drawRightString(x + (element.get('width', 0) * self.scale_x), line_y, line)
+                    text_obj.setTextOrigin(
+                        x + (element.get('width', 0) * self.scale_x) - self._get_text_width(line, font_family, font_size, char_space_pts),
+                        line_y
+                    )
                 else:
-                    self.c.drawString(x, line_y, line)
+                    text_obj.setTextOrigin(x, line_y)
+                
+                text_obj.textLine(line)
+                self.c.drawText(text_obj)
             
         except Exception as e:
             print(f"Error agregando texto: {e}")
@@ -312,6 +335,7 @@ class DynamicPDFGenerator:
             font_size = element.get('font_size', 12) * self.scale_y
             font_family_input = element.get('font_family', 'Calibri')
             text_align = element.get('text_align', 'left')
+            char_spacing = element.get('char_spacing', 0)
             
             font_weight = element.get('font_weight', 'normal')
             font_style = element.get('font_style', 'normal')
@@ -327,18 +351,32 @@ class DynamicPDFGenerator:
             # Obtener fuente compatible
             font_family = self._get_reportlab_font(font_family_input, is_bold, is_italic)
             
-            self.c.setFont(font_family, font_size)
+            char_space_pts = (char_spacing / 1000.0) * font_size
 
             for i, line in enumerate(lines):
                 line_y = y - (i * leading)
                 if line_y < 0: 
                     break
+                
+                text_obj = self.c.beginText()
+                text_obj.setFont(font_family, font_size)
+                text_obj.setCharSpace(char_space_pts)
+                
                 if text_align == 'center':
-                    self.c.drawCentredString(x + (element.get('width', 0) * self.scale_x / 2), line_y, line)
+                    text_obj.setTextOrigin(
+                        x + (element.get('width', 0) * self.scale_x / 2) - self._get_text_width(line, font_family, font_size, char_space_pts) / 2,
+                        line_y
+                    )
                 elif text_align == 'right':
-                    self.c.drawRightString(x + (element.get('width', 0) * self.scale_x), line_y, line)
+                    text_obj.setTextOrigin(
+                        x + (element.get('width', 0) * self.scale_x) - self._get_text_width(line, font_family, font_size, char_space_pts),
+                        line_y
+                    )
                 else:
-                    self.c.drawString(x, line_y, line)
+                    text_obj.setTextOrigin(x, line_y)
+                
+                text_obj.textLine(line)
+                self.c.drawText(text_obj)
                 
         except Exception as e:
             print(f"Error agregando texto dinámico: {e}")
