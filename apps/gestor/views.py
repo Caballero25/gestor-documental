@@ -289,15 +289,16 @@ class DocumentListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 
         # Luego aplicar la búsqueda general sobre los resultados filtrados
         if query:
-            filters = (
-                Q(code_name__icontains=query) |
-                Q(file__icontains=query) |
-                Q(metadata_values__icontains=query) |
-                Q(metadata_schema__name__icontains=query)
-            )
-            if query.isdigit():
-                filters |= Q(id=int(query))
-            queryset = queryset.filter(filters)
+            for term in query.split():
+                filters = (
+                    Q(code_name__icontains=term) |
+                    Q(file__icontains=term) |
+                    Q(metadata_values__icontains=term) |
+                    Q(metadata_schema__name__icontains=term)
+                )
+                if term.isdigit():
+                    filters |= Q(id=int(term))
+                queryset = queryset.filter(filters)
 
         return queryset.order_by('-id')
 
@@ -357,15 +358,16 @@ def lista_tomos(request, schema_id=None):
     query = request.GET.get('q', '')
 
     if query:
-        filters = (
-            Q(code_name__icontains=query) |
-            Q(file__icontains=query) |
-            Q(metadata_values__icontains=query) |
-            Q(metadata_schema__name__icontains=query)
-        )
-        if query.isdigit():
-            filters |= Q(id=int(query))
-        queryset = queryset.filter(filters)
+        for term in query.split():
+            filters = (
+                Q(code_name__icontains=term) |
+                Q(file__icontains=term) |
+                Q(metadata_values__icontains=term) |
+                Q(metadata_schema__name__icontains=term)
+            )
+            if term.isdigit():
+                filters |= Q(id=int(term))
+            queryset = queryset.filter(filters)
 
     tomos = queryset \
         .annotate(tomo=KeyTextTransform('TOMO', 'metadata_values')) \
