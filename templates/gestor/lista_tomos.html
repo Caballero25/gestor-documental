@@ -153,6 +153,7 @@
       <form method="get" action="{% url 'document_list' %}">
         <input type="hidden" name="tomo" value="SIN TOMO" />
         {% if schema_id %}<input type="hidden" name="schema" value="{{ schema_id }}" />{% endif %}
+        {% if query %}<input type="hidden" name="q" value="{{ query }}" />{% endif %}
         <button type="submit" class="doc-card" aria-label="Filtrar por SIN TOMO">
           <div class="card card-warning-soft shine">
             <div class="card-body">
@@ -178,6 +179,7 @@
           <form method="get" action="{% url 'document_list' %}">
             <input type="hidden" name="tomo" value="{{ tomo }}" />
             {% if schema_id %}<input type="hidden" name="schema" value="{{ schema_id }}" />{% endif %}
+            {% if query %}<input type="hidden" name="q" value="{{ query }}" />{% endif %}
             <button type="submit" class="doc-card" aria-label="Filtrar por tomo {{ tomo }}">
               <div class="card card-neutral shine">
                 <div class="card-body">
