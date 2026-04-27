@@ -354,15 +354,36 @@ def lista_tomos(request, schema_id=None):
             schema_name = schema.name
             queryset = queryset.filter(metadata_schema=schema)
 
+    query = request.GET.get('q', '')
+
+    if query:
+        filters = (
+            Q(code_name__icontains=query) |
+            Q(file__icontains=query) |
+            Q(metadata_values__icontains=query) |
+            Q(metadata_schema__name__icontains=query)
+        )
+        if query.isdigit():
+            filters |= Q(id=int(query))
+        queryset = queryset.filter(filters)
+
     tomos = queryset \
         .annotate(tomo=KeyTextTransform('TOMO', 'metadata_values')) \
         .values_list('tomo', flat=True) \
         .distinct()
+        
+    mostrar_sin_tomo = True
+    if query:
+        tomo_key = KeyTextTransform('TOMO', 'metadata_values')
+        qs_sin_tomo = queryset.annotate(tomo=tomo_key).filter(Q(tomo__isnull=True) | Q(tomo__exact=''))
+        mostrar_sin_tomo = qs_sin_tomo.exists()
 
     context = {
         'title': f'Tomos — {schema_name}',
         'tomos': tomos,
         'schema_id': schema_id,
+        'query': query,
+        'mostrar_sin_tomo': mostrar_sin_tomo,
         'breadcrumb_previous': "Esquemas",
         'breadcrumb_previous_link': "lista_esquemas",
     }

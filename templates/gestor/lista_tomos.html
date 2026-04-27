@@ -134,9 +134,21 @@
 <div class="container">
   <h1 class="mb-4 tomo-title">{{ title }}</h1>
 
+  <form method="GET" class="mb-4">
+      <div class="col-sm-8 col-md-8 col-lg-4" style="display: flex;">
+          <input type="text" name="q" value="{{ query }}" class="form-control"
+                 placeholder="Buscar por Nombre - Código - Metadato"
+                 aria-label="Búsqueda">
+          <div class="input-group-append">
+              <button type="submit" class="btn btn-outline-primary">Buscar</button>
+          </div>
+      </div>
+  </form>
+
   <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
 
     <!-- Card para "SIN TOMO" -->
+    {% if mostrar_sin_tomo %}
     <div class="col">
       <form method="get" action="{% url 'document_list' %}">
         <input type="hidden" name="tomo" value="SIN TOMO" />
@@ -158,6 +170,7 @@
         </button>
       </form>
     </div>
+    {% endif %}
 
     {% for tomo in tomos %}
       {% if tomo != None %}
@@ -184,9 +197,15 @@
       {% endif %}
     {% empty %}
       <div class="col-12">
+        {% if query %}
+        <div class="alert alert-warning text-center empty-state">
+          No se encontraron tomos que coincidan con la búsqueda: <strong>{{ query }}</strong>
+        </div>
+        {% else %}
         <div class="alert alert-info text-center empty-state">
           No hay tomos disponibles.
         </div>
+        {% endif %}
       </div>
     {% endfor %}
   </div>
