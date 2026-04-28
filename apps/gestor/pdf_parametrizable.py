@@ -64,7 +64,11 @@ class DynamicPDFGenerator:
         ttf_fonts = [
             ('Carlito', 'Carlito-Regular.ttf', 'Carlito-Bold.ttf', 'Carlito-Italic.ttf', 'Carlito-BoldItalic.ttf'),
             ('Tinos', 'Tinos-Regular.ttf', 'Tinos-Bold.ttf', 'Tinos-Italic.ttf', 'Tinos-BoldItalic.ttf'),
-            ('Cousine', 'Cousine-Regular.ttf', 'Cousine-Bold.ttf', 'Cousine-Italic.ttf', 'Cousine-BoldItalic.ttf')
+            ('Cousine', 'Cousine-Regular.ttf', 'Cousine-Bold.ttf', 'Cousine-Italic.ttf', 'Cousine-BoldItalic.ttf'),
+            ('Roboto', 'Roboto-Regular.ttf', 'Roboto-Bold.ttf', 'Roboto-Italic.ttf', 'Roboto-BoldItalic.ttf'),
+            ('Lato', 'Lato-Regular.ttf', 'Lato-Bold.ttf', 'Lato-Italic.ttf', 'Lato-BoldItalic.ttf'),
+            ('NotoSans', 'NotoSans-Regular.ttf', 'NotoSans-Bold.ttf', 'NotoSans-Italic.ttf', 'NotoSans-BoldItalic.ttf'),
+            ('OpenSans', 'OpenSans-Regular.ttf', 'OpenSans-Bold.ttf', 'OpenSans-Italic.ttf', 'OpenSans-BoldItalic.ttf'),
         ]
         
         for family, reg, bold, italic, bold_italic in ttf_fonts:
@@ -90,6 +94,10 @@ class DynamicPDFGenerator:
             'Courier New': 'Cousine',
             'Verdana': 'Helvetica',
             'Georgia': 'Times-Roman',
+            'Roboto': 'Roboto',
+            'Lato': 'Lato',
+            'Noto Sans': 'NotoSans',
+            'Open Sans': 'OpenSans',
         }
     
     def generate_pdf(self):
@@ -235,7 +243,7 @@ class DynamicPDFGenerator:
             base_font = self.font_mapping[font_name]
             
         # 2. Si es una fuente TTF con familia registrada (las que no tienen el guión en su nombre base)
-        if base_font in ['Carlito', 'Tinos', 'Cousine']:
+        if base_font in ['Carlito', 'Tinos', 'Cousine', 'Roboto', 'Lato', 'NotoSans', 'OpenSans']:
             suffix = ""
             if is_bold and is_italic:
                 suffix = "-BoldItalic"
