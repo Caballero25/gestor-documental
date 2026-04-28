@@ -654,6 +654,10 @@ function addImage(imageField, fieldName) {
                             left: element.x,
                             top: element.y,
                             angle: element.rotation || 0,
+                            originX: element.origin || 'left',
+                            originY: element.origin || 'top',
+                            flipX: element.flip_x || false,
+                            flipY: element.flip_y || false,
                             // Opciones comunes de control
                             padding: 10,
                             cornerSize: 6,
@@ -845,13 +849,21 @@ function addImage(imageField, fieldName) {
                     
                     // Para imágenes
                     if (element.type === 'image') {
-                        const pos = obj.getPointByOrigin('left', 'top');
+                        // Usar el centro para rotación correcta en backend
+                        const center = obj.getPointByOrigin('center', 'center');
                         
-                        elementConfig.x = pos.x;
-                        elementConfig.y = pos.y;
+                        elementConfig.x = center.x;
+                        elementConfig.y = center.y;
+                        elementConfig.origin = 'center';
                         elementConfig.image_field = element.image_field;
-                        elementConfig.width = obj.getScaledWidth();
-                        elementConfig.height = obj.getScaledHeight();
+                        
+                        // Dimensiones puras del objeto, independientemente de su rotación
+                        elementConfig.width = Math.abs(obj.width * obj.scaleX);
+                        elementConfig.height = Math.abs(obj.height * obj.scaleY);
+                        
+                        // Flip state
+                        elementConfig.flip_x = obj.flipX || obj.scaleX < 0;
+                        elementConfig.flip_y = obj.flipY || obj.scaleY < 0;
                     }
                     
                     // Para texto

@@ -173,58 +173,73 @@ class DynamicPDFGenerator:
                 print(f"Archivo de imagen no encontrado: {image_field}")
                 return
                 
-            # --- MODIFICADO: Aplicar escalas (como antes) ---
-            x = element.get('x', 0) * self.scale_x
-            y_fabric = element.get('y', 0) * self.scale_y
-            width = element.get('width', 100) * self.scale_x
-            height = element.get('height', 100) * self.scale_y
+            x_fabric = element.get('x', 0)
+            y_fabric = element.get('y', 0)
+            width_fabric = element.get('width', 100)
+            height_fabric = element.get('height', 100)
             rotation = element.get('rotation', 0)
+            origin = element.get('origin', 'top-left')
+            flip_x = element.get('flip_x', False)
+            flip_y = element.get('flip_y', False)
             
-            y = self.pdf_height - y_fabric - height
+            # Dimensiones finales en el PDF
+            width = width_fabric * self.scale_x
+            height = height_fabric * self.scale_y
+            
+            # Calcular el centro de la imagen en coordenadas del PDF (origen inferior izquierdo)
+            if origin == 'center':
+                x_center = x_fabric * self.scale_x
+                y_center = self.pdf_height - (y_fabric * self.scale_y)
+            else:
+                x_center = (x_fabric * self.scale_x) + (width / 2)
+                y_center = self.pdf_height - (y_fabric * self.scale_y) - (height / 2)
             
             with image_file.open('rb') as f:
-                
-                temp_file_path = None # Definir la variable fuera del with
-                
-                # --- INICIO DE CORRECCIÓN: Manejo de archivo temporal ---
-                # Crear archivo temporal
+                temp_file_path = None
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_file:
                     temp_file.write(f.read())
                     temp_file.flush()
-                    # Guardamos la ruta
                     temp_file_path = temp_file.name
-                    # Cerramos el archivo para que PIL pueda acceder a él
                     temp_file.close()
-                # --- FIN DE CORRECCIÓN ---
                     
-                if temp_file_path: # Asegurarse de que la ruta se obtuvo
+                if temp_file_path:
                     try:
-                        # Usar PIL para procesar la imagen desde la ruta (el archivo ya está cerrado)
                         pil_image = Image.open(temp_file_path)
                         
-                        # Rotar si es necesario
-                        if rotation:
-                            pil_image = pil_image.rotate(-rotation, expand=True, resample=Image.BICUBIC)
-                        
-                        # Convertir a RGB (esta sigue siendo una buena práctica)
                         if pil_image.mode != 'RGB':
                             pil_image = pil_image.convert('RGB')
                         
-                        # Guardar imagen procesada
                         img_buffer = io.BytesIO()
                         pil_image.save(img_buffer, format='JPEG', quality=85)
                         img_buffer.seek(0)
                         
-                        # Dibujar imagen en el PDF
-                        self.c.drawImage(ImageReader(img_buffer), x, y, width, height)
+                        # Usar transformaciones matriciales de ReportLab en lugar de PIL
+                        self.c.saveState()
+                        self.c.translate(x_center, y_center)
+                        self.c.rotate(-rotation) # Fabric (+) horario, ReportLab (+) antihorario
+                        
+                        scale_x = -1 if flip_x else 1
+                        scale_y = -1 if flip_y else 1
+                        if flip_x or flip_y:
+                            self.c.scale(scale_x, scale_y)
+                            
+                        # Dibujar imagen centrada en el origen actual (0,0)
+                        self.c.drawImage(ImageReader(img_buffer), -width/2, -height/2, width, height)
+                        self.c.restoreState()
                         
                     except Exception as img_error:
                         print(f"Error procesando imagen: {img_error}")
-                        # Intentar cargar la imagen directamente
-                        self.c.drawImage(temp_file_path, x, y, width, height)
+                        self.c.saveState()
+                        self.c.translate(x_center, y_center)
+                        self.c.rotate(-rotation)
+                        scale_x = -1 if flip_x else 1
+                        scale_y = -1 if flip_y else 1
+                        if flip_x or flip_y:
+                            self.c.scale(scale_x, scale_y)
+                        self.c.drawImage(temp_file_path, -width/2, -height/2, width, height)
+                        self.c.restoreState()
                     
                     finally:
-                        # Limpiar archivo temporal
                         os.unlink(temp_file_path)
             
         except Exception as e:
