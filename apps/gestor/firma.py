@@ -25,7 +25,7 @@ def signDoc(doc_path, password, path_certificate):
                 fields.append_signature_field(
                     w, sig_field_spec=fields.SigFieldSpec(
                         'Signature',
-                        box=(200, 50, 410, 100),
+                        box=(200, 80, 410, 130),
                         on_page=total_pages - 1
                     )
                 )
