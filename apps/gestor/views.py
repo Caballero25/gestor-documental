@@ -379,13 +379,33 @@ def lista_tomos(request, schema_id=None):
     query = request.GET.get('q', '')
 
     if query:
+        # Obtener los campos del esquema para una búsqueda más precisa si es posible
+        schema_fields = []
+        if schema_id and schema_id != 0:
+            try:
+                schema_obj = MetadataSchema.objects.get(id=schema_id)
+                schema_fields = list(schema_obj.fields.values_list('name', flat=True))
+            except Exception:
+                pass
+
         for term in query.split():
             filters = (
                 Q(code_name__icontains=term) |
                 Q(file__icontains=term) |
-                Q(metadata_values__icontains=term) |
                 Q(metadata_schema__name__icontains=term)
             )
+            
+            if schema_fields:
+                # Búsqueda específica por campos del esquema, excluyendo 'TOMO'
+                metadata_q = Q()
+                for field_name in schema_fields:
+                    if field_name.upper() != 'TOMO':
+                        metadata_q |= Q(**{f'metadata_values__{field_name}__icontains': term})
+                filters |= metadata_q
+            else:
+                # Si no hay esquema, búsqueda general en el JSON
+                filters |= Q(metadata_values__icontains=term)
+
             if term.isdigit():
                 filters |= Q(id=int(term))
             queryset = queryset.filter(filters)
