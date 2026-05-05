@@ -183,6 +183,17 @@
                     <label class="ms-3 me-1 small text-muted mb-0" style="white-space:nowrap;">Espaciado:</label>
                     <input type="number" id="char-spacing-input" class="form-control form-control-sm" style="width: 75px;" title="Espaciado entre letras" value="0" step="10">
                 </div>
+
+                <div id="image-toolbar" class="d-flex align-items-center bg-white p-2 border rounded shadow-sm mb-2" style="display: none !important; width: 800px; margin: 0 auto;">
+                    <span class="me-3 small text-muted fw-bold">OPCIONES DE IMAGEN:</span>
+                    <button id="rotate-left-btn" class="btn btn-sm btn-outline-primary me-2" title="Girar 90° Antihorario" onclick="rotateSelectedImage(-90)">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>Girar -90°
+                    </button>
+                    <button id="rotate-right-btn" class="btn btn-sm btn-outline-primary me-2" title="Girar 90° Horario" onclick="rotateSelectedImage(90)">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Girar +90°
+                    </button>
+                </div>
+
                 <canvas id="pdf-canvas" width="800" height="1131"></canvas>
             </div>
 
@@ -302,6 +313,7 @@
         const alignLeftBtn = document.getElementById('align-left-btn');
         const alignCenterBtn = document.getElementById('align-center-btn');
         const alignRightBtn = document.getElementById('align-right-btn');
+        const imageToolbar = document.getElementById('image-toolbar');
 
         canvas.on('selection:created', updateToolbar);
         canvas.on('selection:updated', updateToolbar);
@@ -309,7 +321,14 @@
 
         function updateToolbar(e) {
             const obj = e.selected?.[0] || canvas.getActiveObject();
-            if (obj && (obj.type === 'i-text' || obj.type === 'text' || obj.type === 'dynamic_text')) {
+            
+            // Ocultar ambos por defecto
+            formatToolbar.style.setProperty('display', 'none', 'important');
+            imageToolbar.style.setProperty('display', 'none', 'important');
+
+            if (!obj) return;
+
+            if (obj.type === 'i-text' || obj.type === 'text' || obj.type === 'dynamic_text') {
                 formatToolbar.style.setProperty('display', 'flex', 'important');
                 
                 fontFamilySelect.value = obj.fontFamily || 'Calibri';
@@ -326,13 +345,24 @@
                 if (obj.textAlign === 'center') alignCenterBtn.classList.add('active');
                 else if (obj.textAlign === 'right') alignRightBtn.classList.add('active');
                 else alignLeftBtn.classList.add('active');
-            } else {
-                hideToolbar();
+            } 
+            else if (obj.type === 'image') {
+                imageToolbar.style.setProperty('display', 'flex', 'important');
             }
         }
 
         function hideToolbar() {
             formatToolbar.style.setProperty('display', 'none', 'important');
+            imageToolbar.style.setProperty('display', 'none', 'important');
+        }
+
+        function rotateSelectedImage(degrees) {
+            const obj = canvas.getActiveObject();
+            if (obj && obj.type === 'image') {
+                const currentAngle = obj.angle || 0;
+                obj.rotate(currentAngle + degrees);
+                canvas.renderAll();
+            }
         }
 
         fontFamilySelect.addEventListener('change', function() {
@@ -474,10 +504,10 @@ function addImage(imageField, fieldName) {
                 img.set({
                     left: leftPos,
                     top: topPos,
-                    angle: 0,
                     padding: 10,
                     cornerSize: 6,
-                    hasRotatingPoint: true
+                    hasRotatingPoint: true,
+                    centeredRotation: true // Rotar sobre el centro
                 });
                 
                 canvas.add(img);
@@ -661,7 +691,8 @@ function addImage(imageField, fieldName) {
                             // Opciones comunes de control
                             padding: 10,
                             cornerSize: 6,
-                            hasRotatingPoint: true
+                            hasRotatingPoint: true,
+                            centeredRotation: true // Rotar sobre el centro
                         };
 
                         if (element.type === 'image') {
